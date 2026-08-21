@@ -50,12 +50,14 @@ html, body {
 .hud-stats { grid-column: 1; grid-row: 1; }
 .hud-minimap { grid-column: 3; grid-row: 1; padding: 8px; line-height: 0; }
 .hud-debug {
-  grid-column: 1;
+  /* Spans the full width: four readouts do not fit the stats column. */
+  grid-column: 1 / -1;
   grid-row: 2;
   align-self: end;
   justify-self: start;
   display: flex;
   gap: 12px;
+  white-space: nowrap;
   font-size: 11px;
   color: var(--hud-muted);
   font-variant-numeric: tabular-nums;
@@ -86,9 +88,12 @@ html, body {
 .hud-bar-fill {
   height: 100%;
   width: 0%;
-  background: linear-gradient(90deg, var(--hud-accent), #a78bfa);
   transition: width 120ms linear;
 }
+
+/* XP and health read as different resources, so they get different ramps. */
+.hud-bar-xp .hud-bar-fill { background: linear-gradient(90deg, var(--hud-accent), #a78bfa); }
+.hud-bar-hp .hud-bar-fill { background: linear-gradient(90deg, #f87171, #4ade80); }
 
 .hud-bar-label {
   position: absolute;
@@ -104,12 +109,12 @@ html, body {
 .hud-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 6px 10px;
+  gap: 8px 10px;
   margin: 0;
 }
 
 .hud-grid dt { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hud-muted); }
-.hud-grid dd { margin: 0; font-size: 15px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.hud-grid dd { margin: 0; font-size: 15px; line-height: 1.2; font-weight: 600; font-variant-numeric: tabular-nums; }
 
 #controls-hint {
   position: fixed;
