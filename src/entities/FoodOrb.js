@@ -1,6 +1,7 @@
 import { Entity } from './Entity.js';
 import { GameConfig } from '../config/GameConfig.js';
 import { pickWeighted, randomRange, TAU } from '../utils/MathUtils.js';
+import { distanceSq } from '../utils/Vector2.js';
 
 /**
  * Collectible orb. Grants mass and XP on pickup.
@@ -42,7 +43,16 @@ export class FoodOrb extends Entity {
   }
 
   update(dt) {
-    if (this.attractedTo) return; // the magnet owns the velocity this tick
+    if (this.attractedTo) {
+      const collector = this.attractedTo;
+      const magnet = collector.magnetRadius ?? 0;
+      // The pickup system only visits nearby cells, so an orb left behind by a
+      // moving collector has to release itself or it would drift no more.
+      if (collector.alive && distanceSq(this.position, collector.position) <= magnet * magnet) {
+        return; // the magnet owns the velocity this tick
+      }
+      this.attractedTo = null;
+    }
     this.driftAngle += dt * 0.6;
     this.velocity.x = Math.cos(this.driftAngle) * this.driftSpeed;
     this.velocity.y = Math.sin(this.driftAngle) * this.driftSpeed;

@@ -72,14 +72,14 @@ export class CanvasRenderer {
       maxY: view.y + halfH,
     };
 
-    this.drawGrid(ctx, visible);
-    this.drawArenaBorder(ctx);
-    this.drawEntities(ctx, alpha, visible);
+    this.drawGrid(ctx, visible, view.zoom);
+    this.drawArenaBorder(ctx, view.zoom);
+    this.drawEntities(ctx, alpha, visible, view.zoom);
 
     ctx.restore();
   }
 
-  drawGrid(ctx, visible) {
+  drawGrid(ctx, visible, zoom) {
     const step = this.theme.gridStep;
     ctx.beginPath();
     const startX = Math.floor(visible.minX / step) * step;
@@ -94,18 +94,18 @@ export class CanvasRenderer {
       ctx.moveTo(visible.minX, y);
       ctx.lineTo(visible.maxX, y);
     }
-    ctx.lineWidth = 1 / this.camera.zoom;
+    ctx.lineWidth = 1 / zoom;
     ctx.strokeStyle = this.theme.gridLine;
     ctx.stroke();
   }
 
-  drawArenaBorder(ctx) {
-    ctx.lineWidth = 6 / this.camera.zoom;
+  drawArenaBorder(ctx, zoom) {
+    ctx.lineWidth = 6 / zoom;
     ctx.strokeStyle = this.theme.wall;
     ctx.strokeRect(0, 0, this.world.bounds.width, this.world.bounds.height);
   }
 
-  drawEntities(ctx, alpha, visible) {
+  drawEntities(ctx, alpha, visible, zoom) {
     this.drawnEntities = 0;
     // Orbs first so players always render on top of the food field.
     for (const orb of this.world.getByType('orb')) {
@@ -120,26 +120,26 @@ export class CanvasRenderer {
 
     for (const player of this.world.getByType('player')) {
       if (!this.#isVisible(player, visible)) continue;
-      this.drawPlayer(ctx, player, alpha);
+      this.drawPlayer(ctx, player, alpha, zoom);
       this.drawnEntities++;
     }
   }
 
-  drawPlayer(ctx, player, alpha) {
+  drawPlayer(ctx, player, alpha, zoom) {
     const p = player.getRenderPosition(alpha, this._scratch);
 
     // Magnet field, so the pickup radius is readable at a glance.
     ctx.beginPath();
     ctx.arc(p.x, p.y, player.magnetRadius, 0, Math.PI * 2);
     ctx.strokeStyle = 'rgba(110, 231, 255, 0.16)';
-    ctx.lineWidth = 1.5 / this.camera.zoom;
+    ctx.lineWidth = 1.5 / zoom;
     ctx.stroke();
 
     ctx.beginPath();
     ctx.arc(p.x, p.y, player.radius, 0, Math.PI * 2);
     ctx.fillStyle = player.color;
     ctx.fill();
-    ctx.lineWidth = 3 / this.camera.zoom;
+    ctx.lineWidth = 3 / zoom;
     ctx.strokeStyle = this.theme.playerOutline;
     ctx.stroke();
 

@@ -148,3 +148,16 @@ test('removals are deferred so grid iteration stays valid', () => {
   assert.equal(world.countOfType('orb'), 0);
   assert.equal(world.grid.queryCircle(100, 100, 20).length, 0);
 });
+
+test('an orb releases the magnet once the collector moves out of range', () => {
+  const { world, player, pickup } = setup();
+  const orb = addOrb(world, 500 + player.magnetRadius * 0.8, 500);
+  pickup.update(1 / 60);
+  assert.equal(orb.attractedTo, player);
+
+  // The collector leaves; the pickup system no longer visits the orb's cells.
+  player.setPosition(100, 100);
+  orb.update(1 / 60);
+  assert.equal(orb.attractedTo, null, 'the orb frees itself and resumes drifting');
+  assert.ok(Math.hypot(orb.velocity.x, orb.velocity.y) > 0);
+});

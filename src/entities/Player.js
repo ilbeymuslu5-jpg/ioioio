@@ -73,7 +73,7 @@ export class Player extends Entity {
     V.copy(this.moveIntent, vector);
     V.limitMut(this.moveIntent, 1);
     if (this.moveIntent.x !== 0 || this.moveIntent.y !== 0) {
-      V.copy(this.facing, V.normalize(this.moveIntent));
+      V.normalizeMut(V.copy(this.facing, this.moveIntent));
     }
     return this;
   }
