@@ -5,6 +5,12 @@
     <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no" />
     <title>Karanlık Arena — Aksiyon RPG</title>
     <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Cpath d='M16 2 L19 20 L16 26 L13 20 Z' fill='%23dfe7f5'/%3E%3Crect x='9' y='19' width='14' height='3' fill='%238d6e3a'/%3E%3C/svg%3E" />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link
+      rel="stylesheet"
+      href="https://fonts.googleapis.com/css2?family=Cinzel:wght@600;700&family=Spectral:wght@400;600&display=swap"
+    />
     <link rel="stylesheet" href="./src/ui/styles.css" />
   </head>
   <body>
@@ -12,6 +18,30 @@
     <div id="hud"></div>
     <div id="levelup"></div>
     <div id="inventory"></div>
+    <div id="gate">
+      <div class="gate-inner">
+        <svg class="gate-mark" viewBox="0 0 32 32" aria-hidden="true">
+          <path d="M16 1 L19.4 19 L16 27 L12.6 19 Z" fill="#dfe7f5" />
+          <rect x="8" y="18.4" width="16" height="2.8" rx="1" fill="#8d6e3a" />
+          <rect x="15" y="21" width="2" height="5" rx="1" fill="#8d6e3a" />
+        </svg>
+        <h1 class="gate-title">Karanlık Arena</h1>
+        <p class="gate-lede">
+          Zindanda tek başına bir savaşçısın. Goblin, iskelet ve kurt sürüleri
+          seviyenle birlikte büyüyor. Ne kadar dayanabilirsin?
+        </p>
+        <dl class="gate-keys">
+          <div><dt>Hareket</dt><dd><kbd>W</kbd> <kbd>A</kbd> <kbd>S</kbd> <kbd>D</kbd></dd></div>
+          <div><dt>Nişan</dt><dd>Fare</dd></div>
+          <div><dt>Saldırı</dt><dd>Sol tık (basılı tut)</dd></div>
+          <div><dt>Atılma</dt><dd><kbd>Boşluk</kbd></dd></div>
+          <div><dt>Envanter</dt><dd><kbd>I</kbd> / <kbd>Tab</kbd></dd></div>
+          <div><dt>Kart seçimi</dt><dd><kbd>1</kbd> <kbd>2</kbd> <kbd>3</kbd></dd></div>
+        </dl>
+        <button class="gate-start" id="gate-start" type="button">Zindana in</button>
+        <p class="gate-note">Dokunmatikte parmağını sürükleyerek hareket edersin.</p>
+      </div>
+    </div>
     <div id="controls-hint">
       <strong>WASD</strong> hareket · <strong>Fare</strong> nişan · <strong>Sol tık</strong> saldırı ·
       <strong>Boşluk</strong> atılma · <strong>I / Tab</strong> envanter

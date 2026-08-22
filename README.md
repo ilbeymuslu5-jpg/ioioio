@@ -7,6 +7,16 @@ Sabit boyutlu bir **Savaşçı** ile karanlık bir zindanda goblin, iskelet ve k
 sürülerini biçersin: kılıç savurma, atılma, ganimet, ekipman ve seviye başına
 3 fantezi kartı. Sürü seviyenle birlikte büyür.
 
+## Oyna
+
+Her revizyonda güncellenen oynanabilir link:
+**https://claude.ai/code/artifact/ea80074e-acac-4612-b0b7-ae783bf360f6**
+
+`npm run bundle` oyunu tek dosyalık, kendi kendine yeten bir HTML'e (`dist/play.html`)
+paketler — tüm JS ve CSS gömülüdür, dışarıya tek istek Google Fonts'adır. Sayfanın
+gövdesi `index.html`'den çıkarılır, yani yayınlanan sürüm ile yerel sürüm aynı
+sayfadır, birbirinden ayrışan iki kopya değil.
+
 ## Çalıştırma
 
 ```bash
@@ -15,6 +25,7 @@ npm start        # derler + http://localhost:5173 sunar
 npm test         # 139 test (node --test, .ts dosyalarını doğrudan koşar)
 npm run typecheck
 npm run build    # src/*.ts -> dist/*.js
+npm run bundle   # tek dosyalık oynanabilir build -> dist/play.html
 ```
 
 Node `.ts` dosyalarını type-stripping ile doğrudan çalıştırdığı için **testler
@@ -30,6 +41,9 @@ derleme gerektirmez**; tarayıcı için `dist/` üretilir (`npm start` bunu yapa
 | **Boşluk** | Atılma — mana harcar, süresince dokunulmazsın |
 | **I / Tab** | Envanter (oyunu duraklatır) |
 | **1 · 2 · 3** | Seviye atlama kartı seçimi |
+
+Oyun bir tuşa basınca başlar: iframe içine gömülü bir sayfa, içine tıklanana kadar
+klavyeyi almaz — yüklenir yüklenmez başlasaydı WASD ana sayfaya giderdi.
 
 Dokunmatikte parmağın indiği nokta sanal joystick merkezi olur.
 
