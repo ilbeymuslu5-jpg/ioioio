@@ -41,6 +41,9 @@ export const GameConfig: GameConfigShape = {
 
     baseMaxHealth: 100,
     baseArmor: 0,
+    baseDamage: 10,
+    baseCritChance: 0.05,
+    baseCritMultiplier: 1.5,
     baseHealthRegen: 0.5,
     baseMagnetRadius: 70,
     /** Magnet reach grows with body size so big players sweep wider. */

@@ -143,3 +143,38 @@ test('a match runs a realistic tick load without unbounded growth', () => {
   assert.equal(game.world.size, GameConfig.orbs.targetCount + 1);
   assert.equal(game.engine.tick, 30 * GameConfig.engine.tickRate);
 });
+
+test('a headless run with auto-picked talents levels and grows stronger', () => {
+  const game = new Game({ headless: true, seed: 55, autoPickTalents: true });
+  const baseSpeed = game.player.stats.base.baseSpeed;
+
+  game.setMoveIntent(1, 0.4);
+  game.simulate(25);
+
+  const player = game.player;
+  assert.ok(player.level > 1);
+  assert.equal(game.skillTreeSystem.pendingCount, 0, 'no draft is left hanging');
+  assert.equal(player.talents.size > 0, true);
+
+  // Every pick is an inMatch modifier group on the sheet.
+  assert.equal(player.stats.groupCount, player.talents.size);
+  assert.ok(player.stats.resolved.baseSpeed >= baseSpeed);
+});
+
+test('level-up drafts queue up when nothing resolves them', () => {
+  const game = new Game({ headless: true, seed: 56 });
+  game.setMoveIntent(1, 0.4);
+  game.simulate(15);
+  assert.equal(game.skillTreeSystem.pendingCount, game.player.level - 1);
+  assert.equal(game.player.talents.size, 0, 'unresolved drafts grant nothing');
+});
+
+test('talent picks stay deterministic for a seed', () => {
+  const run = () => {
+    const game = new Game({ headless: true, seed: 1234, autoPickTalents: true });
+    game.setMoveIntent(0.5, 0.9);
+    game.simulate(20);
+    return [...game.player.talents.entries()].sort();
+  };
+  assert.deepEqual(run(), run());
+});

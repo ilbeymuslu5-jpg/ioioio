@@ -1,6 +1,6 @@
 import { GameConfig } from '../config/GameConfig.ts';
 import { clamp } from '../utils/MathUtils.ts';
-import type { GameSystem, GearScalingConfig, PartialStatBlock, StatBlock, StatKey, StatModifier, StatSource } from '../types/index.ts';
+import type { GameSystem, GearScalingConfig, PartialStatBlock, Rng, StatBlock, StatKey, StatModifier, StatSource } from '../types/index.ts';
 
 export const STAT_KEYS: readonly StatKey[] = [
   'maxHealth',
@@ -10,7 +10,10 @@ export const STAT_KEYS: readonly StatKey[] = [
   'massGain',
   'xpGain',
   'damage',
+  'critChance',
+  'critMultiplier',
   'healthRegen',
+  'luck',
 ];
 
 /** A named bundle of modifiers: one talent node, one equipped item, one buff. */
@@ -33,7 +36,10 @@ function zeroBlock(): StatBlock {
     massGain: 0,
     xpGain: 0,
     damage: 0,
+    critChance: 0,
+    critMultiplier: 0,
     healthRegen: 0,
+    luck: 0,
   };
 }
 
@@ -196,6 +202,20 @@ export class StatSystem<TContext = unknown> implements GameSystem<TContext> {
   /** Damage that actually lands after the target's armour. */
   static damageAfterArmor(incoming: number, armor: number): number {
     return Math.max(0, incoming) * StatSystem.mitigation(armor);
+  }
+
+  /**
+   * A full damage roll: crit chance, crit multiplier, then armour.
+   * One path for every damage source, so nothing can bypass mitigation.
+   */
+  static rollDamage(
+    attacker: Pick<StatBlock, 'damage' | 'critChance' | 'critMultiplier'>,
+    targetArmor: number,
+    rng: Rng = Math.random,
+  ): { amount: number; crit: boolean } {
+    const crit = rng() < clamp(attacker.critChance, 0, 1);
+    const raw = attacker.damage * (crit ? Math.max(1, attacker.critMultiplier) : 1);
+    return { amount: StatSystem.damageAfterArmor(raw, targetArmor), crit };
   }
 
   update(dt: number): void {

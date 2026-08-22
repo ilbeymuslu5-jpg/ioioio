@@ -29,7 +29,10 @@ export type StatKey =
   | 'massGain'
   | 'xpGain'
   | 'damage'
-  | 'healthRegen';
+  | 'critChance'
+  | 'critMultiplier'
+  | 'healthRegen'
+  | 'luck';
 
 /** One layer's contribution to a stat: a flat term and a percentage term. */
 export interface StatModifier {
@@ -101,6 +104,9 @@ export interface PlayerConfig {
   readonly acceleration: number;
   readonly baseMaxHealth: number;
   readonly baseArmor: number;
+  readonly baseDamage: number;
+  readonly baseCritChance: number;
+  readonly baseCritMultiplier: number;
   readonly baseHealthRegen: number;
   readonly baseMagnetRadius: number;
   readonly magnetRadiusPerRadius: number;

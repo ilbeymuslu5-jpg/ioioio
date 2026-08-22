@@ -47,7 +47,15 @@ html, body {
   backdrop-filter: blur(6px);
 }
 
-.hud-stats { grid-column: 1; grid-row: 1; }
+.hud-left {
+  grid-column: 1;
+  grid-row: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: start;
+  gap: 10px;
+  min-width: 0;
+}
 .hud-minimap { grid-column: 3; grid-row: 1; padding: 8px; line-height: 0; }
 .hud-debug {
   /* Spans the full width: four readouts do not fit the stats column. */
@@ -133,4 +141,187 @@ html, body {
 @media (max-width: 720px) {
   .hud-minimap { display: none; }
   #controls-hint { font-size: 11px; }
+}
+
+/* --- Active talent strip ------------------------------------------------ */
+
+.hud-buffs {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  padding: 8px;
+}
+
+.buff {
+  font-size: 11px;
+  font-weight: 600;
+  padding: 3px 8px;
+  border-radius: 999px;
+  border: 1px solid transparent;
+  background: rgba(255, 255, 255, 0.05);
+  white-space: nowrap;
+}
+
+.buff b { font-weight: 700; opacity: 0.85; }
+
+/* --- Level-up card screen ----------------------------------------------- */
+
+.levelup {
+  position: fixed;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  z-index: 20;
+}
+
+.levelup[hidden] { display: none; }
+
+.levelup-backdrop {
+  position: absolute;
+  inset: 0;
+  background: rgba(4, 8, 16, 0.72);
+  backdrop-filter: blur(3px);
+}
+
+.levelup-panel {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 18px;
+  padding: 28px 32px 22px;
+  animation: levelup-in 160ms ease-out;
+}
+
+@keyframes levelup-in {
+  from { opacity: 0; transform: translateY(12px); }
+  to { opacity: 1; transform: none; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .levelup-panel { animation: none; }
+}
+
+.levelup-head { text-align: center; }
+
+.levelup-head h2 {
+  margin: 0;
+  font-size: 30px;
+  letter-spacing: 0.04em;
+  background: linear-gradient(90deg, var(--hud-accent), #a78bfa);
+  -webkit-background-clip: text;
+  background-clip: text;
+  color: transparent;
+}
+
+.levelup-head p {
+  margin: 4px 0 0;
+  font-size: 13px;
+  color: var(--hud-muted);
+}
+
+.levelup-queue { color: var(--hud-accent); }
+
+.levelup-cards {
+  display: grid;
+  grid-auto-flow: column;
+  gap: 14px;
+}
+
+.levelup-foot {
+  font-size: 11px;
+  color: var(--hud-muted);
+  letter-spacing: 0.06em;
+}
+
+/* --- Cards, styled by rarity -------------------------------------------- */
+
+.card {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  width: 210px;
+  min-height: 168px;
+  padding: 16px 16px 14px;
+  text-align: left;
+  color: var(--hud-fg);
+  font: inherit;
+  cursor: pointer;
+  border-radius: 14px;
+  border: 1px solid var(--card-edge, rgba(255, 255, 255, 0.16));
+  background:
+    linear-gradient(180deg, var(--card-tint, transparent), transparent 55%),
+    var(--hud-bg);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+  transition: transform 110ms ease, border-color 110ms ease, box-shadow 110ms ease;
+}
+
+.card:hover,
+.card:focus-visible {
+  transform: translateY(-4px);
+  border-color: var(--card-glow, var(--hud-accent));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--card-glow, var(--hud-accent));
+  outline: none;
+}
+
+.card-key {
+  position: absolute;
+  top: 12px;
+  right: 12px;
+  width: 20px;
+  height: 20px;
+  display: grid;
+  place-items: center;
+  font-size: 11px;
+  font-weight: 700;
+  border-radius: 6px;
+  color: var(--hud-muted);
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.card-rarity {
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--card-glow, var(--hud-accent));
+}
+
+.card-name { font-size: 19px; font-weight: 700; line-height: 1.15; }
+
+.card-desc {
+  font-size: 13px;
+  line-height: 1.45;
+  color: rgba(233, 240, 255, 0.78);
+  flex: 1;
+}
+
+.card-foot {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-size: 11px;
+  color: var(--hud-muted);
+}
+
+.card-stacks { font-variant-numeric: tabular-nums; }
+.card-stacks-new { color: var(--card-glow, var(--hud-accent)); font-weight: 700; }
+
+/* Rarity is carried by one custom property per tier, shared by cards and
+   the HUD buff pills, so the two never drift apart. */
+.card-common,   .buff-common    { --card-glow: #7dd3fc; --card-edge: rgba(125, 211, 252, 0.3); --card-tint: rgba(125, 211, 252, 0.09); }
+.card-rare,     .buff-rare      { --card-glow: #a78bfa; --card-edge: rgba(167, 139, 250, 0.38); --card-tint: rgba(167, 139, 250, 0.12); }
+.card-epic,     .buff-epic      { --card-glow: #fbbf24; --card-edge: rgba(251, 191, 36, 0.42); --card-tint: rgba(251, 191, 36, 0.14); }
+.card-legendary,.buff-legendary { --card-glow: #fb7185; --card-edge: rgba(251, 113, 133, 0.5);  --card-tint: rgba(251, 113, 133, 0.18); }
+
+.buff {
+  color: var(--card-glow, var(--hud-fg));
+  border-color: var(--card-edge, transparent);
+  background: var(--card-tint, rgba(255, 255, 255, 0.05));
+}
+
+@media (max-width: 720px) {
+  .levelup-cards { grid-auto-flow: row; }
+  .card { width: min(88vw, 320px); min-height: 0; }
 }

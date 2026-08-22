@@ -13,9 +13,11 @@ import { PickupSystem } from './systems/PickupSystem.ts';
 import { ProgressionSystem } from './systems/ProgressionSystem.ts';
 import { MassDecaySystem } from './systems/MassDecaySystem.ts';
 import { StatSystem } from './systems/StatSystem.ts';
+import { SkillTreeSystem } from './systems/SkillTreeSystem.ts';
 import { CameraSystem } from './systems/CameraSystem.ts';
 import { CanvasRenderer } from './render/CanvasRenderer.ts';
 import { HUD } from './ui/HUD.ts';
+import { LevelUpModal } from './ui/LevelUpModal.ts';
 import { createRng } from './utils/MathUtils.ts';
 import type { GameEventMap } from './core/GameEvents.ts';
 import type { MatchContext } from './core/MatchContext.ts';
@@ -24,10 +26,18 @@ import type { Rng, Vec2 } from './types/index.ts';
 export interface GameOptions {
   canvas?: HTMLCanvasElement | null;
   hudRoot?: HTMLElement | null;
+  modalRoot?: HTMLElement | null;
   playerName?: string;
   seed?: number;
   headless?: boolean;
   config?: typeof GameConfig;
+  /**
+   * Headless runs have no card screen, so level-up drafts would pile up
+   * unresolved. Turning this on picks for them at random — what a balance
+   * simulation wants; a test that cares about the choice calls
+   * `skillTreeSystem.choose()` itself instead.
+   */
+  autoPickTalents?: boolean;
 }
 
 /**
@@ -57,8 +67,10 @@ export class Game {
   readonly pickupSystem: PickupSystem;
   readonly progressionSystem: ProgressionSystem;
   readonly massDecaySystem: MassDecaySystem;
+  readonly skillTreeSystem: SkillTreeSystem;
   readonly renderer: CanvasRenderer | null = null;
   readonly hud: HUD | null = null;
+  readonly levelUpModal: LevelUpModal | null = null;
 
   private onResize: (() => void) | null = null;
   private onVisibility: (() => void) | null = null;
@@ -66,10 +78,12 @@ export class Game {
   constructor({
     canvas = null,
     hudRoot = null,
+    modalRoot = null,
     playerName = 'Player',
     seed = Date.now(),
     headless = !canvas,
     config = GameConfig,
+    autoPickTalents = false,
   }: GameOptions = {}) {
     this.config = config;
     this.headless = headless;
@@ -127,6 +141,11 @@ export class Game {
       config: config.progression,
       stats: this.statSystem,
     });
+    this.skillTreeSystem = new SkillTreeSystem({
+      world: this.world,
+      stats: this.statSystem,
+      rng: this.rng,
+    });
     this.massDecaySystem = new MassDecaySystem({
       world: this.world,
       config: config.massDecay,
@@ -135,6 +154,13 @@ export class Game {
 
     // Resolve stats once before any system runs, so the player starts complete.
     this.statSystem.recalculate(this.player);
+
+    if (autoPickTalents) {
+      this.skillTreeSystem.setAutoPick((draft) => {
+        const index = Math.floor(this.rng() * draft.choices.length);
+        return (draft.choices[index] ?? draft.choices[0])!.talent.id;
+      });
+    }
 
     // Local input only exists when there is a viewport to steer with; headless
     // runs (tests, bots, authoritative server) write `moveIntent` directly.
@@ -149,12 +175,22 @@ export class Game {
       .addSystem(this.spawnSystem)
       .addSystem(this.massDecaySystem)
       .addSystem(this.progressionSystem)
+      .addSystem(this.skillTreeSystem)
       .addSystem(this.statSystem)
       .addSystem(new CameraSystem({ camera: this.camera }));
 
     if (!headless && canvas) {
       this.renderer = new CanvasRenderer({ canvas, world: this.world, camera: this.camera });
       this.engine.addSystem(this.renderer);
+      if (modalRoot) {
+        this.levelUpModal = new LevelUpModal({
+          root: modalRoot,
+          skillTree: this.skillTreeSystem,
+          events: this.events,
+          engine: this.engine,
+        });
+        this.engine.addSystem(this.levelUpModal);
+      }
       if (hudRoot) {
         this.hud = new HUD({
           root: hudRoot,
@@ -162,13 +198,16 @@ export class Game {
           camera: this.camera,
           progression: this.progressionSystem,
           decay: this.massDecaySystem,
+          skillTree: this.skillTreeSystem,
         });
         this.engine.addSystem(this.hud);
         const hud = this.hud;
         this.events.on('player:levelup', ({ player }) => {
           hud.setGearEffectiveness(this.statSystem.gearEffectiveness(player.level));
         });
+        this.events.on('talent:chosen', ({ player }) => hud.updateBuffs(player));
         hud.setGearEffectiveness(this.statSystem.gearEffectiveness(this.player.level));
+        hud.updateBuffs(this.player);
       }
       this.bindWindow();
     }

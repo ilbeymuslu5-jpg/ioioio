@@ -5,6 +5,7 @@ import type { Camera } from '../core/Camera.ts';
 import type { Player } from '../entities/Player.ts';
 import type { ProgressionSystem } from '../systems/ProgressionSystem.ts';
 import type { MassDecaySystem } from '../systems/MassDecaySystem.ts';
+import type { SkillTreeSystem } from '../systems/SkillTreeSystem.ts';
 import type { MatchContext } from '../core/MatchContext.ts';
 
 /**
@@ -18,6 +19,7 @@ export class HUD implements GameSystem<MatchContext> {
   private readonly camera: Camera;
   private readonly progression: ProgressionSystem;
   private readonly decay: MassDecaySystem | null;
+  private readonly skillTree: SkillTreeSystem | null;
   private readonly minimapSize: number;
   private readonly el: Record<string, HTMLElement> = {};
   private minimapCtx!: CanvasRenderingContext2D;
@@ -29,6 +31,7 @@ export class HUD implements GameSystem<MatchContext> {
     camera,
     progression,
     decay = null,
+    skillTree = null,
     minimapSize = 148,
   }: {
     root: HTMLElement;
@@ -36,6 +39,7 @@ export class HUD implements GameSystem<MatchContext> {
     camera: Camera;
     progression: ProgressionSystem;
     decay?: MassDecaySystem | null;
+    skillTree?: SkillTreeSystem | null;
     minimapSize?: number;
   }) {
     this.root = root;
@@ -43,12 +47,14 @@ export class HUD implements GameSystem<MatchContext> {
     this.camera = camera;
     this.progression = progression;
     this.decay = decay;
+    this.skillTree = skillTree;
     this.minimapSize = minimapSize;
     this.build();
   }
 
   private build(): void {
     this.root.innerHTML = `
+      <div class="hud-left">
       <div class="hud-panel hud-stats">
         <div class="hud-row hud-level"><span class="hud-badge" data-hud="level">Lv 1</span>
           <span class="hud-name" data-hud="name">Player</span></div>
@@ -65,6 +71,8 @@ export class HUD implements GameSystem<MatchContext> {
           <div><dt>Erime</dt><dd data-hud="decay">0.0/sn</dd></div>
         </dl>
       </div>
+      <div class="hud-panel hud-buffs" data-hud="buffs" hidden></div>
+      </div>
       <div class="hud-panel hud-minimap">
         <canvas data-hud="minimap" width="${this.minimapSize}" height="${this.minimapSize}"></canvas>
       </div>
@@ -80,6 +88,21 @@ export class HUD implements GameSystem<MatchContext> {
     const ctx = minimap.getContext('2d');
     if (!ctx) throw new Error('Minimap context unavailable');
     this.minimapCtx = ctx;
+  }
+
+  /** Redraws the active-talent strip. Called on pick, not every frame. */
+  updateBuffs(player: Player): void {
+    const node = this.el['buffs'];
+    if (!node || !this.skillTree) return;
+    const owned = this.skillTree.activeTalents(player);
+    node.hidden = owned.length === 0;
+    node.innerHTML = owned
+      .map(
+        ({ talent, stacks }) => `<span class="buff buff-${talent.rarity}" title="${talent.description}">
+            ${talent.name}${stacks > 1 ? ` <b>×${stacks}</b>` : ''}
+          </span>`,
+      )
+      .join('');
   }
 
   render(_alpha: number, context: MatchContext, engine: EngineHost): void {

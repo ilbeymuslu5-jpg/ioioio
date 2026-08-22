@@ -1,6 +1,8 @@
 import type { Entity } from '../entities/Entity.ts';
 import type { Player } from '../entities/Player.ts';
 import type { FoodOrb } from '../entities/FoodOrb.ts';
+import type { TalentDraft } from '../systems/SkillTreeSystem.ts';
+import type { TalentDefinition } from '../config/TalentPool.ts';
 
 /**
  * The event map every bus in the game is typed against.
@@ -27,6 +29,9 @@ export interface GameEventMap {
   };
 
   'player:levelup': { player: Player; level: number };
+  'talent:offered': { player: Player; draft: TalentDraft };
+  'talent:chosen': { player: Player; talent: TalentDefinition; stacks: number; draftId: number };
+  'talent:cleared': { player: Player };
   'player:damaged': { target: Entity; amount: number; mitigated: number };
   'player:died': { player: Player };
   'stats:recalculated': { player: Player };

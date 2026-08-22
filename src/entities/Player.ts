@@ -34,6 +34,8 @@ export class Player extends Entity implements StatCarrier {
 
   level = 1;
   xp = 0;
+  /** In-match rogue-lite picks: talent id -> stacks. Owned by SkillTreeSystem. */
+  readonly talents = new Map<string, number>();
   xpToNext = 0;
   orbsCollected = 0;
   magnetRadius = 0;
@@ -66,8 +68,11 @@ export class Player extends Entity implements StatCarrier {
       magnetRadius: config.baseMagnetRadius,
       massGain: 1,
       xpGain: 1,
-      damage: 10,
+      damage: config.baseDamage,
+      critChance: config.baseCritChance,
+      critMultiplier: config.baseCritMultiplier,
       healthRegen: config.baseHealthRegen,
+      luck: 0,
     });
     // Resolve once so a player is fully formed before any system touches it.
     for (const key of Object.keys(this.stats.base) as (keyof typeof this.stats.base)[]) {
