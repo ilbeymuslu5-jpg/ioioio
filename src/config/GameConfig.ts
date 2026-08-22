@@ -1,9 +1,8 @@
-import type { GameConfigShape, OrbTier } from '../types/index.ts';
+import type { GameConfigShape } from '../types/index.ts';
 
 /**
  * Single source of truth for every tunable in the simulation.
- * The numbers here implement the balance models from the design spec; systems
- * must read from this object rather than hard-coding constants.
+ * Systems read from this object rather than hard-coding constants.
  */
 export const GameConfig: GameConfigShape = {
   engine: {
@@ -22,79 +21,97 @@ export const GameConfig: GameConfigShape = {
     wallRestitution: 0.4,
   },
 
-  player: {
-    startMass: 25,
-
-    /* --- Mass, size and speed scaling ---------------------------------
-       Radius       = baseRadius + sqrt(mass) * radiusMassFactor
-       MovementSpeed = (baseSpeed / mass ^ speedMassExponent) * (1 + speedBuffs)
-       -------------------------------------------------------------------- */
-    baseRadius: 12,
-    radiusMassFactor: 1.2,
-    baseSpeed: 535,
-    speedMassExponent: 0.18,
-
+  /* --- The hero ---------------------------------------------------------
+     A fixed-size medieval warrior. Nothing here scales with mass: power comes
+     from levels, talents and equipment, never from body size.
+     -------------------------------------------------------------------- */
+  hero: {
+    radius: 17,
+    mass: 90,
     /** Velocity kept after 1s with no input; the source of inertia. */
-    drag: 0.02,
+    drag: 0.015,
     /** How aggressively velocity chases the desired velocity (1/s). */
-    acceleration: 9,
+    acceleration: 14,
 
-    baseMaxHealth: 100,
-    baseArmor: 0,
-    baseDamage: 10,
-    baseCritChance: 0.05,
-    baseCritMultiplier: 1.5,
-    baseHealthRegen: 0.5,
-    baseMagnetRadius: 70,
-    /** Magnet reach grows with body size so big players sweep wider. */
-    magnetRadiusPerRadius: 1.15,
-    magnetPullSpeed: 620,
+    baseMaxHealth: 165,
+    baseHealthRegen: 1.2,
+    baseMaxMana: 100,
+    baseManaRegen: 8,
+    baseArmor: 28,
+    baseDamage: 34,
+    /** Swings per second before any attack-speed bonus. */
+    baseAttackSpeed: 1.35,
+    baseAttackRange: 78,
+    baseCritChance: 0.08,
+    baseCritMultiplier: 1.75,
+    baseMoveSpeed: 285,
+    basePickupRadius: 92,
+
+    swingHalfAngle: Math.PI * 0.42,
+    swingDuration: 0.18,
+    swingKnockback: 5200,
+
+    dashSpeed: 1150,
+    dashDuration: 0.16,
+    dashCooldown: 1.1,
+    dashManaCost: 22,
+    dashInvulnerability: 0.28,
+
+    invulnerabilityAfterHit: 0.35,
   },
 
-  /* --- Snowball barrier ------------------------------------------------
-     A heavy player bleeds mass every second, logarithmically in the excess
-     over `freeMass`, so leading is a running cost rather than a runaway win:
-       decayPerSecond = rate * ln(1 + max(0, mass - freeMass) / reference)
-     -------------------------------------------------------------------- */
-  massDecay: {
-    /** Mass below this never decays, so early game stays frictionless. */
-    freeMass: 60,
-    reference: 60,
-    rate: 0.9,
-    /** Decay never pushes a player below this multiple of the start mass. */
-    floorMultiplier: 1,
+  combat: {
+    /** Even at absurd attack speed a swing cannot be faster than this. */
+    minAttackInterval: 0.12,
+    separationForce: 340,
   },
 
-  /* --- Item cliff barrier ----------------------------------------------
-     Metagame gear enters a match at 25% effect and reaches 100% as in-match
-     level climbs, so a geared veteran cannot flatten a fresh lobby at minute
-     one — they have to earn the power inside the match too.
-     -------------------------------------------------------------------- */
+  loot: {
+    pickupSpeed: 760,
+    dropSpread: 26,
+    lifetime: 45,
+    goldRadius: 6,
+    soulRadius: 7,
+    chestRadius: 11,
+  },
+
+  spawn: {
+    baseEnemyCount: 10,
+    enemiesPerLevel: 1.8,
+    maxEnemies: 90,
+    spawnInterval: 0.55,
+    /** Just outside a 1280x720 view, so nothing pops in on screen. */
+    minSpawnDistance: 780,
+    maxSpawnDistance: 1150,
+    difficultyPerLevel: 0.14,
+  },
+
+  abilities: {
+    bladeOrbitRadius: 74,
+    bladeOrbitSpeed: 3.1,
+    bladeRadius: 13,
+    /** An orbiting blade can only hit the same enemy this often. */
+    bladeDamageInterval: 0.55,
+    lightningInterval: 2.6,
+    lightningRange: 420,
+    fireTrailInterval: 0.42,
+    fireTrailRadius: 34,
+    fireTrailLifetime: 3.2,
+    fireTrailTickInterval: 0.45,
+  },
+
+  /* Gear found in a match applies in full the moment it is worn. The ramp
+     mechanism stays in StatSystem for Phase 4's metagame gear, which does need
+     a barrier against flattening a fresh lobby. */
   gearScaling: {
-    startEffectiveness: 0.25,
-    fullEffectivenessLevel: 10,
-  },
-
-  orbs: {
-    /** Orb count the world tries to keep alive at all times. */
-    targetCount: 1200,
-    spawnPerSecond: 60,
-    baseRadius: 2.5,
-    radiusMassFactor: 0.9,
-    /** Passive drift keeps the field alive without costing physics time. */
-    driftSpeed: 6,
-    tiers: [
-      { id: 'common', weight: 74, mass: 1, xp: 1, color: '#6ee7ff' },
-      { id: 'rare', weight: 20, mass: 3, xp: 4, color: '#a78bfa' },
-      { id: 'epic', weight: 5, mass: 8, xp: 12, color: '#fbbf24' },
-      { id: 'legendary', weight: 1, mass: 20, xp: 35, color: '#fb7185' },
-    ] as readonly OrbTier[],
+    startEffectiveness: 1,
+    fullEffectivenessLevel: 1,
   },
 
   progression: {
     /** xpToNext(level) = baseXp * growth ^ (level - 1) */
-    baseXp: 12,
-    growth: 1.28,
+    baseXp: 22,
+    growth: 1.26,
     maxLevel: 60,
   },
 
@@ -102,13 +119,19 @@ export const GameConfig: GameConfigShape = {
     /** Fraction of the remaining distance left after 1s (lower = snappier). */
     followSmoothing: 0.0005,
     zoomSmoothing: 0.02,
-    /** zoom = baseZoom * (radius / referenceRadius) ^ -zoomMassExponent */
-    baseZoom: 1,
-    referenceRadius: 18,
-    zoomMassExponent: 0.42,
-    minZoom: 0.45,
-    maxZoom: 1.35,
+    /* Pulled in close: an action RPG needs the hero and the swing arc to read
+       at a glance, not a wide strategic view. */
+    baseZoom: 1.5,
+    /** The hero never changes size, so zoom is constant unless overridden. */
+    referenceRadius: 17,
+    zoomMassExponent: 0,
+    minZoom: 1.1,
+    maxZoom: 1.9,
   },
-} as const;
+
+  inventory: {
+    capacity: 24,
+  },
+};
 
 export default GameConfig;

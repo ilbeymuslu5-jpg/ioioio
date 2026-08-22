@@ -3,14 +3,16 @@ import type { EngineHost, GameSystem } from '../types/index.ts';
 import type { World } from '../core/World.ts';
 import type { Camera } from '../core/Camera.ts';
 import type { Player } from '../entities/Player.ts';
+import type { EnemyMob } from '../entities/EnemyMob.ts';
 import type { ProgressionSystem } from '../systems/ProgressionSystem.ts';
-import type { MassDecaySystem } from '../systems/MassDecaySystem.ts';
 import type { SkillTreeSystem } from '../systems/SkillTreeSystem.ts';
 import type { MatchContext } from '../core/MatchContext.ts';
 
 /**
- * Heads-up display: level/XP gauge, health bar, mass and defensive readouts,
- * plus a minimap. Reads through the shared context and never mutates it.
+ * Classic action-RPG heads-up display: a health orb, a mana bar, an XP track
+ * along the bottom, active talent icons and a minimap with enemy blips.
+ *
+ * Reads through the shared context and never mutates it.
  */
 export class HUD implements GameSystem<MatchContext> {
   readonly name = 'hud';
@@ -18,7 +20,6 @@ export class HUD implements GameSystem<MatchContext> {
   private readonly world: World;
   private readonly camera: Camera;
   private readonly progression: ProgressionSystem;
-  private readonly decay: MassDecaySystem | null;
   private readonly skillTree: SkillTreeSystem | null;
   private readonly minimapSize: number;
   private readonly el: Record<string, HTMLElement> = {};
@@ -30,7 +31,6 @@ export class HUD implements GameSystem<MatchContext> {
     world,
     camera,
     progression,
-    decay = null,
     skillTree = null,
     minimapSize = 148,
   }: {
@@ -38,7 +38,6 @@ export class HUD implements GameSystem<MatchContext> {
     world: World;
     camera: Camera;
     progression: ProgressionSystem;
-    decay?: MassDecaySystem | null;
     skillTree?: SkillTreeSystem | null;
     minimapSize?: number;
   }) {
@@ -46,7 +45,6 @@ export class HUD implements GameSystem<MatchContext> {
     this.world = world;
     this.camera = camera;
     this.progression = progression;
-    this.decay = decay;
     this.skillTree = skillTree;
     this.minimapSize = minimapSize;
     this.build();
@@ -54,31 +52,45 @@ export class HUD implements GameSystem<MatchContext> {
 
   private build(): void {
     this.root.innerHTML = `
-      <div class="hud-left">
-      <div class="hud-panel hud-stats">
-        <div class="hud-row hud-level"><span class="hud-badge" data-hud="level">Lv 1</span>
-          <span class="hud-name" data-hud="name">Player</span></div>
-        <div class="hud-bar hud-bar-xp"><div class="hud-bar-fill" data-hud="xpfill"></div>
-          <span class="hud-bar-label" data-hud="xp">0 / 0 XP</span></div>
-        <div class="hud-bar hud-bar-hp"><div class="hud-bar-fill" data-hud="hpfill"></div>
-          <span class="hud-bar-label" data-hud="hp">100 / 100</span></div>
-        <dl class="hud-grid">
-          <div><dt>Kütle</dt><dd data-hud="mass">0</dd></div>
-          <div><dt>Hız</dt><dd data-hud="speed">0</dd></div>
-          <div><dt>Yarıçap</dt><dd data-hud="radius">0</dd></div>
-          <div><dt>Zırh · azaltma</dt><dd data-hud="armor">0 · %0</dd></div>
-          <div><dt>Toplanan</dt><dd data-hud="orbs">0</dd></div>
-          <div><dt>Erime</dt><dd data-hud="decay">0.0/sn</dd></div>
-        </dl>
+      <div class="hud-orb-wrap">
+        <div class="hud-orb">
+          <div class="hud-orb-fill" data-hud="hpfill"></div>
+          <span class="hud-orb-value" data-hud="hp">0</span>
+        </div>
+        <div class="hud-mana">
+          <div class="hud-mana-fill" data-hud="manafill"></div>
+          <span class="hud-mana-label" data-hud="mana">0 / 0</span>
+        </div>
       </div>
-      <div class="hud-panel hud-buffs" data-hud="buffs" hidden></div>
+
+      <div class="hud-top">
+        <div class="hud-panel hud-vitals">
+          <span class="hud-badge" data-hud="level">Sv 1</span>
+          <span class="hud-name" data-hud="name">Kahraman</span>
+          <dl class="hud-grid">
+            <div><dt>Hasar</dt><dd data-hud="damage">0</dd></div>
+            <div><dt>Zırh · azaltma</dt><dd data-hud="armor">0 · %0</dd></div>
+            <div><dt>Saldırı hızı</dt><dd data-hud="aspd">0.0/sn</dd></div>
+            <div><dt>Kritik</dt><dd data-hud="crit">%0</dd></div>
+            <div><dt>Altın</dt><dd data-hud="gold">0</dd></div>
+            <div><dt>Öldürülen</dt><dd data-hud="kills">0</dd></div>
+          </dl>
+        </div>
+        <div class="hud-panel hud-buffs" data-hud="buffs" hidden></div>
       </div>
+
       <div class="hud-panel hud-minimap">
         <canvas data-hud="minimap" width="${this.minimapSize}" height="${this.minimapSize}"></canvas>
       </div>
+
+      <div class="hud-xp">
+        <div class="hud-xp-fill" data-hud="xpfill"></div>
+        <span class="hud-xp-label" data-hud="xp">0 / 0 XP</span>
+      </div>
+
       <div class="hud-panel hud-debug">
-        <span data-hud="fps">-- fps</span><span data-hud="entities">0 entities</span>
-        <span data-hud="gear">gear 25%</span><span data-hud="tick">tick 0</span>
+        <span data-hud="fps">-- fps</span><span data-hud="enemies">0 düşman</span>
+        <span data-hud="dash">Atılma hazır</span><span data-hud="tick">tick 0</span>
       </div>
     `;
     for (const node of this.root.querySelectorAll<HTMLElement>('[data-hud]')) {
@@ -106,54 +118,60 @@ export class HUD implements GameSystem<MatchContext> {
   }
 
   render(_alpha: number, context: MatchContext, engine: EngineHost): void {
-    const player = context.player;
-    // Text is cheap but not free: refresh it ~10x a second, minimap every frame.
-    if (++this.frameCounter % 6 === 0) this.updateText(player, engine);
-    this.drawMinimap(player);
+    const hero = context.player;
+    // Bars follow every frame; text is refreshed ~10x a second.
+    this.updateBars(hero);
+    if (++this.frameCounter % 6 === 0) this.updateText(hero, engine);
+    this.drawMinimap(hero);
   }
 
-  private updateText(player: Player, engine: EngineHost): void {
-    const progress = this.progression.getProgress(player);
-    const hpFraction = player.maxHealth > 0 ? player.health / player.maxHealth : 0;
-    const mitigation = StatSystem.mitigation(player.armor);
-    this.el['name']!.textContent = player.name;
-    this.el['level']!.textContent = `Lv ${player.level}`;
-    this.el['xp']!.textContent = `${Math.floor(player.xp)} / ${player.xpToNext} XP`;
-    this.el['xpfill']!.style.width = `${(progress * 100).toFixed(1)}%`;
-    this.el['hp']!.textContent = `${Math.round(player.health)} / ${Math.round(player.maxHealth)}`;
-    this.el['hpfill']!.style.width = `${(hpFraction * 100).toFixed(1)}%`;
-    this.el['mass']!.textContent = Math.round(player.mass).toLocaleString('tr-TR');
-    this.el['speed']!.textContent = String(Math.round(player.maxSpeed));
-    this.el['radius']!.textContent = String(Math.round(player.radius));
-    // Armour is shown next to the damage reduction it actually buys.
-    this.el['armor']!.textContent = `${Math.round(player.armor)} · %${Math.round((1 - mitigation) * 100)}`;
-    this.el['orbs']!.textContent = player.orbsCollected.toLocaleString('tr-TR');
-    this.el['decay']!.textContent = `${(this.decay?.decayRateFor(player.mass) ?? 0).toFixed(1)}/sn`;
+  private updateBars(hero: Player): void {
+    const hp = hero.maxHealth > 0 ? hero.health / hero.maxHealth : 0;
+    const mana = hero.maxMana > 0 ? hero.mana / hero.maxMana : 0;
+    const xp = this.progression.getProgress(hero);
+
+    // The orb fills bottom-up, so its height is the health fraction.
+    this.el['hpfill']!.style.height = `${(hp * 100).toFixed(1)}%`;
+    this.el['manafill']!.style.width = `${(mana * 100).toFixed(1)}%`;
+    this.el['xpfill']!.style.width = `${(xp * 100).toFixed(1)}%`;
+  }
+
+  private updateText(hero: Player, engine: EngineHost): void {
+    const stats = hero.stats.resolved;
+    const mitigation = StatSystem.mitigation(hero.armor);
+
+    this.el['name']!.textContent = hero.name;
+    this.el['level']!.textContent = `Sv ${hero.level}`;
+    this.el['hp']!.textContent = `${Math.ceil(hero.health)}`;
+    this.el['mana']!.textContent = `${Math.floor(hero.mana)} / ${Math.round(hero.maxMana)}`;
+    this.el['xp']!.textContent = `${Math.floor(hero.xp)} / ${hero.xpToNext} XP`;
+    this.el['damage']!.textContent = String(Math.round(stats.damage));
+    this.el['armor']!.textContent = `${Math.round(hero.armor)} · %${Math.round((1 - mitigation) * 100)}`;
+    this.el['aspd']!.textContent = `${(1 / hero.attackInterval).toFixed(2)}/sn`;
+    this.el['crit']!.textContent = `%${Math.round(stats.critChance * 100)}`;
+    this.el['gold']!.textContent = hero.gold.toLocaleString('tr-TR');
+    this.el['kills']!.textContent = hero.kills.toLocaleString('tr-TR');
     this.el['fps']!.textContent = `${Math.round(engine.fps)} fps`;
-    this.el['entities']!.textContent = `${this.world.size} entities`;
+    this.el['enemies']!.textContent = `${this.world.countOfType('enemy')} düşman`;
+    this.el['dash']!.textContent =
+      hero.dashCooldown > 0 ? `Atılma ${hero.dashCooldown.toFixed(1)}sn` : 'Atılma hazır';
     this.el['tick']!.textContent = `tick ${engine.tick}`;
   }
 
-  /** Shows how much of the metagame gear is currently active (Phase 3 hook). */
-  setGearEffectiveness(effectiveness: number): void {
-    const node = this.el['gear'];
-    if (node) node.textContent = `gear ${Math.round(effectiveness * 100)}%`;
-  }
-
-  private drawMinimap(player: Player): void {
+  private drawMinimap(hero: Player): void {
     const ctx = this.minimapCtx;
     const size = this.minimapSize;
     const { width, height } = this.world.bounds;
     const scale = size / Math.max(width, height);
 
     ctx.clearRect(0, 0, size, size);
-    ctx.fillStyle = 'rgba(10, 16, 30, 0.85)';
+    ctx.fillStyle = 'rgba(14, 12, 18, 0.9)';
     ctx.fillRect(0, 0, size, size);
-    ctx.strokeStyle = 'rgba(120, 190, 255, 0.35)';
+    ctx.strokeStyle = 'rgba(190, 140, 90, 0.4)';
     ctx.strokeRect(0.5, 0.5, width * scale - 1, height * scale - 1);
 
     const view = this.camera.getVisibleBounds();
-    ctx.strokeStyle = 'rgba(255, 255, 255, 0.25)';
+    ctx.strokeStyle = 'rgba(255, 255, 255, 0.2)';
     ctx.strokeRect(
       view.minX * scale,
       view.minY * scale,
@@ -161,9 +179,15 @@ export class HUD implements GameSystem<MatchContext> {
       (view.maxY - view.minY) * scale,
     );
 
-    ctx.fillStyle = player.color;
+    // Enemy blips: the minimap's job is telling you where the pressure is.
+    ctx.fillStyle = '#e5484d';
+    for (const enemy of this.world.getByType<EnemyMob>('enemy')) {
+      ctx.fillRect(enemy.position.x * scale - 1, enemy.position.y * scale - 1, 2.5, 2.5);
+    }
+
+    ctx.fillStyle = '#e8edf7';
     ctx.beginPath();
-    ctx.arc(player.position.x * scale, player.position.y * scale, 3.2, 0, Math.PI * 2);
+    ctx.arc(hero.position.x * scale, hero.position.y * scale, 3.2, 0, Math.PI * 2);
     ctx.fill();
   }
 }

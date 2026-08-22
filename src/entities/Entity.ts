@@ -4,7 +4,7 @@ import type { SpatialEntity } from '../core/SpatialGrid.ts';
 
 let nextId = 1;
 
-export type EntityKind = 'entity' | 'player' | 'orb' | 'bot' | 'projectile';
+export type EntityKind = 'entity' | 'player' | 'enemy' | 'loot' | 'projectile';
 
 export interface EntityOptions {
   id?: string;

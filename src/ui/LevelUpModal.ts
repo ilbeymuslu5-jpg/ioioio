@@ -7,8 +7,8 @@ import type { MatchContext } from '../core/MatchContext.ts';
 
 const RARITY_LABEL: Record<string, string> = {
   common: 'Yaygın',
-  rare: 'Nadir',
-  epic: 'Epik',
+  magic: 'Büyülü',
+  epic: 'Destansı',
   legendary: 'Efsanevi',
 };
 
@@ -17,6 +17,9 @@ const CATEGORY_LABEL: Record<string, string> = {
   defensive: 'Savunma',
   utility: 'Fayda',
 };
+
+/** Talents that grant an ability are worth calling out on the card. */
+const ABILITY_TAG = 'Yetenek';
 
 /**
  * The 3-card level-up screen.
@@ -138,7 +141,9 @@ export class LevelUpModal implements GameSystem<MatchContext> {
     return `
       <button class="card card-${talent.rarity}" data-talent="${talent.id}" type="button">
         <span class="card-key">${index + 1}</span>
-        <span class="card-rarity">${RARITY_LABEL[talent.rarity] ?? talent.rarity}</span>
+        <span class="card-rarity">${RARITY_LABEL[talent.rarity] ?? talent.rarity}${
+          talent.ability ? ` · ${ABILITY_TAG}` : ''
+        }</span>
         <span class="card-name">${talent.name}</span>
         <span class="card-desc">${talent.description}</span>
         <span class="card-foot">

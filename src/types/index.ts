@@ -23,15 +23,20 @@ export interface Rect {
 /** Every stat that flows through the StatSystem pipeline. */
 export type StatKey =
   | 'maxHealth'
+  | 'healthRegen'
+  | 'maxMana'
+  | 'manaRegen'
   | 'armor'
-  | 'baseSpeed'
-  | 'magnetRadius'
-  | 'massGain'
-  | 'xpGain'
   | 'damage'
+  | 'attackSpeed'
+  | 'attackRange'
   | 'critChance'
   | 'critMultiplier'
-  | 'healthRegen'
+  | 'moveSpeed'
+  | 'pickupRadius'
+  | 'cooldownReduction'
+  | 'xpGain'
+  | 'goldGain'
   | 'luck';
 
 /** One layer's contribution to a stat: a flat term and a percentage term. */
@@ -46,13 +51,15 @@ export type StatSource = 'talent' | 'gear' | 'inMatch';
 export type StatBlock = Record<StatKey, number>;
 export type PartialStatBlock = Partial<Record<StatKey, number>>;
 
-export interface OrbTier {
-  readonly id: string;
-  readonly weight: number;
-  readonly mass: number;
-  readonly xp: number;
-  readonly color: string;
-}
+/** Shared rarity ladder: loot, equipment and talent cards all use it. */
+export type Rarity = 'common' | 'magic' | 'epic' | 'legendary';
+
+export const RARITY_ORDER: readonly Rarity[] = ['common', 'magic', 'epic', 'legendary'];
+
+/** Equipment slots the hero can wear. */
+export type EquipmentSlot = 'weapon' | 'chest' | 'helmet' | 'amulet';
+
+export const EQUIPMENT_SLOTS: readonly EquipmentSlot[] = ['weapon', 'chest', 'helmet', 'amulet'];
 
 /** Deterministic or native random number generator, always in [0, 1). */
 export type Rng = () => number;
@@ -94,30 +101,72 @@ export interface ArenaConfig {
   readonly wallRestitution: number;
 }
 
-export interface PlayerConfig {
-  readonly startMass: number;
-  readonly baseRadius: number;
-  readonly radiusMassFactor: number;
-  readonly baseSpeed: number;
-  readonly speedMassExponent: number;
+export interface HeroConfig {
+  /** The hero is a fixed-size body; nothing about it scales with mass. */
+  readonly radius: number;
+  readonly mass: number;
   readonly drag: number;
   readonly acceleration: number;
+
   readonly baseMaxHealth: number;
+  readonly baseHealthRegen: number;
+  readonly baseMaxMana: number;
+  readonly baseManaRegen: number;
   readonly baseArmor: number;
   readonly baseDamage: number;
+  readonly baseAttackSpeed: number;
+  readonly baseAttackRange: number;
   readonly baseCritChance: number;
   readonly baseCritMultiplier: number;
-  readonly baseHealthRegen: number;
-  readonly baseMagnetRadius: number;
-  readonly magnetRadiusPerRadius: number;
-  readonly magnetPullSpeed: number;
+  readonly baseMoveSpeed: number;
+  readonly basePickupRadius: number;
+
+  /** Half-width of the melee swing arc, in radians. */
+  readonly swingHalfAngle: number;
+  /** How long the swing stays visible and the hitbox stays live. */
+  readonly swingDuration: number;
+  /** Knockback impulse a landed swing applies. */
+  readonly swingKnockback: number;
+
+  readonly dashSpeed: number;
+  readonly dashDuration: number;
+  readonly dashCooldown: number;
+  readonly dashManaCost: number;
+  /** Damage immunity window, measured from the start of a dash. */
+  readonly dashInvulnerability: number;
+
+  readonly invulnerabilityAfterHit: number;
 }
 
-export interface MassDecayConfig {
-  readonly freeMass: number;
-  readonly reference: number;
-  readonly rate: number;
-  readonly floorMultiplier: number;
+export interface CombatConfig {
+  /** Cap on how much attack speed can compress the swing cooldown. */
+  readonly minAttackInterval: number;
+  /** Enemies pushed away from each other so a pack cannot occupy one point. */
+  readonly separationForce: number;
+}
+
+export interface LootConfig {
+  readonly pickupSpeed: number;
+  readonly dropSpread: number;
+  /** Loot despawns after this many seconds so the field cannot fill up. */
+  readonly lifetime: number;
+  readonly goldRadius: number;
+  readonly soulRadius: number;
+  readonly chestRadius: number;
+}
+
+export interface SpawnConfig {
+  /** Live enemies the director aims for at wave 1. */
+  readonly baseEnemyCount: number;
+  /** Extra live enemies allowed per hero level. */
+  readonly enemiesPerLevel: number;
+  readonly maxEnemies: number;
+  readonly spawnInterval: number;
+  /** Enemies appear beyond the view but within this ring of the hero. */
+  readonly minSpawnDistance: number;
+  readonly maxSpawnDistance: number;
+  /** Enemy health and damage multiplier gained per hero level. */
+  readonly difficultyPerLevel: number;
 }
 
 export interface GearScalingConfig {
@@ -125,13 +174,17 @@ export interface GearScalingConfig {
   readonly fullEffectivenessLevel: number;
 }
 
-export interface OrbsConfig {
-  readonly targetCount: number;
-  readonly spawnPerSecond: number;
-  readonly baseRadius: number;
-  readonly radiusMassFactor: number;
-  readonly driftSpeed: number;
-  readonly tiers: readonly OrbTier[];
+export interface AbilityConfig {
+  readonly bladeOrbitRadius: number;
+  readonly bladeOrbitSpeed: number;
+  readonly bladeRadius: number;
+  readonly bladeDamageInterval: number;
+  readonly lightningInterval: number;
+  readonly lightningRange: number;
+  readonly fireTrailInterval: number;
+  readonly fireTrailRadius: number;
+  readonly fireTrailLifetime: number;
+  readonly fireTrailTickInterval: number;
 }
 
 export interface ProgressionConfig {
@@ -153,10 +206,18 @@ export interface CameraConfig {
 export interface GameConfigShape {
   readonly engine: EngineConfig;
   readonly arena: ArenaConfig;
-  readonly player: PlayerConfig;
-  readonly massDecay: MassDecayConfig;
+  readonly hero: HeroConfig;
+  readonly combat: CombatConfig;
+  readonly loot: LootConfig;
+  readonly spawn: SpawnConfig;
+  readonly abilities: AbilityConfig;
   readonly gearScaling: GearScalingConfig;
-  readonly orbs: OrbsConfig;
   readonly progression: ProgressionConfig;
   readonly camera: CameraConfig;
+  readonly inventory: InventoryConfig;
+}
+
+export interface InventoryConfig {
+  /** Backpack capacity; a full backpack refuses further pickups. */
+  readonly capacity: number;
 }

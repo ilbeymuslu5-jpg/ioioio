@@ -1,20 +1,26 @@
 :root {
-  --hud-bg: rgba(10, 16, 30, 0.72);
-  --hud-border: rgba(120, 190, 255, 0.22);
-  --hud-text: #e6edf7;
-  --hud-muted: #8ea3c4;
-  --hud-accent: #6ee7ff;
+  --hud-bg: rgba(16, 13, 20, 0.82);
+  --hud-border: rgba(190, 140, 90, 0.28);
+  --hud-text: #e8e2d6;
+  --hud-muted: #9a8f7f;
+  --hud-accent: #d9a441;
+  --hud-blood: #a4243b;
+  --hud-mana: #4a7fd4;
 }
 
 * { box-sizing: border-box; }
+
+/* Several HUD panels set display explicitly, which would otherwise beat the
+   hidden attribute and leave empty boxes on screen. */
+[hidden] { display: none !important; }
 
 html, body {
   margin: 0;
   height: 100%;
   overflow: hidden;
-  background: #070b14;
+  background: #0d0c11;
   color: var(--hud-text);
-  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  font-family: "Iowan Old Style", Georgia, "Times New Roman", serif;
   /* The canvas handles its own touch gestures. */
   touch-action: none;
   overscroll-behavior: none;
@@ -27,42 +33,50 @@ html, body {
   cursor: crosshair;
 }
 
+.hud-panel {
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  border-radius: 6px;
+  padding: 10px 12px;
+  backdrop-filter: blur(5px);
+}
+
+/* --- HUD layout ---------------------------------------------------------
+   A fixed overlay with the vitals top-left, the minimap top-right, the health
+   orb bottom-left and the XP track along the bottom edge.
+   -------------------------------------------------------------------- */
+
 #hud {
   position: fixed;
   inset: 0;
   padding: 14px;
-  display: grid;
-  grid-template-columns: minmax(190px, 240px) 1fr auto;
-  grid-template-rows: auto 1fr;
-  gap: 12px;
-  /* HUD is an overlay: clicks belong to the canvas underneath. */
   pointer-events: none;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-.hud-panel {
-  background: var(--hud-bg);
-  border: 1px solid var(--hud-border);
-  border-radius: 12px;
-  padding: 10px 12px;
-  backdrop-filter: blur(6px);
-}
-
-.hud-left {
-  grid-column: 1;
-  grid-row: 1;
+.hud-top {
+  position: absolute;
+  top: 14px;
+  left: 14px;
   display: flex;
   flex-direction: column;
   align-items: start;
-  gap: 10px;
-  min-width: 0;
+  gap: 8px;
+  max-width: 260px;
 }
-.hud-minimap { grid-column: 3; grid-row: 1; padding: 8px; line-height: 0; }
+
+.hud-minimap {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  padding: 8px;
+  line-height: 0;
+}
+
 .hud-debug {
-  /* Spans the full width: four readouts do not fit the stats column. */
-  grid-column: 1 / -1;
-  grid-row: 2;
-  align-self: end;
-  justify-self: start;
+  position: absolute;
+  bottom: 46px;
+  right: 14px;
   display: flex;
   gap: 12px;
   white-space: nowrap;
@@ -71,79 +85,152 @@ html, body {
   font-variant-numeric: tabular-nums;
 }
 
-.hud-row { display: flex; align-items: center; gap: 8px; }
-
 .hud-badge {
-  background: linear-gradient(135deg, var(--hud-accent), #a78bfa);
-  color: #06121c;
-  font-weight: 700;
+  display: inline-block;
+  padding: 2px 9px;
+  border-radius: 4px;
   font-size: 12px;
-  padding: 2px 8px;
-  border-radius: 999px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  color: #1a1410;
+  background: linear-gradient(180deg, #e8c15f, var(--hud-accent));
 }
 
-.hud-name { font-weight: 600; font-size: 14px; }
-
-.hud-bar {
-  position: relative;
-  height: 16px;
-  margin: 8px 0;
-  border-radius: 999px;
-  background: rgba(255, 255, 255, 0.08);
-  overflow: hidden;
-}
-
-.hud-bar-fill {
-  height: 100%;
-  width: 0%;
-  transition: width 120ms linear;
-}
-
-/* XP and health read as different resources, so they get different ramps. */
-.hud-bar-xp .hud-bar-fill { background: linear-gradient(90deg, var(--hud-accent), #a78bfa); }
-.hud-bar-hp .hud-bar-fill { background: linear-gradient(90deg, #f87171, #4ade80); }
-
-.hud-bar-label {
-  position: absolute;
-  inset: 0;
-  display: grid;
-  place-items: center;
-  font-size: 10px;
+.hud-name {
+  font-size: 14px;
   font-weight: 600;
-  letter-spacing: 0.02em;
-  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.6);
+  margin-left: 8px;
 }
 
 .hud-grid {
   display: grid;
   grid-template-columns: 1fr 1fr;
-  gap: 8px 10px;
-  margin: 0;
+  gap: 8px 12px;
+  margin: 10px 0 0;
 }
 
-.hud-grid dt { font-size: 10px; text-transform: uppercase; letter-spacing: 0.06em; color: var(--hud-muted); }
-.hud-grid dd { margin: 0; font-size: 15px; line-height: 1.2; font-weight: 600; font-variant-numeric: tabular-nums; }
-
-#controls-hint {
-  position: fixed;
-  left: 50%;
-  bottom: 14px;
-  transform: translateX(-50%);
-  font-size: 12px;
+.hud-grid dt {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
   color: var(--hud-muted);
-  background: var(--hud-bg);
+}
+
+.hud-grid dd {
+  margin: 0;
+  font-size: 15px;
+  line-height: 1.2;
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+}
+
+/* --- Health orb and mana bar -------------------------------------------- */
+
+.hud-orb-wrap {
+  position: absolute;
+  bottom: 40px;
+  left: 14px;
+  display: flex;
+  align-items: end;
+  gap: 12px;
+}
+
+.hud-orb {
+  position: relative;
+  width: 92px;
+  height: 92px;
+  border-radius: 50%;
+  overflow: hidden;
+  border: 2px solid rgba(190, 140, 90, 0.55);
+  background: radial-gradient(circle at 35% 30%, #2a1418, #140a0d 70%);
+  box-shadow: inset 0 0 18px rgba(0, 0, 0, 0.8), 0 0 16px rgba(164, 36, 59, 0.25);
+}
+
+/* The orb fills from the bottom, so its height is the health fraction. */
+.hud-orb-fill {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  height: 100%;
+  background: linear-gradient(180deg, #d6455c, var(--hud-blood));
+  transition: height 120ms linear;
+}
+
+.hud-orb-value {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 22px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 2px 6px rgba(0, 0, 0, 0.9);
+}
+
+.hud-mana {
+  position: relative;
+  width: 168px;
+  height: 15px;
+  border-radius: 3px;
+  overflow: hidden;
+  border: 1px solid rgba(120, 150, 220, 0.35);
+  background: rgba(10, 14, 26, 0.85);
+  margin-bottom: 6px;
+}
+
+.hud-mana-fill {
+  height: 100%;
+  width: 100%;
+  background: linear-gradient(90deg, #2f5aa8, var(--hud-mana));
+  transition: width 120ms linear;
+}
+
+.hud-mana-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* --- XP track ------------------------------------------------------------ */
+
+.hud-xp {
+  position: absolute;
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  height: 18px;
+  border-radius: 3px;
+  overflow: hidden;
   border: 1px solid var(--hud-border);
-  border-radius: 999px;
-  padding: 6px 14px;
-  pointer-events: none;
+  background: rgba(14, 12, 18, 0.9);
 }
 
-@media (max-width: 720px) {
-  .hud-minimap { display: none; }
-  #controls-hint { font-size: 11px; }
+.hud-xp-fill {
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, #6d4fa8, #a678e0);
+  transition: width 140ms linear;
 }
 
-/* --- Active talent strip ------------------------------------------------ */
+.hud-xp-label {
+  position: absolute;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  font-weight: 700;
+  color: var(--hud-text);
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.9);
+}
+
+/* --- Active talent pills -------------------------------------------------- */
 
 .hud-buffs {
   display: flex;
@@ -156,30 +243,47 @@ html, body {
   font-size: 11px;
   font-weight: 600;
   padding: 3px 8px;
-  border-radius: 999px;
+  border-radius: 3px;
   border: 1px solid transparent;
-  background: rgba(255, 255, 255, 0.05);
   white-space: nowrap;
 }
 
 .buff b { font-weight: 700; opacity: 0.85; }
 
-/* --- Level-up card screen ----------------------------------------------- */
+#controls-hint {
+  position: fixed;
+  bottom: 40px;
+  left: 50%;
+  transform: translateX(-50%);
+  padding: 7px 16px;
+  border-radius: 4px;
+  font-size: 12px;
+  color: var(--hud-muted);
+  background: var(--hud-bg);
+  border: 1px solid var(--hud-border);
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
+  pointer-events: none;
+}
 
-.levelup {
+#controls-hint strong { color: var(--hud-text); font-weight: 600; }
+
+/* --- Level-up card screen ------------------------------------------------ */
+
+.levelup, .inventory {
   position: fixed;
   inset: 0;
   display: grid;
   place-items: center;
   z-index: 20;
+  font-family: system-ui, -apple-system, "Segoe UI", sans-serif;
 }
 
-.levelup[hidden] { display: none; }
+.levelup[hidden], .inventory[hidden] { display: none; }
 
-.levelup-backdrop {
+.levelup-backdrop, .inventory-backdrop {
   position: absolute;
   inset: 0;
-  background: rgba(4, 8, 16, 0.72);
+  background: rgba(6, 4, 8, 0.78);
   backdrop-filter: blur(3px);
 }
 
@@ -190,25 +294,26 @@ html, body {
   align-items: center;
   gap: 18px;
   padding: 28px 32px 22px;
-  animation: levelup-in 160ms ease-out;
+  animation: panel-in 160ms ease-out;
 }
 
-@keyframes levelup-in {
+@keyframes panel-in {
   from { opacity: 0; transform: translateY(12px); }
   to { opacity: 1; transform: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .levelup-panel { animation: none; }
+  .levelup-panel, .inventory-panel { animation: none; }
 }
 
 .levelup-head { text-align: center; }
 
 .levelup-head h2 {
   margin: 0;
-  font-size: 30px;
-  letter-spacing: 0.04em;
-  background: linear-gradient(90deg, var(--hud-accent), #a78bfa);
+  font-size: 32px;
+  letter-spacing: 0.06em;
+  font-family: "Iowan Old Style", Georgia, serif;
+  background: linear-gradient(90deg, #f0d090, var(--hud-accent));
   -webkit-background-clip: text;
   background-clip: text;
   color: transparent;
@@ -234,34 +339,31 @@ html, body {
   letter-spacing: 0.06em;
 }
 
-/* --- Cards, styled by rarity -------------------------------------------- */
-
 .card {
   position: relative;
   display: flex;
   flex-direction: column;
   gap: 6px;
-  width: 210px;
-  min-height: 168px;
+  width: 214px;
+  min-height: 172px;
   padding: 16px 16px 14px;
   text-align: left;
-  color: var(--hud-fg);
+  color: var(--hud-text);
   font: inherit;
   cursor: pointer;
-  border-radius: 14px;
+  border-radius: 8px;
   border: 1px solid var(--card-edge, rgba(255, 255, 255, 0.16));
   background:
-    linear-gradient(180deg, var(--card-tint, transparent), transparent 55%),
-    var(--hud-bg);
-  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.45);
+    linear-gradient(180deg, var(--card-tint, transparent), transparent 58%),
+    rgba(18, 15, 22, 0.96);
+  box-shadow: 0 10px 30px rgba(0, 0, 0, 0.6);
   transition: transform 110ms ease, border-color 110ms ease, box-shadow 110ms ease;
 }
 
-.card:hover,
-.card:focus-visible {
+.card:hover, .card:focus-visible {
   transform: translateY(-4px);
   border-color: var(--card-glow, var(--hud-accent));
-  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.5), 0 0 0 1px var(--card-glow, var(--hud-accent));
+  box-shadow: 0 14px 34px rgba(0, 0, 0, 0.65), 0 0 0 1px var(--card-glow, var(--hud-accent));
   outline: none;
 }
 
@@ -275,7 +377,7 @@ html, body {
   place-items: center;
   font-size: 11px;
   font-weight: 700;
-  border-radius: 6px;
+  border-radius: 4px;
   color: var(--hud-muted);
   background: rgba(255, 255, 255, 0.07);
 }
@@ -288,12 +390,17 @@ html, body {
   color: var(--card-glow, var(--hud-accent));
 }
 
-.card-name { font-size: 19px; font-weight: 700; line-height: 1.15; }
+.card-name {
+  font-size: 19px;
+  font-weight: 700;
+  line-height: 1.15;
+  font-family: "Iowan Old Style", Georgia, serif;
+}
 
 .card-desc {
   font-size: 13px;
   line-height: 1.45;
-  color: rgba(233, 240, 255, 0.78);
+  color: rgba(232, 226, 214, 0.76);
   flex: 1;
 }
 
@@ -308,20 +415,206 @@ html, body {
 .card-stacks { font-variant-numeric: tabular-nums; }
 .card-stacks-new { color: var(--card-glow, var(--hud-accent)); font-weight: 700; }
 
-/* Rarity is carried by one custom property per tier, shared by cards and
-   the HUD buff pills, so the two never drift apart. */
-.card-common,   .buff-common    { --card-glow: #7dd3fc; --card-edge: rgba(125, 211, 252, 0.3); --card-tint: rgba(125, 211, 252, 0.09); }
-.card-rare,     .buff-rare      { --card-glow: #a78bfa; --card-edge: rgba(167, 139, 250, 0.38); --card-tint: rgba(167, 139, 250, 0.12); }
-.card-epic,     .buff-epic      { --card-glow: #fbbf24; --card-edge: rgba(251, 191, 36, 0.42); --card-tint: rgba(251, 191, 36, 0.14); }
-.card-legendary,.buff-legendary { --card-glow: #fb7185; --card-edge: rgba(251, 113, 133, 0.5);  --card-tint: rgba(251, 113, 133, 0.18); }
+/* --- Inventory ----------------------------------------------------------- */
+
+.inventory-panel {
+  position: relative;
+  width: min(92vw, 780px);
+  max-height: 88vh;
+  overflow-y: auto;
+  padding: 22px 24px;
+  border-radius: 10px;
+  border: 1px solid var(--hud-border);
+  background: rgba(18, 15, 22, 0.98);
+  box-shadow: 0 20px 60px rgba(0, 0, 0, 0.7);
+  animation: panel-in 140ms ease-out;
+}
+
+.inventory-head {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 18px;
+}
+
+.inventory-head h2 {
+  margin: 0;
+  font-size: 24px;
+  font-family: "Iowan Old Style", Georgia, serif;
+  letter-spacing: 0.04em;
+}
+
+.inventory-gold {
+  margin-left: auto;
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--hud-accent);
+  font-variant-numeric: tabular-nums;
+}
+
+.inventory-close {
+  width: 28px;
+  height: 28px;
+  border-radius: 4px;
+  border: 1px solid var(--hud-border);
+  background: transparent;
+  color: var(--hud-text);
+  font-size: 18px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.inventory-close:hover { background: rgba(255, 255, 255, 0.08); }
+
+.inventory-body {
+  display: grid;
+  grid-template-columns: 1fr 220px;
+  gap: 18px;
+  margin-bottom: 18px;
+}
+
+.inventory-slots {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.slot {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  min-height: 86px;
+  padding: 10px 12px;
+  text-align: left;
+  font: inherit;
+  color: var(--hud-text);
+  border-radius: 6px;
+  border: 1px solid var(--card-edge, rgba(255, 255, 255, 0.1));
+  background: var(--card-tint, rgba(255, 255, 255, 0.02));
+  cursor: pointer;
+}
+
+.slot:hover { border-color: var(--card-glow, var(--hud-accent)); }
+
+.slot-empty {
+  cursor: default;
+  border-style: dashed;
+  opacity: 0.5;
+  place-content: center;
+}
+
+.slot-label {
+  font-size: 10px;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hud-muted);
+}
+
+.slot-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--card-glow, var(--hud-text));
+}
+
+.slot-lines {
+  display: flex;
+  flex-direction: column;
+  font-size: 11px;
+  color: rgba(232, 226, 214, 0.72);
+  font-variant-numeric: tabular-nums;
+}
+
+.inventory-summary h3, .inventory-bag h3 {
+  margin: 0 0 8px;
+  font-size: 11px;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--hud-muted);
+}
+
+.inventory-bag h3 span { color: var(--hud-text); }
+
+.inventory-summary dl {
+  display: grid;
+  gap: 4px;
+  margin: 0;
+  font-size: 12px;
+}
+
+.inventory-summary dl > div {
+  display: flex;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.inventory-summary dt { color: var(--hud-muted); }
+.inventory-summary dd { margin: 0; font-weight: 700; font-variant-numeric: tabular-nums; }
+
+.bag-grid {
+  display: grid;
+  grid-template-columns: repeat(6, 1fr);
+  gap: 6px;
+}
+
+.bag-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  justify-content: center;
+  min-height: 62px;
+  padding: 6px;
+  text-align: left;
+  font: inherit;
+  color: var(--hud-text);
+  border-radius: 5px;
+  border: 1px solid var(--card-edge, rgba(255, 255, 255, 0.08));
+  background: var(--card-tint, rgba(255, 255, 255, 0.02));
+  cursor: pointer;
+}
+
+.bag-cell:hover { border-color: var(--card-glow, var(--hud-accent)); }
+.bag-empty { cursor: default; border-style: dashed; opacity: 0.35; }
+
+.bag-slot-tag {
+  font-size: 9px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hud-muted);
+}
+
+.bag-name {
+  font-size: 11px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--card-glow, var(--hud-text));
+}
+
+.inventory-foot {
+  font-size: 11px;
+  color: var(--hud-muted);
+  text-align: center;
+}
+
+/* --- The rarity ladder ---------------------------------------------------
+   One custom property set per tier, shared by talent cards, equipment slots,
+   bag cells and HUD pills, so the four surfaces can never drift apart.
+   -------------------------------------------------------------------- */
+
+.card-common,    .buff-common,    .slot-common,    .bag-common    { --card-glow: #cfc9bd; --card-edge: rgba(207, 201, 189, 0.3);  --card-tint: rgba(207, 201, 189, 0.06); }
+.card-magic,     .buff-magic,     .slot-magic,     .bag-magic     { --card-glow: #6ba3f5; --card-edge: rgba(107, 163, 245, 0.42); --card-tint: rgba(107, 163, 245, 0.12); }
+.card-epic,      .buff-epic,      .slot-epic,      .bag-epic      { --card-glow: #b57cf0; --card-edge: rgba(181, 124, 240, 0.45); --card-tint: rgba(181, 124, 240, 0.14); }
+.card-legendary, .buff-legendary, .slot-legendary, .bag-legendary { --card-glow: #f0883e; --card-edge: rgba(240, 136, 62, 0.55);  --card-tint: rgba(240, 136, 62, 0.18); }
 
 .buff {
-  color: var(--card-glow, var(--hud-fg));
+  color: var(--card-glow, var(--hud-text));
   border-color: var(--card-edge, transparent);
   background: var(--card-tint, rgba(255, 255, 255, 0.05));
 }
 
-@media (max-width: 720px) {
+@media (max-width: 760px) {
   .levelup-cards { grid-auto-flow: row; }
   .card { width: min(88vw, 320px); min-height: 0; }
+  .inventory-body { grid-template-columns: 1fr; }
+  .bag-grid { grid-template-columns: repeat(4, 1fr); }
+  #controls-hint { display: none; }
 }

@@ -1,42 +1,87 @@
-import type { StatKey, StatModifier } from '../types/index.ts';
+import type { Rarity, StatKey, StatModifier } from '../types/index.ts';
 
 export type TalentCategory = 'offensive' | 'defensive' | 'utility';
-export type TalentRarity = 'common' | 'rare' | 'epic' | 'legendary';
+
+/**
+ * Talents that grant an active ability rather than raw numbers.
+ * AbilitySystem drives one instance per owned id; stacks make it stronger.
+ */
+export type AbilityId = 'whirlwind-blades' | 'holy-lightning' | 'fire-trail';
 
 /**
  * One in-match rogue-lite upgrade.
  *
  * `perStack` is what a single pick contributes; a talent taken three times
- * contributes three times that. Everything here lands on the player's
- * StatSheet as an `inMatch` modifier group, so it flows through the same
- * pipeline as metagame talents and gear.
+ * contributes three times that. Everything here lands on the hero's StatSheet
+ * as an `inMatch` modifier group, so it flows through the same pipeline as
+ * equipment. A talent may additionally grant an `ability`, which the
+ * AbilitySystem picks up.
  */
 export interface TalentDefinition {
   readonly id: string;
   readonly name: string;
   readonly description: string;
   readonly category: TalentCategory;
-  readonly rarity: TalentRarity;
+  readonly rarity: Rarity;
   readonly maxStacks: number;
   readonly perStack: Partial<Record<StatKey, Partial<StatModifier>>>;
+  readonly ability?: AbilityId;
 }
 
 /** Draft weights per rarity, before the luck stat biases them. */
-export const RARITY_WEIGHTS: Readonly<Record<TalentRarity, number>> = {
+export const RARITY_WEIGHTS: Readonly<Record<Rarity, number>> = {
   common: 60,
-  rare: 27,
+  magic: 27,
   epic: 10,
   legendary: 3,
 };
 
-/** Ordering used for display and for luck biasing (rarest last). */
-export const RARITY_ORDER: readonly TalentRarity[] = ['common', 'rare', 'epic', 'legendary'];
-
 export const TALENT_POOL: readonly TalentDefinition[] = [
-  /* --- Offensive ------------------------------------------------------ */
+  /* --- Abilities ------------------------------------------------------ */
   {
-    id: 'sharp-edge',
-    name: 'Keskin Uç',
+    id: 'whirlwind-blades',
+    name: 'Kasırga Kılıçları',
+    description: 'Etrafında dönen hayalet kılıçlar değdiği düşmanı biçer.',
+    category: 'offensive',
+    rarity: 'epic',
+    maxStacks: 4,
+    perStack: {},
+    ability: 'whirlwind-blades',
+  },
+  {
+    id: 'holy-lightning',
+    name: 'Kutsal Şimşek',
+    description: 'Belirli aralıklarla en yakın düşmanın tepesine yıldırım düşer.',
+    category: 'offensive',
+    rarity: 'epic',
+    maxStacks: 4,
+    perStack: {},
+    ability: 'holy-lightning',
+  },
+  {
+    id: 'fire-trail',
+    name: 'Ateş İzi',
+    description: 'Yürüdüğün yerde düşmanları yakan alevler bırakırsın.',
+    category: 'offensive',
+    rarity: 'magic',
+    maxStacks: 4,
+    perStack: {},
+    ability: 'fire-trail',
+  },
+
+  /* --- Warrior discipline and other stat talents ---------------------- */
+  {
+    id: 'knight-discipline',
+    name: 'Şövalye Disiplini',
+    description: 'Zırh %20, maksimum can +50 artar.',
+    category: 'defensive',
+    rarity: 'magic',
+    maxStacks: 4,
+    perStack: { armor: { perc: 0.2 }, maxHealth: { flat: 50 } },
+  },
+  {
+    id: 'sharpened-steel',
+    name: 'Bilenmiş Çelik',
     description: 'Hasar %15 artar.',
     category: 'offensive',
     rarity: 'common',
@@ -44,42 +89,49 @@ export const TALENT_POOL: readonly TalentDefinition[] = [
     perStack: { damage: { perc: 0.15 } },
   },
   {
-    id: 'heavy-strike',
-    name: 'Ağır Vuruş',
-    description: 'Hasara +6 eklenir.',
+    id: 'swift-hands',
+    name: 'Hızlı Eller',
+    description: 'Saldırı hızı %12 artar.',
     category: 'offensive',
     rarity: 'common',
     maxStacks: 5,
-    perStack: { damage: { flat: 6 } },
+    perStack: { attackSpeed: { perc: 0.12 } },
   },
   {
-    id: 'critical-focus',
-    name: 'Kritik Odak',
+    id: 'long-reach',
+    name: 'Uzun Menzil',
+    description: 'Kılıç erimi +10 artar.',
+    category: 'offensive',
+    rarity: 'common',
+    maxStacks: 4,
+    perStack: { attackRange: { flat: 10 } },
+  },
+  {
+    id: 'assassins-eye',
+    name: 'Suikastçı Gözü',
     description: 'Kritik vuruş şansı %8 artar.',
     category: 'offensive',
-    rarity: 'rare',
+    rarity: 'magic',
     maxStacks: 4,
     perStack: { critChance: { flat: 0.08 } },
   },
   {
-    id: 'lethal-blow',
-    name: 'Ölümcül Darbe',
+    id: 'executioner',
+    name: 'Cellat',
     description: 'Kritik hasar çarpanı %25 artar.',
     category: 'offensive',
     rarity: 'epic',
     maxStacks: 3,
     perStack: { critMultiplier: { perc: 0.25 } },
   },
-
-  /* --- Defensive ------------------------------------------------------ */
   {
-    id: 'thick-hide',
-    name: 'Kalın Deri',
-    description: 'Zırha +25 eklenir.',
+    id: 'iron-hide',
+    name: 'Demir Post',
+    description: 'Zırha +30 eklenir.',
     category: 'defensive',
     rarity: 'common',
     maxStacks: 6,
-    perStack: { armor: { flat: 25 } },
+    perStack: { armor: { flat: 30 } },
   },
   {
     id: 'vitality',
@@ -91,65 +143,64 @@ export const TALENT_POOL: readonly TalentDefinition[] = [
     perStack: { maxHealth: { perc: 0.2 } },
   },
   {
-    id: 'regeneration',
-    name: 'Rejenerasyon',
+    id: 'second-wind',
+    name: 'İkinci Nefes',
     description: 'Saniyede +1.5 can yenilenir.',
     category: 'defensive',
-    rarity: 'rare',
+    rarity: 'magic',
     maxStacks: 4,
     perStack: { healthRegen: { flat: 1.5 } },
   },
   {
-    id: 'iron-will',
-    name: 'Demir İrade',
-    description: 'Zırh %40, maksimum can %10 artar.',
+    id: 'battle-trance',
+    name: 'Savaş Transı',
+    description: 'Mana yenilenmesi +5, maksimum mana +25 artar.',
     category: 'defensive',
-    rarity: 'epic',
-    maxStacks: 3,
-    perStack: { armor: { perc: 0.4 }, maxHealth: { perc: 0.1 } },
-  },
-
-  /* --- Utility -------------------------------------------------------- */
-  {
-    id: 'magnet',
-    name: 'Mıknatıs',
-    description: 'Toplama yarıçapı %25 artar.',
-    category: 'utility',
     rarity: 'common',
-    maxStacks: 5,
-    perStack: { magnetRadius: { perc: 0.25 } },
+    maxStacks: 4,
+    perStack: { manaRegen: { flat: 5 }, maxMana: { flat: 25 } },
   },
   {
-    id: 'agility',
-    name: 'Çeviklik',
+    id: 'fleet-foot',
+    name: 'Yeleli Ayak',
     description: 'Hareket hızı %10 artar.',
     category: 'utility',
     rarity: 'common',
     maxStacks: 5,
-    perStack: { baseSpeed: { perc: 0.1 } },
+    perStack: { moveSpeed: { perc: 0.1 } },
   },
   {
-    id: 'wisdom',
-    name: 'Bilgelik',
+    id: 'scavenger',
+    name: 'Çapulcu',
+    description: 'Toplama yarıçapı %30, altın kazancı %15 artar.',
+    category: 'utility',
+    rarity: 'common',
+    maxStacks: 4,
+    perStack: { pickupRadius: { perc: 0.3 }, goldGain: { perc: 0.15 } },
+  },
+  {
+    id: 'runic-focus',
+    name: 'Runik Odak',
+    description: 'Yetenek bekleme süreleri %10 kısalır.',
+    category: 'utility',
+    rarity: 'magic',
+    maxStacks: 4,
+    // Cooldown reduction has a base of 0, so it has to be granted flat.
+    perStack: { cooldownReduction: { flat: 0.1 } },
+  },
+  {
+    id: 'ancient-lore',
+    name: 'Kadim Bilgi',
     description: 'Kazanılan XP %20 artar.',
     category: 'utility',
-    rarity: 'rare',
+    rarity: 'magic',
     maxStacks: 4,
     perStack: { xpGain: { perc: 0.2 } },
   },
   {
-    id: 'gluttony',
-    name: 'Oburluk',
-    description: 'Toplanan kütle %25 artar.',
-    category: 'utility',
-    rarity: 'rare',
-    maxStacks: 4,
-    perStack: { massGain: { perc: 0.25 } },
-  },
-  {
-    id: 'fortune',
-    name: 'Şans Tılsımı',
-    description: 'Sonraki seçimlerde nadir yetenek şansı artar.',
+    id: 'gamblers-charm',
+    name: 'Kumarbaz Tılsımı',
+    description: 'Nadir yetenek ve eşya şansı artar.',
     category: 'utility',
     rarity: 'epic',
     maxStacks: 3,
@@ -158,26 +209,30 @@ export const TALENT_POOL: readonly TalentDefinition[] = [
 
   /* --- Legendary ------------------------------------------------------ */
   {
-    id: 'star-core',
-    name: 'Yıldız Çekirdeği',
-    description: 'Hasar %30, can %25 ve hız %12 artar.',
+    id: 'dragonheart',
+    name: 'Ejder Yüreği',
+    description: 'Hasar %30, can %25 ve hareket hızı %12 artar.',
     category: 'offensive',
     rarity: 'legendary',
     maxStacks: 2,
     perStack: {
       damage: { perc: 0.3 },
       maxHealth: { perc: 0.25 },
-      baseSpeed: { perc: 0.12 },
+      moveSpeed: { perc: 0.12 },
     },
   },
   {
-    id: 'black-hole',
-    name: 'Kara Delik',
-    description: 'Toplama yarıçapı %80, toplanan kütle %20 artar.',
-    category: 'utility',
+    id: 'avatar-of-war',
+    name: 'Savaş Tanrısı',
+    description: 'Saldırı hızı %25, kritik şansı %10, zırh %25 artar.',
+    category: 'offensive',
     rarity: 'legendary',
     maxStacks: 2,
-    perStack: { magnetRadius: { perc: 0.8 }, massGain: { perc: 0.2 } },
+    perStack: {
+      attackSpeed: { perc: 0.25 },
+      critChance: { flat: 0.1 },
+      armor: { perc: 0.25 },
+    },
   },
 ];
 

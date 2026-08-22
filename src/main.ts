@@ -7,13 +7,15 @@ import { Game } from './Game.ts';
 const canvas = document.getElementById('game-canvas') as HTMLCanvasElement | null;
 const hudRoot = document.getElementById('hud');
 const modalRoot = document.getElementById('levelup');
+const inventoryRoot = document.getElementById('inventory');
 if (!canvas) throw new Error('#game-canvas missing from the page');
 
 const game = new Game({
   canvas,
   hudRoot,
   modalRoot,
-  playerName: localStorage.getItem('playerName') ?? 'Player',
+  inventoryRoot,
+  playerName: localStorage.getItem('playerName') ?? 'Kahraman',
 });
 
 game.start();

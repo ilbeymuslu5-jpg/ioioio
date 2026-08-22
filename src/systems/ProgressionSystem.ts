@@ -8,17 +8,15 @@ import type { MatchContext } from '../core/MatchContext.ts';
 /**
  * In-match XP and levelling.
  *
- * Phase 1 awards levels and emits `player:levelup`; Phase 2 hangs the 3-card
- * talent draft off that same event without touching this file. A level-up also
- * re-resolves stats, because in-match level drives how much of the metagame
- * gear counts (the item-cliff barrier in StatSystem).
+ * XP arrives from LootSystem when a soul shard is picked up; this system only
+ * decides what a level costs and emits `player:levelup`, which the talent
+ * draft and the UI hang off without touching this file.
  */
 export class ProgressionSystem implements GameSystem<MatchContext> {
   readonly name = 'progression';
   private readonly world: World;
   private readonly config: ProgressionConfig;
   private readonly stats: StatSystem | null;
-  private unsubscribe: (() => void) | null = null;
 
   constructor({
     world,
@@ -38,14 +36,6 @@ export class ProgressionSystem implements GameSystem<MatchContext> {
     for (const player of this.world.getByType<Player>('player')) {
       if (player.xpToNext === 0) player.xpToNext = this.xpForLevel(player.level);
     }
-    this.unsubscribe = this.world.events.on('orb:collected', ({ collector, xp }) => {
-      this.grantXp(collector, xp);
-    });
-  }
-
-  detach(): void {
-    this.unsubscribe?.();
-    this.unsubscribe = null;
   }
 
   /** XP required to advance *from* `level` to the next one. */

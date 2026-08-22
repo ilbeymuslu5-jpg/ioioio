@@ -188,6 +188,15 @@ export class InputManager {
     return this.actions.has(action);
   }
 
+  /**
+   * Reads an action and clears it, for one-shot inputs.
+   * Holding the key down re-adds it only on the next keydown, so a dash costs
+   * one press rather than firing every tick the key is held.
+   */
+  consumeAction(action: InputAction): boolean {
+    return this.actions.delete(action);
+  }
+
   /** Clears transient state; called on blur and on respawn. */
   reset(): this {
     this.keys.clear();

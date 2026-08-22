@@ -6,31 +6,37 @@ import { PhysicsEngine } from './core/PhysicsEngine.ts';
 import { Camera } from './core/Camera.ts';
 import { InputManager } from './core/InputManager.ts';
 import { Player } from './entities/Player.ts';
+import { StatSystem } from './systems/StatSystem.ts';
+import { ItemFactory } from './systems/ItemFactory.ts';
+import { InventorySystem } from './systems/InventorySystem.ts';
+import { CombatSystem } from './systems/CombatSystem.ts';
+import { AbilitySystem } from './systems/AbilitySystem.ts';
+import { EnemyAISystem } from './systems/EnemyAISystem.ts';
+import { EnemySpawnSystem } from './systems/EnemySpawnSystem.ts';
+import { LootSystem } from './systems/LootSystem.ts';
 import { InputSystem } from './systems/InputSystem.ts';
 import { MovementSystem } from './systems/MovementSystem.ts';
-import { SpawnSystem } from './systems/SpawnSystem.ts';
-import { PickupSystem } from './systems/PickupSystem.ts';
 import { ProgressionSystem } from './systems/ProgressionSystem.ts';
-import { MassDecaySystem } from './systems/MassDecaySystem.ts';
-import { StatSystem } from './systems/StatSystem.ts';
 import { SkillTreeSystem } from './systems/SkillTreeSystem.ts';
 import { CameraSystem } from './systems/CameraSystem.ts';
 import { CanvasRenderer } from './render/CanvasRenderer.ts';
 import { HUD } from './ui/HUD.ts';
 import { LevelUpModal } from './ui/LevelUpModal.ts';
+import { InventoryUI } from './ui/InventoryUI.ts';
 import { createRng } from './utils/MathUtils.ts';
 import type { GameEventMap } from './core/GameEvents.ts';
 import type { MatchContext } from './core/MatchContext.ts';
-import type { Rng, Vec2 } from './types/index.ts';
+import type { GameConfigShape, Rng, Vec2 } from './types/index.ts';
 
 export interface GameOptions {
   canvas?: HTMLCanvasElement | null;
   hudRoot?: HTMLElement | null;
   modalRoot?: HTMLElement | null;
+  inventoryRoot?: HTMLElement | null;
   playerName?: string;
   seed?: number;
   headless?: boolean;
-  config?: typeof GameConfig;
+  config?: GameConfigShape;
   /**
    * Headless runs have no card screen, so level-up drafts would pile up
    * unresolved. Turning this on picks for them at random — what a balance
@@ -43,14 +49,14 @@ export interface GameOptions {
 /**
  * Composition root: wires the modules together and owns the system order.
  *
- * Nothing else crosses layer boundaries, so a later phase adds its system here
+ * Nothing else crosses layer boundaries, so a new feature adds its system here
  * without touching existing files.
  *
  * `headless: true` builds a simulation with no canvas, renderer or DOM input —
- * used by the tests and, later, by the authoritative server.
+ * used by the tests and, later, by an authoritative server.
  */
 export class Game {
-  readonly config: typeof GameConfig;
+  readonly config: GameConfigShape;
   readonly headless: boolean;
   readonly rng: Rng;
   readonly events: EventBus<GameEventMap>;
@@ -63,14 +69,19 @@ export class Game {
   readonly context: MatchContext;
 
   readonly statSystem: StatSystem;
-  readonly spawnSystem: SpawnSystem;
-  readonly pickupSystem: PickupSystem;
+  readonly itemFactory: ItemFactory;
+  readonly inventorySystem: InventorySystem;
+  readonly combatSystem: CombatSystem;
+  readonly abilitySystem: AbilitySystem;
+  readonly enemyAISystem: EnemyAISystem;
+  readonly enemySpawnSystem: EnemySpawnSystem;
+  readonly lootSystem: LootSystem;
   readonly progressionSystem: ProgressionSystem;
-  readonly massDecaySystem: MassDecaySystem;
   readonly skillTreeSystem: SkillTreeSystem;
   readonly renderer: CanvasRenderer | null = null;
   readonly hud: HUD | null = null;
   readonly levelUpModal: LevelUpModal | null = null;
+  readonly inventoryUI: InventoryUI | null = null;
 
   private onResize: (() => void) | null = null;
   private onVisibility: (() => void) | null = null;
@@ -79,7 +90,8 @@ export class Game {
     canvas = null,
     hudRoot = null,
     modalRoot = null,
-    playerName = 'Player',
+    inventoryRoot = null,
+    playerName = 'Kahraman',
     seed = Date.now(),
     headless = !canvas,
     config = GameConfig,
@@ -105,7 +117,7 @@ export class Game {
         x: this.world.bounds.width / 2,
         y: this.world.bounds.height / 2,
         name: playerName,
-        config: config.player,
+        config: config.hero,
       }),
     );
     this.camera.follow(this.player);
@@ -130,12 +142,36 @@ export class Game {
     };
     this.engine.setContext(this.context);
 
+    /* --- Systems, built before registration so they can reference each
+       other (combat needs items, loot needs inventory and progression). --- */
     this.statSystem = new StatSystem({
       carriers: () => this.world.getByType<Player>('player'),
       gearScaling: config.gearScaling,
     });
-    this.spawnSystem = new SpawnSystem({ world: this.world, rng: this.rng, config: config.orbs });
-    this.pickupSystem = new PickupSystem({ world: this.world, config: config.player });
+    this.itemFactory = new ItemFactory({ rng: this.rng });
+    this.inventorySystem = new InventorySystem({
+      world: this.world,
+      stats: this.statSystem,
+      config: config.inventory,
+    });
+    this.combatSystem = new CombatSystem({
+      world: this.world,
+      physics: this.physics,
+      items: this.itemFactory,
+      rng: this.rng,
+      config: config.hero,
+    });
+    this.abilitySystem = new AbilitySystem({
+      world: this.world,
+      combat: this.combatSystem,
+      config: config.abilities,
+    });
+    this.enemyAISystem = new EnemyAISystem({ world: this.world, config: config.combat });
+    this.enemySpawnSystem = new EnemySpawnSystem({
+      world: this.world,
+      rng: this.rng,
+      config: config.spawn,
+    });
     this.progressionSystem = new ProgressionSystem({
       world: this.world,
       config: config.progression,
@@ -146,14 +182,16 @@ export class Game {
       stats: this.statSystem,
       rng: this.rng,
     });
-    this.massDecaySystem = new MassDecaySystem({
+    this.lootSystem = new LootSystem({
       world: this.world,
-      config: config.massDecay,
-      startMass: config.player.startMass,
+      inventory: this.inventorySystem,
+      progression: this.progressionSystem,
+      config: config.loot,
     });
 
-    // Resolve stats once before any system runs, so the player starts complete.
+    // Resolve stats once before any system runs, so the hero starts complete.
     this.statSystem.recalculate(this.player);
+    this.player.health = this.player.maxHealth;
 
     if (autoPickTalents) {
       this.skillTreeSystem.setAutoPick((draft) => {
@@ -163,25 +201,42 @@ export class Game {
     }
 
     // Local input only exists when there is a viewport to steer with; headless
-    // runs (tests, bots, authoritative server) write `moveIntent` directly.
+    // runs drive the hero through `setMoveIntent` and `combatSystem.attack`.
     if (!headless) {
-      this.engine.addSystem(new InputSystem({ input: this.input, camera: this.camera }));
+      this.engine.addSystem(
+        new InputSystem({
+          input: this.input,
+          camera: this.camera,
+          combat: this.combatSystem,
+          world: this.world,
+        }),
+      );
     }
 
-    // The tick pipeline: intent -> motion -> pickups -> decay -> xp -> stats -> view.
+    /* The tick pipeline. Order matters:
+       AI steers, bodies move, then contacts and abilities resolve against the
+       positions they actually ended up in; loot and XP settle last. */
     this.engine
+      .addSystem(this.enemyAISystem)
       .addSystem(new MovementSystem({ world: this.world, physics: this.physics }))
-      .addSystem(this.pickupSystem)
-      .addSystem(this.spawnSystem)
-      .addSystem(this.massDecaySystem)
+      .addSystem(this.combatSystem)
+      .addSystem(this.abilitySystem)
+      .addSystem(this.enemySpawnSystem)
+      .addSystem(this.lootSystem)
       .addSystem(this.progressionSystem)
       .addSystem(this.skillTreeSystem)
       .addSystem(this.statSystem)
       .addSystem(new CameraSystem({ camera: this.camera }));
 
     if (!headless && canvas) {
-      this.renderer = new CanvasRenderer({ canvas, world: this.world, camera: this.camera });
+      this.renderer = new CanvasRenderer({
+        canvas,
+        world: this.world,
+        camera: this.camera,
+        abilities: this.abilitySystem,
+      });
       this.engine.addSystem(this.renderer);
+
       if (modalRoot) {
         this.levelUpModal = new LevelUpModal({
           root: modalRoot,
@@ -191,22 +246,27 @@ export class Game {
         });
         this.engine.addSystem(this.levelUpModal);
       }
+      if (inventoryRoot) {
+        this.inventoryUI = new InventoryUI({
+          root: inventoryRoot,
+          inventory: this.inventorySystem,
+          events: this.events,
+          engine: this.engine,
+          player: this.player,
+        });
+        this.engine.addSystem(this.inventoryUI);
+      }
       if (hudRoot) {
         this.hud = new HUD({
           root: hudRoot,
           world: this.world,
           camera: this.camera,
           progression: this.progressionSystem,
-          decay: this.massDecaySystem,
           skillTree: this.skillTreeSystem,
         });
         this.engine.addSystem(this.hud);
         const hud = this.hud;
-        this.events.on('player:levelup', ({ player }) => {
-          hud.setGearEffectiveness(this.statSystem.gearEffectiveness(player.level));
-        });
         this.events.on('talent:chosen', ({ player }) => hud.updateBuffs(player));
-        hud.setGearEffectiveness(this.statSystem.gearEffectiveness(this.player.level));
         hud.updateBuffs(this.player);
       }
       this.bindWindow();
@@ -231,10 +291,21 @@ export class Game {
     return this;
   }
 
-  /** Steers the local player directly; the headless equivalent of input. */
+  /** Steers the hero directly; the headless equivalent of input. */
   setMoveIntent(x: number, y: number): this {
     this.player.setMoveIntent({ x, y } satisfies Vec2);
     return this;
+  }
+
+  /** Points the hero at a world position; the headless equivalent of the mouse. */
+  aimAt(x: number, y: number): this {
+    this.player.aimAt(x, y);
+    return this;
+  }
+
+  /** Swings the sword, if the cooldown allows. */
+  attack(): boolean {
+    return this.combatSystem.attack(this.player).length >= 0 && this.player.isSwinging;
   }
 
   /** Advances the simulation by `seconds` with no render loop (tests/server). */

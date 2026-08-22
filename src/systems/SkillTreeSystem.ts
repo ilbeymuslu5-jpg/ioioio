@@ -1,6 +1,7 @@
-import { TALENT_POOL, RARITY_ORDER, RARITY_WEIGHTS } from '../config/TalentPool.ts';
-import type { TalentDefinition, TalentRarity } from '../config/TalentPool.ts';
-import type { GameSystem, Rng, StatKey, StatModifier } from '../types/index.ts';
+import { TALENT_POOL, RARITY_WEIGHTS } from '../config/TalentPool.ts';
+import type { TalentDefinition } from '../config/TalentPool.ts';
+import { RARITY_ORDER } from '../types/index.ts';
+import type { GameSystem, Rarity, Rng, StatKey, StatModifier } from '../types/index.ts';
 import type { World } from '../core/World.ts';
 import type { Player } from '../entities/Player.ts';
 import type { StatSystem } from './StatSystem.ts';
@@ -119,7 +120,7 @@ export class SkillTreeSystem implements GameSystem<MatchContext> {
    * the rarer tiers — the metagame "Luck" node plugs in here by raising the
    * player's `luck` stat.
    */
-  weightFor(rarity: TalentRarity, luck: number): number {
+  weightFor(rarity: Rarity, luck: number): number {
     const step = RARITY_ORDER.indexOf(rarity);
     const base = RARITY_WEIGHTS[rarity];
     return base * (1 + Math.max(0, luck) * this.luckWeightPerStep * step);

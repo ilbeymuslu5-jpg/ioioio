@@ -4,6 +4,7 @@ import { GameEngine } from '../src/core/GameEngine.ts';
 import { EventBus } from '../src/core/EventBus.ts';
 import { Camera } from '../src/core/Camera.ts';
 import { Entity } from '../src/entities/Entity.ts';
+import { GameConfig } from '../src/config/GameConfig.ts';
 import type { GameSystem } from '../src/types/index.ts';
 
 function headlessEngine(options: { maxTicksPerFrame?: number } = {}): GameEngine<null> {
@@ -91,8 +92,17 @@ test('camera damping converges on the target and clamps to the arena', () => {
   assert.ok(camera.x <= 2000 - halfW + 1e-6, 'never shows outside the arena');
 });
 
-test('camera zooms out as the followed body grows', () => {
+test('zoom is constant, because the hero is a fixed-size body', () => {
   const camera = new Camera({ viewportWidth: 800, viewportHeight: 600 });
+  assert.equal(camera.zoomForRadius(17), camera.zoomForRadius(170));
+});
+
+test('the camera still supports size-driven zoom when a mode asks for it', () => {
+  const camera = new Camera({
+    viewportWidth: 800,
+    viewportHeight: 600,
+    config: { ...GameConfig.camera, zoomMassExponent: 0.4 },
+  });
   const small = camera.zoomForRadius(18);
   const large = camera.zoomForRadius(180);
   assert.ok(large < small);

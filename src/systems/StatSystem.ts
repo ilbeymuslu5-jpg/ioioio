@@ -4,15 +4,20 @@ import type { GameSystem, GearScalingConfig, PartialStatBlock, Rng, StatBlock, S
 
 export const STAT_KEYS: readonly StatKey[] = [
   'maxHealth',
+  'healthRegen',
+  'maxMana',
+  'manaRegen',
   'armor',
-  'baseSpeed',
-  'magnetRadius',
-  'massGain',
-  'xpGain',
   'damage',
+  'attackSpeed',
+  'attackRange',
   'critChance',
   'critMultiplier',
-  'healthRegen',
+  'moveSpeed',
+  'pickupRadius',
+  'cooldownReduction',
+  'xpGain',
+  'goldGain',
   'luck',
 ];
 
@@ -30,15 +35,20 @@ function emptyModifier(): StatModifier {
 function zeroBlock(): StatBlock {
   return {
     maxHealth: 0,
+    healthRegen: 0,
+    maxMana: 0,
+    manaRegen: 0,
     armor: 0,
-    baseSpeed: 0,
-    magnetRadius: 0,
-    massGain: 0,
-    xpGain: 0,
     damage: 0,
+    attackSpeed: 0,
+    attackRange: 0,
     critChance: 0,
     critMultiplier: 0,
-    healthRegen: 0,
+    moveSpeed: 0,
+    pickupRadius: 0,
+    cooldownReduction: 0,
+    xpGain: 0,
+    goldGain: 0,
     luck: 0,
   };
 }
@@ -218,13 +228,27 @@ export class StatSystem<TContext = unknown> implements GameSystem<TContext> {
     return { amount: StatSystem.damageAfterArmor(raw, targetArmor), crit };
   }
 
+  /** Health and mana regeneration, the one place resources trickle back. */
   update(dt: number): void {
     for (const carrier of this.carriers()) {
-      const regen = carrier.stats.resolved.healthRegen;
-      if (regen <= 0) continue;
-      const body = carrier as unknown as { health: number; maxHealth: number; alive: boolean };
-      if (!body.alive || body.health >= body.maxHealth) continue;
-      body.health = Math.min(body.maxHealth, body.health + regen * dt);
+      const body = carrier as unknown as {
+        health: number;
+        maxHealth: number;
+        mana?: number;
+        maxMana?: number;
+        alive: boolean;
+      };
+      if (!body.alive) continue;
+
+      const healthRegen = carrier.stats.resolved.healthRegen;
+      if (healthRegen > 0 && body.health < body.maxHealth) {
+        body.health = Math.min(body.maxHealth, body.health + healthRegen * dt);
+      }
+
+      const manaRegen = carrier.stats.resolved.manaRegen;
+      if (manaRegen > 0 && body.mana !== undefined && body.maxMana !== undefined) {
+        body.mana = Math.min(body.maxMana, body.mana + manaRegen * dt);
+      }
     }
   }
 }

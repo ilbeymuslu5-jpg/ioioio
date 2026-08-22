@@ -2,80 +2,104 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { Game } from '../src/Game.ts';
 import { GameConfig } from '../src/config/GameConfig.ts';
-import { PhysicsEngine } from '../src/core/PhysicsEngine.ts';
-import { Player } from '../src/entities/Player.ts';
+import { EnemyMob } from '../src/entities/EnemyMob.ts';
+import { ENEMY_TYPES } from '../src/config/EnemyTypes.ts';
+import type { EnemyType } from '../src/config/EnemyTypes.ts';
+import type { Player } from '../src/entities/Player.ts';
 
-test('a headless match boots with a full orb field and a centred player', () => {
+const GOBLIN = ENEMY_TYPES[0] as EnemyType;
+
+/** Drives the hero like a cautious player: kite the nearest mob and swing. */
+function fight(game: Game, seconds: number): void {
+  const hero = game.player;
+  for (let i = 0; i < seconds * 60; i++) {
+    if (!hero.alive) return;
+    const target = game.abilitySystem.nearestEnemy(hero, 700);
+    if (target) {
+      const dx = hero.position.x - target.position.x;
+      const dy = hero.position.y - target.position.y;
+      const distance = Math.hypot(dx, dy) || 1;
+      game.aimAt(target.position.x, target.position.y);
+      game.setMoveIntent(distance < 90 ? dx / distance : -dx / distance, distance < 90 ? dy / distance : -dy / distance);
+      game.combatSystem.attack(hero);
+    } else {
+      game.setMoveIntent(0, 0);
+    }
+    game.engine.step();
+  }
+}
+
+test('a headless match boots with a hero and an opening enemy wave', () => {
   const game = new Game({ headless: true, seed: 1 });
-  assert.equal(game.world.countOfType('orb'), GameConfig.orbs.targetCount);
+  assert.ok(game.world.countOfType('enemy') > 0);
+  assert.equal(game.world.countOfType('loot'), 0, 'nothing has died yet');
   assert.equal(game.player.position.x, GameConfig.arena.width / 2);
   assert.equal(game.camera.target, game.player);
   assert.equal(game.world.grid.size, game.world.size);
 });
 
-test('the player boots with stats already resolved', () => {
-  const game = new Game({ headless: true, seed: 1 });
-  const player = game.player;
-  assert.equal(player.maxSpeed, GameConfig.player.baseSpeed / Math.pow(player.mass, GameConfig.player.speedMassExponent));
-  assert.equal(player.maxHealth, GameConfig.player.baseMaxHealth);
-  assert.ok(player.magnetRadius > 0);
+test('the hero boots as a fully resolved warrior', () => {
+  const hero = new Game({ headless: true, seed: 1 }).player;
+  assert.equal(hero.radius, GameConfig.hero.radius);
+  assert.equal(hero.maxSpeed, GameConfig.hero.baseMoveSpeed);
+  assert.equal(hero.health, hero.maxHealth);
+  assert.equal(hero.mana, hero.maxMana);
+  assert.ok(hero.attackRange > 0);
 });
 
-test('the player moves, collects and levels up over a simulated run', () => {
-  const game = new Game({ headless: true, seed: 99 });
-  const start = { ...game.player.position };
+test('a fought match yields kills, loot, levels and gold', () => {
+  const game = new Game({ headless: true, seed: 99, autoPickTalents: true });
+  fight(game, 45);
 
-  game.setMoveIntent(1, 0.4);
-  game.simulate(10);
-
-  const player = game.player;
-  assert.ok(player.position.x > start.x, 'travelled along the input vector');
-  assert.ok(player.orbsCollected > 0, 'swept up orbs on the way');
-  assert.ok(player.mass > GameConfig.player.startMass, 'gained mass');
-  assert.ok(player.level > 1, 'gained levels');
-  assert.equal(
-    game.world.countOfType('orb'),
-    GameConfig.orbs.targetCount,
-    'the field is kept stocked',
-  );
+  const hero = game.player;
+  assert.ok(hero.kills > 0, 'killed something');
+  assert.ok(hero.level > 1, 'gained levels');
+  assert.ok(hero.gold > 0, 'picked up gold');
+  assert.ok(hero.talents.size > 0, 'picked talents');
+  assert.equal(game.skillTreeSystem.pendingCount, 0, 'no draft left hanging');
 });
 
-test('gear effectiveness climbs as the match level rises', () => {
-  const game = new Game({ headless: true, seed: 21 });
-  const atStart = game.statSystem.gearEffectiveness(game.player.level);
-  game.setMoveIntent(1, 0.4);
-  game.simulate(20);
-  const later = game.statSystem.gearEffectiveness(game.player.level);
-  assert.equal(atStart, GameConfig.gearScaling.startEffectiveness);
-  assert.ok(later > atStart, 'levelling brings the metagame gear online');
+test('the hero finds and wears equipment over a long run', () => {
+  const game = new Game({ headless: true, seed: 5, autoPickTalents: true });
+  let found = 0;
+  game.events.on('item:found', () => found++);
+  fight(game, 90);
+
+  assert.ok(found > 0, 'chests dropped');
+  const worn = game.inventorySystem.equippedItems(game.player).filter((entry) => entry.item);
+  assert.ok(worn.length > 0, 'and something got worn');
+  // Worn gear is the `gear` layer of the sheet, one group per filled slot.
+  assert.equal(game.player.stats.groupCount, worn.length + game.player.talents.size);
 });
 
-test('the snowball barrier bleeds mass off a heavy player', () => {
-  const game = new Game({ headless: true, seed: 4 });
-  game.player.mass = 600;
-  game.player.recalculateDerived();
-  game.simulate(5);
-  assert.ok(game.player.massDecayed > 0, 'heavy players pay upkeep');
-  assert.ok(game.player.mass < 600 + 5 * 60, 'decay is actually applied in the loop');
+test('difficulty ramps: the hero eventually falls to the swarm', () => {
+  const game = new Game({ headless: true, seed: 3, autoPickTalents: true });
+  let died = 0;
+  game.events.on('hero:died', () => died++);
+  fight(game, 240);
+
+  assert.equal(game.player.alive, false, 'the run ends');
+  assert.equal(died, 1);
+  assert.ok(game.player.kills > 30, 'but not before a real fight');
 });
 
 test('the simulation is deterministic for a given seed', () => {
   const run = () => {
-    const game = new Game({ headless: true, seed: 2024 });
-    game.setMoveIntent(0.6, -0.8);
-    game.simulate(6);
+    const game = new Game({ headless: true, seed: 2024, autoPickTalents: true });
+    fight(game, 20);
     return {
-      x: game.player.position.x,
-      y: game.player.position.y,
-      mass: game.player.mass,
+      x: Math.round(game.player.position.x),
+      y: Math.round(game.player.position.y),
+      kills: game.player.kills,
       level: game.player.level,
-      orbs: game.player.orbsCollected,
+      gold: game.player.gold,
+      talents: [...game.player.talents.entries()].sort(),
     };
   };
   assert.deepEqual(run(), run());
 });
 
-test('the player can never leave the arena', () => {
+test('the hero can never leave the arena', () => {
   const game = new Game({ headless: true, seed: 5 });
   game.setMoveIntent(-1, -1);
   game.simulate(30);
@@ -90,91 +114,75 @@ test('the player can never leave the arena', () => {
 });
 
 test('the spatial index stays consistent with the entity registry', () => {
-  const game = new Game({ headless: true, seed: 11 });
-  game.setMoveIntent(1, 1);
-  game.simulate(15);
+  const game = new Game({ headless: true, seed: 11, autoPickTalents: true });
+  fight(game, 25);
 
   assert.equal(game.world.grid.size, game.world.size);
   for (const entity of game.world.entities.values()) {
     assert.ok(entity._gridBounds, `${entity.id} is indexed`);
-    const found = game.world.grid.queryCircle(
-      entity.position.x,
-      entity.position.y,
-      entity.radius,
-    );
+    const found = game.world.grid.queryCircle(entity.position.x, entity.position.y, entity.radius);
     assert.ok(found.includes(entity), `${entity.id} is findable at its position`);
   }
 });
 
-test('two players are pushed apart instead of overlapping', () => {
-  const game = new Game({ headless: true, seed: 3 });
-  const rival = game.world.add(
-    new Player({
-      x: game.player.position.x + 4,
-      y: game.player.position.y,
-      name: 'Rival',
-    }),
-  );
+test('enemies are pushed apart rather than stacking on one point', () => {
+  const game = new Game({ headless: true, seed: 8 });
+  const hero = game.player;
+  for (let i = 0; i < 6; i++) {
+    const enemy = game.world.add(
+      new EnemyMob({ x: hero.position.x + 200 + i, y: hero.position.y, type: GOBLIN }),
+    );
+    enemy.hunting = true;
+  }
+  game.simulate(2);
 
-  game.simulate(0.5);
-  assert.ok(
-    PhysicsEngine.overlapDepth(game.player, rival) < 1,
-    'bodies separate through the collision pipeline',
-  );
+  const mobs = [...game.world.getByType<EnemyMob>('enemy')];
+  for (let i = 0; i < mobs.length; i++) {
+    for (let j = i + 1; j < mobs.length; j++) {
+      const a = mobs[i]!;
+      const b = mobs[j]!;
+      const distance = Math.hypot(a.position.x - b.position.x, a.position.y - b.position.y);
+      assert.ok(distance > 1, 'no two mobs occupy the same point');
+    }
+  }
 });
 
-test('the camera trails the player and stays inside the arena', () => {
+test('the enemy population is capped no matter how long the run goes', () => {
+  const game = new Game({ headless: true, seed: 21, autoPickTalents: true });
+  game.player.level = 50;
+  game.simulate(120);
+  assert.ok(game.world.countOfType('enemy') <= GameConfig.spawn.maxEnemies);
+});
+
+test('the camera trails the hero and stays inside the arena', () => {
   const game = new Game({ headless: true, seed: 8 });
   game.camera.resize(1280, 720);
   game.setMoveIntent(1, 0);
   game.simulate(5);
 
   const dx = Math.abs(game.camera.x - game.player.position.x);
-  assert.ok(dx < 400, `camera keeps up with the player (off by ${dx.toFixed(1)})`);
+  assert.ok(dx < 400, `camera keeps up with the hero (off by ${dx.toFixed(1)})`);
   const view = game.camera.getVisibleBounds();
   assert.ok(view.minX >= -1e-6 && view.maxX <= GameConfig.arena.width + 1e-6);
 });
 
-test('a match runs a realistic tick load without unbounded growth', () => {
-  const game = new Game({ headless: true, seed: 77 });
-  game.setMoveIntent(0.8, 0.6);
-  game.simulate(30);
-  // Orb count is capped by the spawner, so entity count must stay flat.
-  assert.equal(game.world.size, GameConfig.orbs.targetCount + 1);
-  assert.equal(game.engine.tick, 30 * GameConfig.engine.tickRate);
-});
+test('a dash costs mana, grants immunity and then goes on cooldown', () => {
+  const game = new Game({ headless: true, seed: 4 });
+  const hero: Player = game.player;
+  hero.setMoveIntent({ x: 1, y: 0 });
 
-test('a headless run with auto-picked talents levels and grows stronger', () => {
-  const game = new Game({ headless: true, seed: 55, autoPickTalents: true });
-  const baseSpeed = game.player.stats.base.baseSpeed;
+  const mana = hero.mana;
+  hero.dashTimer = hero.config.dashDuration;
+  hero.dashCooldown = hero.config.dashCooldown;
+  hero.grantInvulnerability(hero.config.dashInvulnerability);
+  hero.spendMana(hero.config.dashManaCost);
 
-  game.setMoveIntent(1, 0.4);
-  game.simulate(25);
+  assert.ok(hero.mana < mana);
+  assert.equal(hero.isDashing, true);
+  assert.equal(hero.isInvulnerable, true);
+  assert.equal(hero.canDash, false, 'cannot chain dashes');
 
-  const player = game.player;
-  assert.ok(player.level > 1);
-  assert.equal(game.skillTreeSystem.pendingCount, 0, 'no draft is left hanging');
-  assert.equal(player.talents.size > 0, true);
-
-  // Every pick is an inMatch modifier group on the sheet.
-  assert.equal(player.stats.groupCount, player.talents.size);
-  assert.ok(player.stats.resolved.baseSpeed >= baseSpeed);
-});
-
-test('level-up drafts queue up when nothing resolves them', () => {
-  const game = new Game({ headless: true, seed: 56 });
-  game.setMoveIntent(1, 0.4);
-  game.simulate(15);
-  assert.equal(game.skillTreeSystem.pendingCount, game.player.level - 1);
-  assert.equal(game.player.talents.size, 0, 'unresolved drafts grant nothing');
-});
-
-test('talent picks stay deterministic for a seed', () => {
-  const run = () => {
-    const game = new Game({ headless: true, seed: 1234, autoPickTalents: true });
-    game.setMoveIntent(0.5, 0.9);
-    game.simulate(20);
-    return [...game.player.talents.entries()].sort();
-  };
-  assert.deepEqual(run(), run());
+  game.simulate(hero.config.dashCooldown + 0.1);
+  assert.equal(hero.isDashing, false);
+  assert.ok(hero.mana > 0, 'mana regenerates');
 });
