@@ -30,11 +30,11 @@ def test_update_price_and_stock_rejects_too_many():
         products.update_price_and_stock(_client(), items=[{"barcode": "x"}] * 1001)
 
 
-def test_update_price_and_stock_posts_items():
+def test_update_price_and_stock_puts_items():
     client = _client()
     items = [{"barcode": "ABC123", "quantity": 5, "salePrice": 99.9}]
     products.update_price_and_stock(client, items=items)
-    client.post.assert_called_once_with(
+    client.put.assert_called_once_with(
         "/integration/product/sellers/12345/products/price-and-inventory",
         json={"items": items},
     )

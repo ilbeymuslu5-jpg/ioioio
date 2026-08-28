@@ -28,7 +28,7 @@ def update_price_and_stock(client: TrendyolClient, items: list[dict]) -> dict:
     if len(items) > 1000:
         raise ValueError("Tek istekte en fazla 1000 barkod guncellenebilir")
     path = endpoints.PRICE_AND_INVENTORY_UPDATE.format(supplier_id=client.config.supplier_id)
-    return client.post(path, json={"items": items})
+    return client.put(path, json={"items": items})
 
 
 def get_batch_request_result(client: TrendyolClient, batch_id: str) -> dict:

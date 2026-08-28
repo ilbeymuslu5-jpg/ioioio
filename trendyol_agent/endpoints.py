@@ -10,7 +10,7 @@
 PRODUCTS_LIST = "/integration/product/sellers/{supplier_id}/products"  # GET
 PRODUCTS_CREATE = "/integration/product/sellers/{supplier_id}/v2/products"  # POST
 PRODUCTS_UPDATE = "/integration/product/sellers/{supplier_id}/v2/products"  # PUT - DOGRULA
-PRICE_AND_INVENTORY_UPDATE = "/integration/product/sellers/{supplier_id}/products/price-and-inventory"  # POST/PUT
+PRICE_AND_INVENTORY_UPDATE = "/integration/product/sellers/{supplier_id}/products/price-and-inventory"  # PUT
 
 BATCH_REQUEST_RESULT = "/integration/product/sellers/{supplier_id}/products/batch-requests/{batch_id}"  # GET
 
