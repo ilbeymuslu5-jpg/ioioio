@@ -35,6 +35,6 @@ def test_update_price_and_stock_puts_items():
     items = [{"barcode": "ABC123", "quantity": 5, "salePrice": 99.9}]
     products.update_price_and_stock(client, items=items)
     client.put.assert_called_once_with(
-        "/integration/product/sellers/12345/products/price-and-inventory",
+        "/integration/inventory/sellers/12345/products/price-and-inventory",
         json={"items": items},
     )
