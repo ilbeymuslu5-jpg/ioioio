@@ -88,6 +88,25 @@ bağımlı olmamalıdır. Dış bağımlılıklar `Plugins/` altında ve bir ara
   yalnızca `IPlayerInputProvider` uygulayan yeni bir sınıf yazmak yeterlidir.
 - Şerit engel kontrolü tek `Physics.CheckCapsule` çağrısıyla yapılır.
 
+## Oynanabilir Web Prototipi
+
+`WebPrototype/index.html` — Unity'deki tasarımın **tarayıcıda oynanabilir** karşılığı.
+Tek dosya, harici bağımlılık yok (kendi yazdığımız minik 3B projeksiyon katmanı ile
+Canvas 2D üzerine çizilir), mobil dokunmatik kontrollerle çalışır.
+
+Prototipte doğrulanan mekanikler:
+- Üç siper hattı arasında eğri ile yumuşatılmış şerit geçişi, engel kontrolü ve bekleme süresi
+- Yürüme / koşma / sürünme; sürünürken kum torbası arkasında gizlenme
+- Can, vücut ısısı ve gaz filtresi — tick tabanlı, `SurvivalStatsManager` ile aynı formüller
+- Gündüz/gece döngüsü; geceleri devriye çıkar, ısı iki katı hızla düşer
+- Rastgele olaylar: topçu ateşi (yere yatınca hasar azalır), gaz saldırısı (bir şerit
+  daima temiz kalır), siper baskını
+- Sargı bezi / konserve / yedek filtre toplama, ateş başında ısınma, çamurda yavaşlama
+- Üç dakika dayanınca kurtarma ekibi gelir
+
+Kontroller — klavye: `A`/`D` yürü, `Shift` koş, `W`/`S` şerit değiştir, `Ctrl` sürün.
+Dokunmatik: sol yarı sanal joystick, sağ yarı yukarı/aşağı kaydırma ile şerit, `SÜRÜN` tuşu.
+
 ## Sıradaki Adımlar
 - `Environment/`: `DayNightCycle`, `GasZone`, `MudZone`, `HeatSource` tetikleyicileri
   (hepsi `SurvivalStatsManager` üzerindeki Enter/Exit metotlarını çağırır).

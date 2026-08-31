@@ -1,0 +1,1614 @@
+<title>Siper Hattı 1916</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@400;600&family=Barlow:wght@400;600&family=Special+Elite&display=swap">
+<style>
+  /* Tek gorsel dunya: cephe. Tema anahtari yok; her renk acikca boyanir. */
+  :root {
+    --mud-deep: #16130f;
+    --bone:     #ded6c4;
+    --bone-dim: #9a917f;
+    --gas:      #b3bd44;
+    --blood:    #a03a2c;
+    --flare:    #dd9a34;
+    --line:     rgba(222, 214, 196, 0.22);
+    --panel:    rgba(18, 15, 12, 0.72);
+  }
+
+  * { box-sizing: border-box; }
+
+  body {
+    margin: 0;
+    background: var(--mud-deep);
+    color: var(--bone);
+    font-family: "Barlow", system-ui, -apple-system, sans-serif;
+    overflow: hidden;
+    -webkit-user-select: none;
+    user-select: none;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  #stage { position: fixed; inset: 0; touch-action: none; overflow: hidden; }
+  canvas { display: block; width: 100%; height: 100%; }
+
+  /* --- Atmosfer katmanlari --- */
+  .veil { position: fixed; inset: 0; pointer-events: none; }
+  #vignette { box-shadow: inset 0 0 170px 24px rgba(0, 0, 0, 0.5); }
+
+  #gasVeil {
+    background: radial-gradient(120% 90% at 50% 60%, rgba(179, 189, 68, 0.40), rgba(112, 122, 38, 0.66));
+    opacity: 0;
+    transition: opacity 0.6s linear;
+    mix-blend-mode: multiply;
+  }
+
+  #hurtVeil {
+    background: radial-gradient(120% 100% at 50% 50%, rgba(160, 58, 44, 0) 32%, rgba(160, 58, 44, 0.85));
+    opacity: 0;
+    transition: opacity 0.3s ease-out;
+  }
+
+  /* --- HUD --- */
+  .hud {
+    position: fixed;
+    pointer-events: none;
+    font-family: "Barlow Condensed", "Barlow", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+  }
+
+  #status {
+    top: 14px; left: 14px;
+    padding: 12px 14px 13px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-left: 3px solid var(--flare);
+    min-width: 206px;
+  }
+
+  #status h1 {
+    margin: 0 0 10px;
+    font-family: "Special Elite", "Barlow Condensed", serif;
+    font-size: 13px;
+    font-weight: 400;
+    letter-spacing: 0.16em;
+    color: var(--bone-dim);
+  }
+
+  .meter { margin-bottom: 9px; }
+  .meter:last-child { margin-bottom: 0; }
+
+  .meter-top {
+    display: flex;
+    justify-content: space-between;
+    align-items: baseline;
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .meter-top b { font-weight: 600; font-variant-numeric: tabular-nums; letter-spacing: 0.04em; }
+
+  /* Segmentli bar: erzak karnesi hissi, yumusak dolgu degil. */
+  .ticks { display: flex; gap: 2px; }
+
+  .ticks i {
+    display: block;
+    width: 8px;
+    height: 10px;
+    background: rgba(222, 214, 196, 0.13);
+    transition: background 0.12s linear;
+  }
+
+  #hpBar  i.on { background: var(--blood); }
+  #enBar  i.on { background: var(--flare); }
+  #filBar i.on { background: var(--gas); }
+  #hpBar  i.on.warn { animation: pulse 0.8s steps(2, end) infinite; }
+
+  @keyframes pulse { 50% { background: rgba(160, 58, 44, 0.22); } }
+
+  #clock {
+    top: 14px; right: 14px;
+    padding: 11px 14px 12px;
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-right: 3px solid var(--gas);
+    text-align: right;
+  }
+
+  #clock span { display: block; font-size: 11px; color: var(--bone-dim); }
+
+  #clock strong {
+    display: block;
+    font-size: 30px;
+    line-height: 1.05;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+  }
+
+  #phase { margin-top: 6px; font-size: 12px; color: var(--flare); }
+
+  #banner {
+    top: 94px; left: 50%;
+    transform: translateX(-50%);
+    font-family: "Special Elite", serif;
+    font-size: clamp(15px, 4.2vw, 22px);
+    letter-spacing: 0.2em;
+    color: var(--gas);
+    text-shadow: 0 2px 12px rgba(0, 0, 0, 0.95);
+    opacity: 0;
+    transition: opacity 0.25s ease-out;
+    white-space: nowrap;
+  }
+
+  #banner.show { opacity: 1; }
+
+  #tags {
+    bottom: 16px; left: 50%;
+    transform: translateX(-50%);
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    justify-content: center;
+    max-width: 92vw;
+  }
+
+  .tag {
+    font-size: 11px;
+    padding: 4px 9px;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--bone-dim);
+  }
+
+  .tag.hot  { color: var(--flare); border-color: rgba(221, 154, 52, 0.55); }
+  .tag.bad  { color: var(--gas);   border-color: rgba(179, 189, 68, 0.55); }
+  .tag.hurt { color: var(--blood); border-color: rgba(160, 58, 44, 0.6); }
+
+  #hint {
+    bottom: 16px; left: 14px;
+    font-size: 11px;
+    color: var(--bone-dim);
+    line-height: 1.8;
+    max-width: 26ch;
+  }
+
+  #hint kbd {
+    font-family: "Barlow Condensed", sans-serif;
+    border: 1px solid var(--line);
+    padding: 0 4px;
+    color: var(--bone);
+  }
+
+  body.touch #hint { display: none; }
+
+  /* --- Dokunmatik kontroller --- */
+  #stick {
+    position: fixed;
+    width: 116px; height: 116px;
+    border: 1px solid var(--line);
+    border-radius: 50%;
+    pointer-events: none;
+    opacity: 0;
+    transition: opacity 0.15s linear;
+    transform: translate(-50%, -50%);
+  }
+
+  #stick.on { opacity: 0.7; }
+
+  #stick .knob {
+    position: absolute;
+    left: 50%; top: 50%;
+    width: 44px; height: 44px;
+    margin: -22px 0 0 -22px;
+    border-radius: 50%;
+    background: rgba(222, 214, 196, 0.28);
+  }
+
+  #crawlBtn {
+    position: fixed;
+    right: 18px; bottom: 76px;
+    width: 92px; height: 92px;
+    border-radius: 50%;
+    border: 1px solid var(--line);
+    background: var(--panel);
+    color: var(--bone);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 15px;
+    letter-spacing: 0.12em;
+    text-transform: uppercase;
+    display: none;
+    align-items: center;
+    justify-content: center;
+    touch-action: none;
+  }
+
+  #crawlBtn.active { background: rgba(221, 154, 52, 0.35); color: #fff; }
+  body.touch #crawlBtn { display: flex; }
+
+  /* --- Kart ekranlari --- */
+  #overlay {
+    position: fixed;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 20px;
+    background: rgba(10, 8, 6, 0.88);
+  }
+
+  #overlay.hidden { display: none; }
+
+  .card {
+    width: min(560px, 100%);
+    max-height: 92vh;
+    overflow-y: auto;
+    background: #1c1813;
+    border: 1px solid var(--line);
+    padding: 28px 30px 26px;
+    box-shadow: 0 24px 60px rgba(0, 0, 0, 0.65);
+  }
+
+  .stamp {
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 11px;
+    letter-spacing: 0.3em;
+    text-transform: uppercase;
+    color: var(--gas);
+    margin-bottom: 10px;
+  }
+
+  .card h2 {
+    font-family: "Special Elite", serif;
+    font-weight: 400;
+    font-size: clamp(27px, 6vw, 38px);
+    line-height: 1.12;
+    margin: 0 0 6px;
+    text-wrap: balance;
+  }
+
+  .card .sub {
+    font-family: "Barlow Condensed", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.14em;
+    font-size: 13px;
+    color: var(--bone-dim);
+    margin: 0 0 18px;
+    padding-bottom: 16px;
+    border-bottom: 1px solid var(--line);
+  }
+
+  .card p { margin: 0 0 14px; font-size: 15px; line-height: 1.6; max-width: 62ch; }
+  .card b { color: var(--bone); }
+
+  .keys {
+    display: grid;
+    grid-template-columns: auto 1fr;
+    gap: 7px 16px;
+    font-size: 14px;
+    margin: 0 0 20px;
+    padding: 15px 0 0;
+    border-top: 1px solid var(--line);
+  }
+
+  .keys dt {
+    font-family: "Barlow Condensed", sans-serif;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--flare);
+  }
+
+  .keys dd { margin: 0; color: var(--bone-dim); }
+
+  .btn {
+    appearance: none;
+    border: 1px solid var(--flare);
+    background: transparent;
+    color: var(--flare);
+    font-family: "Barlow Condensed", sans-serif;
+    font-size: 17px;
+    letter-spacing: 0.18em;
+    text-transform: uppercase;
+    padding: 13px 30px;
+    cursor: pointer;
+    transition: background 0.15s linear, color 0.15s linear;
+  }
+
+  .btn:hover, .btn:focus-visible { background: var(--flare); color: #17130e; }
+  .btn:focus-visible { outline: 2px solid var(--bone); outline-offset: 3px; }
+
+  @media (prefers-reduced-motion: reduce) {
+    *, *::before, *::after { animation-duration: 0.01ms !important; transition-duration: 0.01ms !important; }
+  }
+</style>
+
+<div id="stage"></div>
+<div class="veil" id="vignette"></div>
+<div class="veil" id="gasVeil"></div>
+<div class="veil" id="hurtVeil"></div>
+
+<div class="hud" id="status">
+  <h1>Er — Durum</h1>
+  <div class="meter">
+    <div class="meter-top"><span>Can</span><b id="hpVal">100</b></div>
+    <div class="ticks" id="hpBar"></div>
+  </div>
+  <div class="meter">
+    <div class="meter-top"><span>Vücut Isısı</span><b id="enVal">100</b></div>
+    <div class="ticks" id="enBar"></div>
+  </div>
+  <div class="meter">
+    <div class="meter-top"><span>Maske Filtresi</span><b id="filVal">100</b></div>
+    <div class="ticks" id="filBar"></div>
+  </div>
+</div>
+
+<div class="hud" id="clock">
+  <span>Kurtarmaya</span>
+  <strong id="timer">3:00</strong>
+  <div id="phase">Gündüz</div>
+</div>
+
+<div class="hud" id="banner"></div>
+<div class="hud" id="tags"></div>
+
+<div class="hud" id="hint">
+  <kbd>A</kbd> <kbd>D</kbd> yürü · <kbd>Shift</kbd> koş<br>
+  <kbd>W</kbd> <kbd>S</kbd> şerit değiştir · <kbd>Ctrl</kbd> sürün
+</div>
+
+<div id="stick"><div class="knob"></div></div>
+<button id="crawlBtn" type="button">Sürün</button>
+
+<div id="overlay">
+  <div class="card" id="card">
+    <div class="stamp" id="cardStamp">Cephe Raporu — 1916</div>
+    <h2 id="cardTitle">Siper Hattı 1916</h2>
+    <p class="sub" id="cardSub">Yalnız asker · 2.5D hayatta kalma prototipi</p>
+    <div id="cardBody">
+      <p>Bölüğün geri çekildi, hattın son adamı sensin. Kurtarma ekibi <b>üç dakika</b> sonra siperlere ulaşacak. O zamana kadar ayakta kalman gerekiyor.</p>
+      <p>Siper üç hattan oluşur: <b>ön, orta, arka</b>. Şerit değiştirerek topçu ateşinden ve devriyelerden kaç. Kum torbalarının dibinde sürünürsen devriyeler seni göremez — ama yavaşlarsın.</p>
+      <p>Isın: ateş başında bekle. Doyur: konserve topla. Nefes al: gaz saldırısında temiz şeride geç, filtren tükenmesin.</p>
+    </div>
+    <dl class="keys" id="cardKeys">
+      <dt>A / D</dt><dd>Yürü — <b>Shift</b> ile koş</dd>
+      <dt>W / S</dt><dd>Arka / ön şeride geç</dd>
+      <dt>Ctrl</dt><dd>Sürün — siper altı geçiş ve gizlenme</dd>
+      <dt>Dokunmatik</dt><dd>Sol yarı: joystick · Sağ yarı: yukarı-aşağı kaydır · Sürün tuşu</dd>
+    </dl>
+    <button class="btn" id="startBtn" type="button">Hatta İn</button>
+  </div>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  var $ = function (id) { return document.getElementById(id); };
+
+  /* ===========================================================
+     AYARLAR — Unity tarafindaki ScriptableObject degerleriyle esdeger
+     =========================================================== */
+  var CFG = {
+    laneZ: [4.6, 0.0, -4.6],       // 0 = on hat (kameraya yakin), 2 = arka hat
+    startLane: 1,
+    walkSpeed: 3.2,
+    runSpeed: 6.0,
+    crawlSpeed: 1.7,
+    acceleration: 18,
+    laneSwitchDuration: 0.30,
+    laneSwitchCooldown: 0.10,
+
+    tickInterval: 0.25,
+    energyDrain: 1.05,
+    nightMultiplier: 1.8,
+    mudMultiplier: 1.7,
+    sprintMultiplier: 2.2,
+    heatRegen: 16,
+    comfortThreshold: 0.5,
+    minSpeedMultiplier: 0.45,
+    exhaustionDamage: 2.5,
+
+    filterDrain: 6.5,
+    gasDamage: 11,
+    bandageHeal: 26,
+    rationEnergy: 42,
+    filterRefill: 50,
+
+    rescueTime: 180,
+    dayLength: 48,
+    nightLength: 32,
+    worldSpan: 58                  // bu mesafeyi asan nesneler karsi tarafa tasinir
+  };
+
+  var LANE_COUNT = CFG.laneZ.length;
+
+  /* ===========================================================
+     KUCUK 3B RENDER KATMANI
+     Sahne kutulardan olusur; her kare projeksiyonla ciziliyor.
+     Harici kutuphane yok — oyun tek dosyada, cevrimdisi calisir.
+     =========================================================== */
+  var canvas = document.createElement("canvas");
+  var ctx = canvas.getContext("2d");
+  $("stage").appendChild(canvas);
+
+  var W = 0, H = 0, focal = 0, horizonY = 0;
+  var cam = { x: 0, y: 3.6, z: 12.0, pitch: 0.20 };
+  var FOV = 50 * Math.PI / 180;
+  var FOG_NEAR = 12, FOG_FAR = 52;
+  var LIGHT = (function () {
+    var v = [-0.42, 0.84, 0.34];
+    var len = Math.sqrt(v[0] * v[0] + v[1] * v[1] + v[2] * v[2]);
+    return [v[0] / len, v[1] / len, v[2] / len];
+  })();
+
+  function resize() {
+    var ratio = Math.min(window.devicePixelRatio || 1, 2);
+    W = window.innerWidth;
+    H = window.innerHeight;
+    canvas.width = Math.floor(W * ratio);
+    canvas.height = Math.floor(H * ratio);
+    canvas.style.width = W + "px";
+    canvas.style.height = H + "px";
+    ctx.setTransform(ratio, 0, 0, ratio, 0, 0);
+    // Dikey ekranlarda (telefon portre) yatay gorus alani daralmasin diye
+    // odak uzakligini genislige gore de siniriyoruz.
+    var focalY = (H / 2) / Math.tan(FOV / 2);
+    var focalX = 1.35 * (W / 2) / Math.tan(30 * Math.PI / 180);
+    focal = Math.min(focalY, focalX);
+    horizonY = H / 2 - focal * Math.tan(cam.pitch);
+  }
+  window.addEventListener("resize", resize);
+  resize();
+
+  var sinP = 0, cosP = 1;
+
+  function updateCameraBasis() {
+    sinP = Math.sin(cam.pitch);
+    cosP = Math.cos(cam.pitch);
+    horizonY = H / 2 - focal * Math.tan(cam.pitch);
+  }
+
+  // Dunya noktasini ekrana tasir. Sahnedeki her sey kameranin onunde
+  // durdugu icin ayrica kirpma (clipping) gerekmiyor.
+  var px = 0, py = 0, pd = 0;
+  function project(x, y, z) {
+    var vx = x - cam.x, vy = y - cam.y, vz = z - cam.z;
+    pd = -vy * sinP - vz * cosP;
+    if (pd < 0.2) { pd = 0.2; }
+    var uy = vy * cosP - vz * sinP;
+    px = W / 2 + focal * vx / pd;
+    py = H / 2 - focal * uy / pd;
+  }
+
+  var quads = [];         // opak yuzeyler
+  var alphaQuads = [];    // yari saydam yuzeyler (gaz bulutu)
+  var skyRGB = [109, 106, 86];
+  var lightLevel = 1;
+
+  var CUBE = [
+    [-1, -1, -1], [1, -1, -1], [1, 1, -1], [-1, 1, -1],
+    [-1, -1, 1], [1, -1, 1], [1, 1, 1], [-1, 1, 1]
+  ];
+  var FACES = [
+    [4, 5, 6, 7], [1, 0, 3, 2], [3, 7, 6, 2], [0, 1, 5, 4], [5, 1, 2, 6], [0, 4, 7, 3]
+  ];
+
+  var vertsX = new Array(8), vertsY = new Array(8), vertsZ = new Array(8);
+  var scrX = new Array(8), scrY = new Array(8), scrD = new Array(8);
+
+  // xform verilirse her kose noktasi once ondan gecer (uzuv donusleri icin).
+  function pushBox(cx, cy, cz, w, h, d, color, alpha, xform) {
+    var hw = w / 2, hh = h / 2, hd = d / 2, i;
+
+    for (i = 0; i < 8; i++) {
+      var c = CUBE[i];
+      var x = c[0] * hw, y = c[1] * hh, z = c[2] * hd;
+      if (xform) {
+        var out = xform(x, y, z);
+        x = out[0]; y = out[1]; z = out[2];
+      }
+      x += cx; y += cy; z += cz;
+      vertsX[i] = x; vertsY[i] = y; vertsZ[i] = z;
+      project(x, y, z);
+      scrX[i] = px; scrY[i] = py; scrD[i] = pd;
+    }
+
+    for (var fi = 0; fi < 6; fi++) {
+      var f = FACES[fi];
+      var ax = vertsX[f[0]], ay = vertsY[f[0]], az = vertsZ[f[0]];
+      var bx = vertsX[f[1]] - ax, by = vertsY[f[1]] - ay, bz = vertsZ[f[1]] - az;
+      var ex = vertsX[f[3]] - ax, ey = vertsY[f[3]] - ay, ez = vertsZ[f[3]] - az;
+
+      // Yuzey normali ve arka yuz eleme
+      var nx = by * ez - bz * ey;
+      var ny = bz * ex - bx * ez;
+      var nz = bx * ey - by * ex;
+      var len = Math.sqrt(nx * nx + ny * ny + nz * nz) || 1;
+      nx /= len; ny /= len; nz /= len;
+
+      var mx = (vertsX[f[0]] + vertsX[f[2]]) / 2;
+      var my = (vertsY[f[0]] + vertsY[f[2]]) / 2;
+      var mz = (vertsZ[f[0]] + vertsZ[f[2]]) / 2;
+      if (nx * (cam.x - mx) + ny * (cam.y - my) + nz * (cam.z - mz) <= 0) { continue; }
+
+      var x0 = scrX[f[0]], y0 = scrY[f[0]];
+      var x1 = scrX[f[1]], y1 = scrY[f[1]];
+      var x2 = scrX[f[2]], y2 = scrY[f[2]];
+      var x3 = scrX[f[3]], y3 = scrY[f[3]];
+
+      // Ekranda birkac pikselden kucuk kalan yuzeyleri hic cizmiyoruz.
+      var area = Math.abs((x2 - x0) * (y3 - y1) - (x3 - x1) * (y2 - y0)) / 2;
+      if (area < 9) { continue; }
+
+      // Tamamen ekran disindaki yuzeyler de elenir.
+      var minX = Math.min(x0, x1, x2, x3), maxX = Math.max(x0, x1, x2, x3);
+      if (maxX < -40 || minX > W + 40) { continue; }
+      var minY = Math.min(y0, y1, y2, y3), maxY = Math.max(y0, y1, y2, y3);
+      if (maxY < -40 || minY > H + 40) { continue; }
+
+      var depth = (scrD[f[0]] + scrD[f[1]] + scrD[f[2]] + scrD[f[3]]) / 4;
+      var lambert = 0.52 + 0.54 * Math.max(0, nx * LIGHT[0] + ny * LIGHT[1] + nz * LIGHT[2]);
+      var shade = lambert * lightLevel;
+      var fog = Math.max(0, Math.min(1, (depth - FOG_NEAR) / (FOG_FAR - FOG_NEAR)));
+
+      var r = color[0] * shade, g = color[1] * shade, b = color[2] * shade;
+      r += (skyRGB[0] - r) * fog;
+      g += (skyRGB[1] - g) * fog;
+      b += (skyRGB[2] - b) * fog;
+
+      var quad = {
+        d: depth,
+        c: "rgb(" + (r | 0) + "," + (g | 0) + "," + (b | 0) + ")",
+        a: alpha,
+        p: [x0, y0, x1, y1, x2, y2, x3, y3]
+      };
+      if (alpha < 1) { alphaQuads.push(quad); } else { quads.push(quad); }
+    }
+  }
+
+  function paintQuads(list) {
+    list.sort(function (a, b) { return b.d - a.d; });
+    var alpha = -1;
+    for (var i = 0; i < list.length; i++) {
+      var q = list[i];
+      if (q.a !== alpha) { ctx.globalAlpha = q.a; alpha = q.a; }
+      ctx.fillStyle = q.c;
+      ctx.beginPath();
+      ctx.moveTo(q.p[0], q.p[1]);
+      ctx.lineTo(q.p[2], q.p[3]);
+      ctx.lineTo(q.p[4], q.p[5]);
+      ctx.lineTo(q.p[6], q.p[7]);
+      ctx.closePath();
+      ctx.fill();
+    }
+    ctx.globalAlpha = 1;
+  }
+
+  // Zemine yapisik daire (golge, camur birikintisi, obus isareti)
+  function groundDisc(x, z, radius, color, alpha) {
+    project(x, 0.02, z);
+    var sx = px, sy = py, d = pd;
+    var rx = focal * radius / d;
+    var ry = rx * Math.max(0.18, sinP + 0.12);
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = color;
+    ctx.beginPath();
+    ctx.ellipse(sx, sy, rx, ry, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.globalAlpha = 1;
+  }
+
+  function glow(x, y, z, radius, color, strength) {
+    project(x, y, z);
+    var r = Math.max(4, focal * radius / pd);
+    var grad = ctx.createRadialGradient(px, py, 0, px, py, r);
+    grad.addColorStop(0, color);
+    grad.addColorStop(1, "rgba(0,0,0,0)");
+    ctx.globalCompositeOperation = "lighter";
+    ctx.globalAlpha = strength;
+    ctx.fillStyle = grad;
+    ctx.fillRect(px - r, py - r, r * 2, r * 2);
+    ctx.globalCompositeOperation = "source-over";
+    ctx.globalAlpha = 1;
+  }
+
+  /* ===========================================================
+     PALET
+     =========================================================== */
+  var COL = {
+    mud: [92, 79, 59],
+    mudDark: [74, 63, 46],
+    mudWet: [44, 38, 27],
+    sandbag: [143, 125, 91],
+    wood: [96, 74, 51],
+    metal: [84, 88, 78],
+    coat: [148, 145, 104],
+    coatDim: [104, 103, 75],
+    foe: [88, 93, 81],
+    skin: [198, 158, 118],
+    helmet: [72, 72, 54],
+    crate: [150, 121, 68],
+    med: [178, 62, 46],
+    filt: [190, 200, 74],
+    gas: [182, 196, 82],
+    tree: [46, 40, 31],
+    lip: [34, 29, 22],
+    floorFront: [96, 83, 62],
+    floorMid: [82, 71, 52],
+    floorBack: [68, 58, 42]
+  };
+
+  var SKY_DAY = [138, 133, 110];
+  var SKY_NIGHT = [20, 25, 36];
+  var SKY_GAS = [126, 130, 52];
+  var GROUND_FAR = [124, 114, 92];
+  var GROUND_NEAR = [62, 53, 39];
+
+  function mix(a, b, t) {
+    return [a[0] + (b[0] - a[0]) * t, a[1] + (b[1] - a[1]) * t, a[2] + (b[2] - a[2]) * t];
+  }
+  function rgb(c) { return "rgb(" + (c[0] | 0) + "," + (c[1] | 0) + "," + (c[2] | 0) + ")"; }
+
+  /* ===========================================================
+     DUNYA NESNELERI — geri donusumle sonsuz siper hatti
+     =========================================================== */
+  var items = [];
+
+  function spawnItem(kind, x) {
+    var it = {
+      kind: kind,
+      x: x,
+      lane: Math.floor(Math.random() * LANE_COUNT),
+      alive: true,
+      seed: Math.random() * 10
+    };
+    items.push(it);
+    return it;
+  }
+
+  function reseat(it, x) {
+    it.x = x;
+    it.lane = Math.floor(Math.random() * LANE_COUNT);
+    it.alive = true;
+  }
+
+  (function populate() {
+    var plan = [
+      ["barricade", 10], ["wire", 7], ["fire", 4], ["mud", 7],
+      ["med", 3], ["ration", 4], ["filter", 3]
+    ];
+    for (var p = 0; p < plan.length; p++) {
+      for (var i = 0; i < plan[p][1]; i++) {
+        spawnItem(plan[p][0], (Math.random() - 0.5) * CFG.worldSpan * 2);
+      }
+    }
+  })();
+
+  /* ===========================================================
+     OYUNCU VE DEVRIYELER
+     =========================================================== */
+  var P = {
+    x: 0, z: CFG.laneZ[CFG.startLane], lane: CFG.startLane,
+    speed: 0, facing: 1, stance: "walk",
+    switching: false, switchT: 0, switchFrom: 0, switchTo: 0, cooldown: 0,
+    tilt: 0, step: 0
+  };
+
+  var patrols = [];
+  for (var pi = 0; pi < 3; pi++) {
+    patrols.push({ x: 0, lane: 0, dir: 1, speed: 2.2, active: false, alerted: false, step: 0 });
+  }
+
+  function spawnPatrol(p) {
+    p.lane = Math.floor(Math.random() * LANE_COUNT);
+    p.x = P.x + (Math.random() < 0.5 ? -1 : 1) * (9 + Math.random() * 5);
+    p.dir = p.x > P.x ? -1 : 1;
+    p.active = true;
+    p.alerted = false;
+  }
+
+  /* ===========================================================
+     ASKER CIZIMI — uzuvlar govde ve kalca eksenlerinde doner
+     =========================================================== */
+  function drawSoldier(x, z, facing, tilt, swing, coat, helmetCol, spiked) {
+    var ca = Math.cos(tilt), sa = Math.sin(tilt);
+    var fy = facing > 0 ? 1 : -1;
+
+    // Govde egimi (surunme) + bakis yonu tek donusumde birlestirilir.
+    function body(vx, vy, vz) {
+      var rx = vx * ca - vy * sa;
+      var ry = vx * sa + vy * ca;
+      return [rx * fy, ry, vz * fy];
+    }
+
+    // Kalca/omuz ekseninde salinan uzuvlar
+    function limb(pivotY, angle) {
+      var cs = Math.cos(angle), sn = Math.sin(angle);
+      return function (vx, vy, vz) {
+        var ly = vy - pivotY;
+        var rx = vx * cs - ly * sn;
+        var ry = vx * sn + ly * cs;
+        return body(rx, ry + pivotY, vz);
+      };
+    }
+
+    groundDisc(x, z, 0.55, "#000", 0.28);
+
+    pushBox(x, 0, z, 0.52, 0.74, 0.36, coat, 1, function (a, b, c) { return body(a, b + 1.16, c); });
+    pushBox(x, 0, z, 0.3, 0.34, 0.22, COL.wood, 1, function (a, b, c) { return body(a - 0.06, b + 1.24, c - 0.26); });
+
+    var legL = limb(0.8, swing), legR = limb(0.8, -swing);
+    pushBox(x, 0, z, 0.19, 0.8, 0.2, COL.coatDim, 1, function (a, b, c) { return legL(a, b + 0.4, c + 0.13); });
+    pushBox(x, 0, z, 0.19, 0.8, 0.2, COL.coatDim, 1, function (a, b, c) { return legR(a, b + 0.4, c - 0.13); });
+
+    var armL = limb(1.44, -swing * 0.75), armR = limb(1.44, swing * 0.75);
+    pushBox(x, 0, z, 0.16, 0.62, 0.17, coat, 1, function (a, b, c) { return armL(a, b + 1.13, c + 0.3); });
+    pushBox(x, 0, z, 0.16, 0.62, 0.17, coat, 1, function (a, b, c) { return armR(a, b + 1.13, c - 0.3); });
+
+    pushBox(x, 0, z, 0.27, 0.28, 0.27, COL.skin, 1, function (a, b, c) { return body(a, b + 1.64, c); });
+
+    if (spiked) {
+      pushBox(x, 0, z, 0.34, 0.2, 0.34, helmetCol, 1, function (a, b, c) { return body(a, b + 1.8, c); });
+      pushBox(x, 0, z, 0.07, 0.16, 0.07, helmetCol, 1, function (a, b, c) { return body(a, b + 1.96, c); });
+    } else {
+      pushBox(x, 0, z, 0.42, 0.09, 0.42, helmetCol, 1, function (a, b, c) { return body(a, b + 1.76, c); });
+      pushBox(x, 0, z, 0.3, 0.13, 0.3, helmetCol, 1, function (a, b, c) { return body(a, b + 1.83, c); });
+    }
+
+    // Omuza asili tufek
+    pushBox(x, 0, z, 1.0, 0.07, 0.07, COL.wood, 1, function (a, b, c) {
+      var rx = a * 0.72 - b * 0.69;
+      var ry = a * 0.69 + b * 0.72;
+      return body(rx - 0.08, ry + 1.15, c - 0.24);
+    });
+  }
+
+  /* ===========================================================
+     SAHNE CIZIMI
+     =========================================================== */
+  function laneFloorsAndTrenches() {
+    var baseX = P.x, l, i;
+    var floorTone = [COL.floorFront, COL.floorMid, COL.floorBack];
+    var walls = [(CFG.laneZ[0] + CFG.laneZ[1]) / 2, (CFG.laneZ[1] + CFG.laneZ[2]) / 2];
+
+    // Serit tabanlari: on hat acik, arka hat koyu — uc duzlem ayri okunur.
+    for (l = 0; l < LANE_COUNT; l++) {
+      pushBox(baseX, 0.03, CFG.laneZ[l], 240, 0.06, 3.8, floorTone[l], 1, null);
+    }
+
+    // Tahta yurume yolu (duckboard)
+    var startX = Math.floor((P.x - 13) / 2.2) * 2.2;
+    for (i = 0; i < 13; i++) {
+      var plankX = startX + i * 2.2;
+      for (l = 0; l < LANE_COUNT; l++) {
+        pushBox(plankX, 0.1, CFG.laneZ[l], 0.9, 0.09, 2.6, COL.wood, 1, null);
+      }
+    }
+
+    // Seritler arasi kum torbasi hatlari: ayakta duran asker gorunur,
+    // surunen asker bu yuksekligin arkasinda kaybolur.
+    for (i = 0; i < walls.length; i++) {
+      pushBox(baseX, 0.27, walls[i], 240, 0.55, 0.85, COL.sandbag, 1, null);
+      pushBox(baseX, 0.02, walls[i] + 0.62, 240, 0.04, 0.5, COL.mudWet, 1, null);
+    }
+
+    // Arka toprak set ve on plandaki koyu siluet sed — derinligi cerceveler.
+    pushBox(baseX, 1.5, CFG.laneZ[2] - 2.9, 240, 3.0, 1.2, COL.mudDark, 1, null);
+    pushBox(baseX, 0.22, CFG.laneZ[0] + 2.2, 240, 0.45, 1.0, COL.lip, 1, null);
+    pushBox(baseX, 0.4, CFG.laneZ[0] + 4.4, 240, 0.8, 1.2, COL.lip, 1, null);
+
+    // Dikey ritim: kum torbalari, tahta dikmeler ve siper merdivenleri.
+    var postStart = Math.floor((P.x - 12) / 2.2) * 2.2;
+    for (var b = 0; b < 12; b++) {
+      var bx = postStart + b * 2.2;
+      for (var w = 0; w < walls.length; w++) {
+        pushBox(bx, 0.64, walls[w], 1.5, 0.22, 0.95, (b % 2 === 0) ? COL.sandbag : COL.mud, 1, null);
+        pushBox(bx + 1.1, 0.48, walls[w] - 0.5, 0.14, 0.96, 0.14, COL.wood, 1, null);
+      }
+      pushBox(bx, 0.6, CFG.laneZ[2] - 2.25, 0.15, 1.2, 0.15, COL.wood, 1, null);
+    }
+  }
+
+  // Ufuktaki harap agac hatti: konumlar x'e bagli deterministik, sonsuz uzanir.
+  function horizonLine() {
+    var start = Math.floor((P.x - 70) / 9) * 9;
+    for (var i = 0; i < 17; i++) {
+      var x = start + i * 9;
+      var h = 1.8 + ((Math.sin(x * 0.7) * 0.5 + 0.5) * 3.6);
+      var z = -22 - (Math.sin(x * 1.3) * 0.5 + 0.5) * 8;
+      pushBox(x, h / 2, z, 0.3, h, 0.3, COL.tree, 1, null);
+    }
+  }
+
+  function drawItem(it) {
+    var z = CFG.laneZ[it.lane];
+    if (it.kind === "barricade") {
+      for (var i = 0; i < 6; i++) {
+        pushBox(it.x + (i % 3) * 0.72 - 0.72, 0.14 + Math.floor(i / 3) * 0.27, z + ((i * 7) % 3 - 1) * 0.06,
+          0.7, 0.27, 0.5, COL.sandbag, 1, null);
+      }
+    } else if (it.kind === "wire") {
+      for (var p = 0; p < 3; p++) {
+        pushBox(it.x + p * 0.9 - 0.9, 0.5, z, 0.11, 1.0, 0.11, COL.wood, 1, null);
+      }
+      pushBox(it.x, 0.78, z, 1.9, 0.06, 0.06, COL.metal, 1, null);
+      pushBox(it.x, 0.5, z, 1.9, 0.05, 0.05, COL.metal, 1, null);
+    } else if (it.kind === "fire") {
+      pushBox(it.x, 0.07, z, 0.8, 0.14, 0.6, COL.wood, 1, null);
+      var flick = 0.55 + Math.sin(clock * 9 + it.seed) * 0.14;
+      pushBox(it.x, 0.18 + flick / 2, z, 0.26, flick, 0.26, [221, 154, 52], 1, null);
+    } else if (it.kind === "mud") {
+      groundDisc(it.x, z, 1.5, rgb(COL.mudWet), 0.85);
+    } else if (it.alive) {
+      var col = it.kind === "med" ? COL.med : (it.kind === "filter" ? COL.filt : COL.crate);
+      var bob = 0.18 + Math.sin(clock * 2.4 + it.seed) * 0.05;
+      pushBox(it.x, bob, z, 0.36, 0.36, 0.36, col, 1, null);
+      pushBox(it.x, bob, z, 0.4, 0.09, 0.4, COL.metal, 1, null);
+    }
+  }
+
+  /* ===========================================================
+     HAYATTA KALMA ISTATISTIKLERI
+     =========================================================== */
+  var S = {
+    hp: 100, hpMax: 100,
+    energy: 100, energyMax: 100,
+    filter: 100, filterMax: 100,
+    alive: true, inGas: false, inMud: false, nearFire: false, hidden: false
+  };
+
+  function speedMultiplier() {
+    var t = Math.min(1, (S.energy / S.energyMax) / CFG.comfortThreshold);
+    return CFG.minSpeedMultiplier + (1 - CFG.minSpeedMultiplier) * t;
+  }
+
+  function damage(amount, cause) {
+    if (!S.alive || amount <= 0) { return; }
+    S.hp = Math.max(0, S.hp - amount);
+    if (amount > 1.2) { hurtFlash(Math.min(0.85, amount / 20)); }
+    if (S.hp <= 0) { endGame(false, cause); }
+  }
+
+  function heal(a) { S.hp = Math.min(S.hpMax, S.hp + a); }
+  function feed(a) { S.energy = Math.min(S.energyMax, S.energy + a); }
+  function refillFilter(a) { S.filter = Math.min(S.filterMax, S.filter + a); }
+
+  /* ===========================================================
+     TOPCU ATESI
+     =========================================================== */
+  var shells = [];
+  var blastLight = 0;
+
+  function launchShell(x, lane, delay) {
+    shells.push({ x: x, lane: lane, t: -delay, fuse: 1.3 });
+  }
+
+  function detonate(sh) {
+    var dx = P.x - sh.x;
+    var dz = P.z - CFG.laneZ[sh.lane];
+    var dist = Math.sqrt(dx * dx + dz * dz);
+    var radius = 3.2;
+    if (dist < radius) {
+      // Yere yatmak sarapnelden korur: surunme burada hayat kurtarir.
+      var raw = 34 * (1 - dist / radius) * (P.stance === "crawl" ? 0.4 : 1);
+      damage(raw, "Topçu ateşi");
+      shake(0.6 * (1 - dist / radius) + 0.15);
+    } else if (dist < 10) {
+      shake(0.16);
+    }
+    blastLight = Math.max(blastLight, dist < 14 ? 1 : 0.4);
+  }
+
+  /* ===========================================================
+     GAZ BULUTU
+     =========================================================== */
+  var gas = { active: false, timeLeft: 0, lanes: [] };
+
+  function startGas() {
+    // Her zaman bir serit temiz kalir; oyuncunun kacacak yeri olmali.
+    var safe = Math.floor(Math.random() * LANE_COUNT);
+    gas.lanes = [];
+    for (var i = 0; i < LANE_COUNT; i++) { if (i !== safe) { gas.lanes.push(i); } }
+    gas.active = true;
+    gas.timeLeft = 17;
+    var names = ["ÖN", "ORTA", "ARKA"];
+    banner("GAZ! " + names[safe] + " ŞERİT TEMİZ");
+  }
+
+  function stopGas() {
+    gas.active = false;
+    gas.lanes = [];
+  }
+
+  /* ===========================================================
+     OLAY YONETICISI
+     =========================================================== */
+  var director = { next: 14, raidTimer: 0 };
+
+  function fireEvent() {
+    var roll = Math.random();
+    if (roll < 0.42) {
+      banner("TOPÇU ATEŞİ — SİPERE YAT");
+      var count = 5 + Math.floor(Math.random() * 4);
+      for (var i = 0; i < count; i++) {
+        launchShell(P.x + (Math.random() - 0.5) * 26, Math.floor(Math.random() * LANE_COUNT), i * 0.5 + Math.random() * 0.35);
+      }
+    } else if (roll < 0.74) {
+      startGas();
+    } else {
+      banner("SİPER BASKINI");
+      director.raidTimer = 22;
+      var spawned = 0;
+      for (var k = 0; k < patrols.length && spawned < 2; k++) {
+        if (!patrols[k].active) { spawnPatrol(patrols[k]); spawned++; }
+      }
+    }
+    director.next = 17 + Math.random() * 9;
+  }
+
+  /* ===========================================================
+     GIRDI — klavye ve dokunmatik
+     =========================================================== */
+  var input = { horizontal: 0, run: false, crawl: false, laneRequest: 0 };
+  var keys = {};
+  var touchActive = false;
+  var crawlButtonHeld = false;
+
+  window.addEventListener("keydown", function (e) {
+    keys[e.code] = true;
+    if (e.code === "KeyW" || e.code === "ArrowUp") { input.laneRequest = 1; }
+    if (e.code === "KeyS" || e.code === "ArrowDown") { input.laneRequest = -1; }
+    if (["ArrowUp", "ArrowDown", "ArrowLeft", "ArrowRight", "Space"].indexOf(e.code) >= 0) { e.preventDefault(); }
+  });
+  window.addEventListener("keyup", function (e) { keys[e.code] = false; });
+
+  function readKeyboard() {
+    var h = 0;
+    if (keys.KeyA || keys.ArrowLeft) { h -= 1; }
+    if (keys.KeyD || keys.ArrowRight) { h += 1; }
+    if (h !== 0) {
+      input.horizontal = h;
+      input.run = !!(keys.ShiftLeft || keys.ShiftRight);
+    } else if (!touchActive) {
+      input.horizontal = 0;
+      input.run = false;
+    }
+    if (!crawlButtonHeld) {
+      input.crawl = !!(keys.ControlLeft || keys.ControlRight || keys.KeyC);
+    }
+  }
+
+  var stickEl = $("stick");
+  var knobEl = stickEl.firstElementChild;
+  var moveFinger = -1, swipeFinger = -1;
+  var stickOrigin = { x: 0, y: 0 };
+  var swipeStart = { x: 0, y: 0, t: 0 };
+  var stage = $("stage");
+
+  function onTouchStart(e) {
+    document.body.classList.add("touch");
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      var t = e.changedTouches[i];
+      if (t.clientX < window.innerWidth * 0.5 && moveFinger === -1) {
+        moveFinger = t.identifier;
+        stickOrigin.x = t.clientX;
+        stickOrigin.y = t.clientY;
+        stickEl.style.left = t.clientX + "px";
+        stickEl.style.top = t.clientY + "px";
+        stickEl.classList.add("on");
+        touchActive = true;
+      } else if (t.clientX >= window.innerWidth * 0.5 && swipeFinger === -1) {
+        swipeFinger = t.identifier;
+        swipeStart.x = t.clientX;
+        swipeStart.y = t.clientY;
+        swipeStart.t = performance.now();
+      }
+    }
+  }
+
+  function onTouchMove(e) {
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      var t = e.changedTouches[i];
+      if (t.identifier !== moveFinger) { continue; }
+      var radius = Math.max(1, window.innerWidth * 0.10);
+      var raw = Math.max(-1, Math.min(1, (t.clientX - stickOrigin.x) / radius));
+      var mag = Math.abs(raw);
+      knobEl.style.transform = "translateX(" + (raw * 34) + "px)";
+      if (mag < 0.12) {
+        input.horizontal = 0;
+        input.run = false;
+      } else {
+        input.horizontal = ((mag - 0.12) / 0.88) * (raw < 0 ? -1 : 1);
+        input.run = mag >= 0.75;
+      }
+    }
+    if (e.cancelable) { e.preventDefault(); }
+  }
+
+  function onTouchEnd(e) {
+    for (var i = 0; i < e.changedTouches.length; i++) {
+      var t = e.changedTouches[i];
+      if (t.identifier === moveFinger) {
+        moveFinger = -1;
+        touchActive = false;
+        input.horizontal = 0;
+        input.run = false;
+        stickEl.classList.remove("on");
+        knobEl.style.transform = "translateX(0px)";
+      } else if (t.identifier === swipeFinger) {
+        swipeFinger = -1;
+        if (performance.now() - swipeStart.t < 600) {
+          var dy = t.clientY - swipeStart.y;
+          var dx = t.clientX - swipeStart.x;
+          if (Math.abs(dy) > window.innerHeight * 0.08 && Math.abs(dy) > Math.abs(dx)) {
+            input.laneRequest = dy < 0 ? 1 : -1;      // yukari kaydir = arka serit
+          }
+        }
+      }
+    }
+  }
+
+  stage.addEventListener("touchstart", onTouchStart, { passive: true });
+  stage.addEventListener("touchmove", onTouchMove, { passive: false });
+  stage.addEventListener("touchend", onTouchEnd, { passive: true });
+  stage.addEventListener("touchcancel", onTouchEnd, { passive: true });
+
+  var crawlBtn = $("crawlBtn");
+  function setCrawl(v) {
+    crawlButtonHeld = v;
+    input.crawl = v;
+    crawlBtn.classList.toggle("active", v);
+  }
+  crawlBtn.addEventListener("pointerdown", function (e) { e.preventDefault(); setCrawl(true); });
+  crawlBtn.addEventListener("pointerup", function () { setCrawl(false); });
+  crawlBtn.addEventListener("pointerleave", function () { setCrawl(false); });
+  crawlBtn.addEventListener("pointercancel", function () { setCrawl(false); });
+
+  /* ===========================================================
+     HAREKET — X ekseni ve Z ekseni serit gecisi
+     =========================================================== */
+  function laneBlocked(lane, x) {
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (it.lane !== lane) { continue; }
+      if (it.kind !== "barricade" && it.kind !== "wire") { continue; }
+      if (Math.abs(it.x - x) < 1.35) { return true; }
+    }
+    return false;
+  }
+
+  function requestLane(delta) {
+    if (!delta || P.switching || P.cooldown > 0) { return; }
+    var target = P.lane + delta;
+    if (target < 0 || target >= LANE_COUNT) { return; }
+    if (laneBlocked(target, P.x)) { return; }
+    P.lane = target;
+    P.switchFrom = P.z;
+    P.switchTo = CFG.laneZ[target];
+    P.switchT = 0;
+    P.switching = true;
+  }
+
+  function smoothstep(t) { return t * t * (3 - 2 * t); }
+
+  function updateMovement(dt) {
+    if (input.crawl) { P.stance = "crawl"; }
+    else if (input.run && Math.abs(input.horizontal) > 0.05) { P.stance = "run"; }
+    else { P.stance = "walk"; }
+
+    var request = input.laneRequest;
+    input.laneRequest = 0;
+    requestLane(request);
+    if (P.cooldown > 0) { P.cooldown -= dt; }
+
+    var base = P.stance === "run" ? CFG.runSpeed : (P.stance === "crawl" ? CFG.crawlSpeed : CFG.walkSpeed);
+    var target = input.horizontal * base * speedMultiplier() * (S.inMud ? 0.65 : 1);
+    var step = CFG.acceleration * dt;
+    P.speed += Math.max(-step, Math.min(step, target - P.speed));
+
+    var nextX = P.x + P.speed * dt;
+    if (laneBlocked(P.lane, nextX) && !laneBlocked(P.lane, P.x)) { P.speed = 0; }
+    else { P.x = nextX; }
+
+    if (Math.abs(input.horizontal) > 0.05) { P.facing = input.horizontal < 0 ? -1 : 1; }
+
+    // Serit gecisi: Unity'deki egri tabanli yumusatmanin ayni.
+    if (P.switching) {
+      P.switchT += dt;
+      var progress = Math.min(1, P.switchT / CFG.laneSwitchDuration);
+      P.z = P.switchFrom + (P.switchTo - P.switchFrom) * smoothstep(progress);
+      if (progress >= 1) {
+        P.switching = false;
+        P.cooldown = CFG.laneSwitchCooldown;
+      }
+    }
+
+    var targetTilt = P.stance === "crawl" ? -1.35 : 0;
+    P.tilt += (targetTilt - P.tilt) * Math.min(1, dt * 12);
+    P.step += Math.abs(P.speed) * dt * (P.stance === "crawl" ? 2.6 : 3.4);
+  }
+
+  /* ===========================================================
+     CEVRE ETKILESIMI
+     =========================================================== */
+  function updateItems(dt) {
+    S.inMud = false;
+    S.nearFire = false;
+    S.hidden = false;
+
+    for (var i = 0; i < items.length; i++) {
+      var it = items[i];
+
+      // Menzil disina cikan nesneler karsi tarafa tasinir: sonsuz siper.
+      if (it.x < P.x - CFG.worldSpan) { reseat(it, it.x + CFG.worldSpan * 2); }
+      else if (it.x > P.x + CFG.worldSpan) { reseat(it, it.x - CFG.worldSpan * 2); }
+
+      var dx = Math.abs(it.x - P.x);
+      var sameLane = it.lane === P.lane;
+
+      if (it.kind === "fire") {
+        if (dx < 2.4 && sameLane) { S.nearFire = true; }
+      } else if (it.kind === "mud") {
+        if (dx < 1.5 && sameLane) { S.inMud = true; }
+      } else if (it.kind === "barricade") {
+        // Kum torbasinin dibinde surunmek gizlenme saglar.
+        if (dx < 2.2 && sameLane && P.stance === "crawl") { S.hidden = true; }
+      } else if (it.alive && (it.kind === "med" || it.kind === "ration" || it.kind === "filter")) {
+        if (dx < 1.1 && sameLane) {
+          it.alive = false;
+          if (it.kind === "med") { heal(CFG.bandageHeal); banner("SARGI BEZİ +" + CFG.bandageHeal); }
+          else if (it.kind === "ration") { feed(CFG.rationEnergy); banner("KONSERVE +" + CFG.rationEnergy); }
+          else { refillFilter(CFG.filterRefill); banner("YENİ FİLTRE +" + CFG.filterRefill); }
+        }
+      }
+    }
+  }
+
+  /* ===========================================================
+     DEVRIYELER
+     =========================================================== */
+  var patrolNear = false;
+
+  function updatePatrols(dt) {
+    patrolNear = false;
+    var contact = false;
+    var wantActive = nightAmount > 0.5 || director.raidTimer > 0;
+
+    for (var i = 0; i < patrols.length; i++) {
+      var p = patrols[i];
+
+      if (!wantActive) { p.active = false; continue; }
+      if (!p.active) {
+        if (Math.random() < dt * 0.5) { spawnPatrol(p); }
+        continue;
+      }
+
+      var dx = P.x - p.x;
+      var dist = Math.abs(dx);
+      var sameLane = p.lane === P.lane;
+
+      // Gorulme: ayni serit, menzil icinde ve siperde saklanmiyorsan.
+      var sight = P.stance === "crawl" ? 7 : 15;
+      p.alerted = sameLane && dist < sight && !S.hidden;
+
+      if (p.alerted) {
+        // Fark edildin: uzerine gelir.
+        p.dir = dx > 0 ? 1 : -1;
+        p.x += p.dir * p.speed * 1.15 * dt;
+      } else if (dist > 6) {
+        // Hatti tariyor: yavasca yaklasir, boylece baskin gorunur kalir.
+        p.dir = dx > 0 ? 1 : -1;
+        p.x += p.dir * p.speed * 0.8 * dt;
+      } else {
+        // Yakinda oyalanir; siperde saklanan askeri bulamaz.
+        p.x += p.dir * p.speed * 0.35 * dt;
+        if (Math.random() < dt * 0.5) { p.dir *= -1; }
+      }
+
+      // Yakinindaki askeri gorurse serit atlar.
+      if (!sameLane && dist < 3.5 && !S.hidden && Math.random() < dt * 0.6) {
+        p.lane = P.lane;
+      }
+
+      if (dist > CFG.worldSpan) { p.active = false; continue; }
+      if (dist < 13) { patrolNear = true; }
+      // Hasar tek kaynaktan uygulanir; ust uste binen devriyeler oyuncuyu bir anda silmesin.
+      if (sameLane && dist < 1.0 && !contact) {
+        contact = true;
+        damage(9 * dt, "Siper baskını");
+      }
+
+      p.step += dt * (p.alerted ? 9 : 4.5);
+    }
+
+    if (director.raidTimer > 0) { director.raidTimer -= dt; }
+  }
+
+  /* ===========================================================
+     HAYATTA KALMA TICK'I — her karede degil, sabit araliklarla
+     =========================================================== */
+  var tickTimer = 0;
+
+  function survivalTick(dt) {
+    tickTimer += dt;
+    if (tickTimer < CFG.tickInterval) { return; }
+    var step = tickTimer;
+    tickTimer = 0;
+
+    if (S.nearFire) {
+      feed(CFG.heatRegen * step);
+    } else {
+      var drain = CFG.energyDrain;
+      if (nightAmount > 0.5) { drain *= CFG.nightMultiplier; }
+      if (S.inMud) { drain *= CFG.mudMultiplier; }
+      if (P.stance === "run" && Math.abs(P.speed) > 0.3) { drain *= CFG.sprintMultiplier; }
+      S.energy = Math.max(0, S.energy - drain * step);
+      if (S.energy <= 0) { damage(CFG.exhaustionDamage * step, "Bitkinlik"); }
+    }
+
+    S.inGas = gas.active && gas.lanes.indexOf(P.lane) >= 0;
+    if (S.inGas) {
+      if (S.filter > 0) { S.filter = Math.max(0, S.filter - CFG.filterDrain * step); }
+      else { damage(CFG.gasDamage * step, "Hardal gazı"); }
+    }
+  }
+
+  /* ===========================================================
+     GUNDUZ / GECE
+     =========================================================== */
+  var nightAmount = 0;
+  var cycleLength = CFG.dayLength + CFG.nightLength;
+
+  function updateDayNight(dt) {
+    var t = clock % cycleLength;
+    var target = t > CFG.dayLength ? 1 : 0;
+    nightAmount += (target - nightAmount) * Math.min(1, dt * 0.45);
+
+    var sky = mix(SKY_DAY, SKY_NIGHT, nightAmount);
+    if (gas.active) { sky = mix(sky, SKY_GAS, 0.12); }
+    skyRGB = sky;
+    lightLevel = 1.14 - nightAmount * 0.68;
+    FOG_FAR = 52 - nightAmount * 16 - (gas.active ? 10 : 0);
+  }
+
+  /* ===========================================================
+     KAMERA
+     =========================================================== */
+  var shakeAmount = 0;
+  var reduceMotion = window.matchMedia && window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+
+  function shake(v) { if (!reduceMotion) { shakeAmount = Math.min(1, shakeAmount + v); } }
+
+  function updateCamera(dt) {
+    var targetX = P.x + P.facing * 1.7;
+    cam.x += (targetX - cam.x) * Math.min(1, dt * 3.0);
+    cam.y = 3.6;
+    if (shakeAmount > 0) {
+      cam.x += (Math.random() - 0.5) * shakeAmount * 0.7;
+      cam.y += (Math.random() - 0.5) * shakeAmount * 0.5;
+      shakeAmount = Math.max(0, shakeAmount - dt * 1.5);
+    }
+    updateCameraBasis();
+  }
+
+  /* ===========================================================
+     ARAYUZ
+     =========================================================== */
+  var TICKS = 20;
+  var bars = {};
+  ["hpBar", "enBar", "filBar"].forEach(function (id) {
+    var el = $(id), cells = [];
+    for (var i = 0; i < TICKS; i++) {
+      var cell = document.createElement("i");
+      el.appendChild(cell);
+      cells.push(cell);
+    }
+    bars[id] = cells;
+  });
+
+  function paintBar(id, value, max, warn) {
+    var cells = bars[id];
+    var on = Math.ceil((value / max) * TICKS);
+    for (var i = 0; i < TICKS; i++) {
+      cells[i].className = i < on ? (warn ? "on warn" : "on") : "";
+    }
+  }
+
+  var bannerEl = $("banner");
+  var bannerTimer = 0;
+
+  function banner(text) {
+    bannerEl.textContent = text;
+    bannerEl.classList.add("show");
+    bannerTimer = 2.6;
+  }
+
+  var hurtVeil = $("hurtVeil");
+  var hurtTimer = 0;
+
+  function hurtFlash(strength) {
+    hurtVeil.style.opacity = String(Math.min(0.9, strength));
+    hurtTimer = 0.35;
+  }
+
+  var gasVeil = $("gasVeil");
+  var tagsEl = $("tags");
+  var hudTimer = 0;
+  var lastTags = "";
+
+  function updateHud(dt) {
+    if (bannerTimer > 0) {
+      bannerTimer -= dt;
+      if (bannerTimer <= 0) { bannerEl.classList.remove("show"); }
+    }
+    if (hurtTimer > 0) {
+      hurtTimer -= dt;
+      if (hurtTimer <= 0) { hurtVeil.style.opacity = "0"; }
+    }
+
+    hudTimer += dt;
+    if (hudTimer < 0.1) { return; }
+    hudTimer = 0;
+
+    paintBar("hpBar", S.hp, S.hpMax, S.hp < 25);
+    paintBar("enBar", S.energy, S.energyMax, false);
+    paintBar("filBar", S.filter, S.filterMax, false);
+    $("hpVal").textContent = Math.ceil(S.hp);
+    $("enVal").textContent = Math.ceil(S.energy);
+    $("filVal").textContent = Math.ceil(S.filter);
+
+    var left = Math.max(0, CFG.rescueTime - clock);
+    var m = Math.floor(left / 60), s = Math.floor(left % 60);
+    $("timer").textContent = m + ":" + (s < 10 ? "0" : "") + s;
+    $("phase").textContent = nightAmount > 0.5 ? "Gece" : "Gündüz";
+    $("phase").style.color = nightAmount > 0.5 ? "#8fa4c9" : "#dd9a34";
+
+    gasVeil.style.opacity = S.inGas ? "0.42" : (gas.active ? "0.06" : "0");
+
+    var tags = [];
+    if (S.inGas) { tags.push(["bad", "Gaz bulutunun içindesin"]); }
+    else if (gas.active) { tags.push(["bad", "Gaz yakında"]); }
+    if (nightAmount > 0.5) { tags.push(["", "Gece — devriye var"]); }
+    if (S.inMud) { tags.push(["", "Çamur"]); }
+    if (S.nearFire) { tags.push(["hot", "Ateş başı"]); }
+    if (S.hidden) { tags.push(["", "Siperde gizli"]); }
+    if (patrolNear && !S.hidden) { tags.push(["hurt", "Devriye yakın"]); }
+    if (S.energy < 30) { tags.push(["hurt", "Üşüyorsun — yavaşladın"]); }
+
+    var html = "";
+    for (var i = 0; i < tags.length; i++) {
+      html += '<div class="tag ' + tags[i][0] + '">' + tags[i][1] + "</div>";
+    }
+    if (html !== lastTags) {
+      tagsEl.innerHTML = html;
+      lastTags = html;
+    }
+  }
+
+  /* ===========================================================
+     CIZIM
+     =========================================================== */
+  function render() {
+    quads.length = 0;
+    alphaQuads.length = 0;
+
+    // Gokyuzu ve zemin
+    var skyTop = mix(skyRGB, [0, 0, 0], 0.25);
+    var skyGrad = ctx.createLinearGradient(0, 0, 0, Math.max(1, horizonY));
+    skyGrad.addColorStop(0, rgb(skyTop));
+    skyGrad.addColorStop(1, rgb(mix(skyRGB, [255, 255, 255], 0.12 * lightLevel)));
+    ctx.fillStyle = skyGrad;
+    ctx.fillRect(0, 0, W, Math.max(1, horizonY));
+
+    var farGround = mix(mix(GROUND_FAR, skyRGB, 0.55), [0, 0, 0], nightAmount * 0.55);
+    var nearGround = mix(GROUND_NEAR, [0, 0, 0], nightAmount * 0.5);
+    var gGrad = ctx.createLinearGradient(0, horizonY, 0, H);
+    gGrad.addColorStop(0, rgb(farGround));
+    gGrad.addColorStop(1, rgb(nearGround));
+    ctx.fillStyle = gGrad;
+    ctx.fillRect(0, Math.max(0, horizonY), W, H - Math.max(0, horizonY));
+
+    // Ufuktaki duman sutunlari: uzaktaki bombardimanin izi.
+    for (var sm = 0; sm < 3; sm++) {
+      var smokeX = P.x * 0.25 + sm * 46 - 60 + Math.sin(clock * 0.05 + sm) * 6;
+      var baseY = horizonY;
+      var height = 90 + sm * 26;
+      var width = 34 + sm * 12;
+      var sx = ((smokeX % 260) + 260) % 260 / 260 * (W + 200) - 100;
+      var smokeGrad = ctx.createLinearGradient(0, baseY - height, 0, baseY);
+      smokeGrad.addColorStop(0, "rgba(0,0,0,0)");
+      smokeGrad.addColorStop(1, "rgba(30,26,20," + (0.16 + 0.06 * sm) * (1 - nightAmount * 0.5) + ")");
+      ctx.fillStyle = smokeGrad;
+      ctx.beginPath();
+      ctx.moveTo(sx - width * 0.25, baseY);
+      ctx.quadraticCurveTo(sx - width * 0.7, baseY - height * 0.6, sx - width * 0.2, baseY - height);
+      ctx.lineTo(sx + width * 0.3, baseY - height);
+      ctx.quadraticCurveTo(sx + width * 0.8, baseY - height * 0.5, sx + width * 0.35, baseY);
+      ctx.closePath();
+      ctx.fill();
+    }
+
+    // Zemine yapisik izler
+    var i;
+    for (i = 0; i < items.length; i++) {
+      if (items[i].kind === "mud" && Math.abs(items[i].x - P.x) < 45) { drawItem(items[i]); }
+    }
+    for (i = 0; i < shells.length; i++) {
+      var sh = shells[i];
+      if (sh.t < 0) { continue; }
+      var k = Math.min(1, sh.t / sh.fuse);
+      var pulse = 0.35 + Math.abs(Math.sin(sh.t * 14)) * 0.45;
+      groundDisc(sh.x, CFG.laneZ[sh.lane], 1.6 - k * 0.7, "#a03a2c", pulse);
+    }
+
+    // Hacimli nesneler
+    horizonLine();
+    laneFloorsAndTrenches();
+    for (i = 0; i < items.length; i++) {
+      if (items[i].kind !== "mud" && Math.abs(items[i].x - P.x) < 45) { drawItem(items[i]); }
+    }
+
+    var swing = Math.sin(P.step) * Math.min(0.62, Math.abs(P.speed) * 0.13);
+    drawSoldier(P.x, P.z, P.facing, P.tilt, swing, COL.coat, COL.helmet, false);
+
+    for (i = 0; i < patrols.length; i++) {
+      var p = patrols[i];
+      if (!p.active || Math.abs(p.x - P.x) > 45) { continue; }
+      drawSoldier(p.x, CFG.laneZ[p.lane], p.dir, 0, Math.sin(p.step) * 0.45, COL.foe, COL.metal, true);
+    }
+
+    // Gaz bulutu: kaplanan seritlerin uzerinde yari saydam kutle
+    if (gas.active) {
+      for (i = 0; i < gas.lanes.length; i++) {
+        var drift = Math.sin(clock * 0.8 + i) * 0.12;
+        pushBox(P.x, 0.78 + drift, CFG.laneZ[gas.lanes[i]], 120, 1.5, 4.0, COL.gas, 0.5, null);
+        pushBox(P.x, 0.3, CFG.laneZ[gas.lanes[i]], 120, 0.6, 4.2, COL.gas, 0.4, null);
+      }
+    }
+
+    paintQuads(quads);
+    paintQuads(alphaQuads);
+
+    // Ates isiltisi
+    for (i = 0; i < items.length; i++) {
+      var it = items[i];
+      if (it.kind === "fire" && Math.abs(it.x - P.x) < 40) {
+        var f = 0.55 + Math.sin(clock * 9 + it.seed) * 0.12;
+        glow(it.x, 0.7, CFG.laneZ[it.lane], 2.6, "rgba(255,150,50,0.55)", f);
+      }
+    }
+
+    // Patlama parlamasi
+    if (blastLight > 0.01) {
+      ctx.globalAlpha = Math.min(0.55, blastLight * 0.55);
+      ctx.fillStyle = "#ffd9a0";
+      ctx.fillRect(0, 0, W, H);
+      ctx.globalAlpha = 1;
+    }
+  }
+
+  /* ===========================================================
+     OYUN DONGUSU
+     =========================================================== */
+  var clock = 0;
+  var running = false;
+  var last = 0;
+
+  function updateShells(dt) {
+    for (var i = shells.length - 1; i >= 0; i--) {
+      var sh = shells[i];
+      sh.t += dt;
+      if (sh.t >= sh.fuse) {
+        detonate(sh);
+        shells.splice(i, 1);
+      }
+    }
+    if (blastLight > 0) { blastLight = Math.max(0, blastLight - dt * 3.2); }
+  }
+
+  function frame(now) {
+    requestAnimationFrame(frame);
+    if (!running) { last = now; return; }
+
+    var dt = Math.min(0.05, (now - last) / 1000);
+    last = now;
+    clock += dt;
+
+    readKeyboard();
+    updateMovement(dt);
+    updateItems(dt);
+    updateDayNight(dt);
+    updatePatrols(dt);
+    updateShells(dt);
+    survivalTick(dt);
+    updateCamera(dt);
+    updateHud(dt);
+
+    if (gas.active) {
+      gas.timeLeft -= dt;
+      if (gas.timeLeft <= 0) { stopGas(); banner("GAZ DAĞILDI"); }
+    }
+
+    director.next -= dt;
+    if (director.next <= 0 && S.alive) { fireEvent(); }
+    if (clock >= CFG.rescueTime && S.alive) { endGame(true, ""); }
+
+    render();
+  }
+
+  requestAnimationFrame(frame);
+
+  /* ===========================================================
+     BASLAT / BITIR
+     =========================================================== */
+  var overlay = $("overlay");
+
+  function resetRun() {
+    clock = 0;
+    tickTimer = 0;
+    S.hp = 100; S.energy = 100; S.filter = 100;
+    S.alive = true; S.inGas = false; S.inMud = false; S.nearFire = false; S.hidden = false;
+    P.x = 0; P.lane = CFG.startLane; P.z = CFG.laneZ[CFG.startLane];
+    P.speed = 0; P.switching = false; P.cooldown = 0; P.stance = "walk"; P.facing = 1; P.tilt = 0;
+    cam.x = 0;
+    stopGas();
+    shells.length = 0;
+    blastLight = 0;
+    for (var j = 0; j < patrols.length; j++) { patrols[j].active = false; }
+    for (var k = 0; k < items.length; k++) {
+      var x = (Math.random() - 0.5) * CFG.worldSpan * 2;
+      // Oyuncunun dogdugu yere engel koymuyoruz.
+      if (Math.abs(x) < 7) { x += x < 0 ? -8 : 8; }
+      reseat(items[k], x);
+    }
+    director.next = 14;
+    director.raidTimer = 0;
+    nightAmount = 0;
+    gasVeil.style.opacity = "0";
+    hurtVeil.style.opacity = "0";
+    updateCamera(0.016);
+  }
+
+  function startRun() {
+    resetRun();
+    overlay.classList.add("hidden");
+    running = true;
+    last = performance.now();
+  }
+
+  function endGame(won, cause) {
+    if (!S.alive && !won) { return; }
+    S.alive = false;
+    running = false;
+
+    var survived = Math.floor(Math.min(clock, CFG.rescueTime));
+    var mm = Math.floor(survived / 60), ss = survived % 60;
+    var timeText = mm + ":" + (ss < 10 ? "0" : "") + ss;
+
+    $("cardStamp").textContent = won ? "Cephe Raporu — Tahliye" : "Cephe Raporu — Kayıp";
+    $("cardTitle").textContent = won ? "Kurtarma hatta ulaştı" : "Hat düştü";
+    $("cardSub").textContent = won
+      ? "Üç dakika boyunca ayakta kaldın"
+      : (cause || "Bilinmeyen") + " · siperde " + timeText + " dayandın";
+    $("cardBody").innerHTML = won
+      ? "<p>Sedye ekibi ön hatta indi. Çamurun içinden çıkarıldın; hattaki son adam sendin.</p>" +
+        "<p>Kalan can <b>" + Math.ceil(S.hp) + "</b> · vücut ısısı <b>" + Math.ceil(S.energy) +
+        "</b> · filtre <b>" + Math.ceil(S.filter) + "</b></p>"
+      : "<p>Sebep: <b>" + (cause || "Bilinmeyen") + "</b>. Siper hattı bir daha aynı yerde durmadı.</p>" +
+        "<p>Şerit değiştirmek, topçu ateşinde yere yatmak ve gaz bulutundan çıkmak hayatta kalmanın üç kuralı.</p>";
+    $("cardKeys").style.display = "none";
+    $("startBtn").textContent = won ? "Yeniden Oyna" : "Tekrar Dene";
+    overlay.classList.remove("hidden");
+  }
+
+  $("startBtn").addEventListener("click", startRun);
+
+  if (navigator.maxTouchPoints > 0 || "ontouchstart" in window) {
+    document.body.classList.add("touch");
+  }
+
+  // Kart arkasinda cephe gorunsun diye ilk kare hemen cizilir.
+  updateCameraBasis();
+  render();
+})();
+</script>
