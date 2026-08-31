@@ -1,0 +1,14 @@
+{
+    "name": "TrenchSurvivor.Runtime",
+    "rootNamespace": "TrenchSurvivor",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

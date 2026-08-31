@@ -1,0 +1,43 @@
+# Unity tarafindan uretilen klasorler
+[Ll]ibrary/
+[Tt]emp/
+[Oo]bj/
+[Bb]uild/
+[Bb]uilds/
+[Ll]ogs/
+[Uu]ser[Ss]ettings/
+[Mm]emoryCaptures/
+[Rr]ecordings/
+
+# Otomatik uretilen proje dosyalari
+*.csproj
+*.unityproj
+*.sln
+*.suo
+*.user
+*.userprefs
+*.pidb
+*.booproj
+*.svd
+*.pdb
+*.mdb
+*.opendb
+*.VC.db
+.vs/
+.idea/
+.vscode/
+
+# Mobil build ciktilari
+*.apk
+*.aab
+*.ipa
+*.unitypackage
+*.app
+
+# Isletim sistemi artiklari
+.DS_Store
+Thumbs.db
+
+# Crash raporlari
+sysinfo.txt
+crashlytics-build.properties
