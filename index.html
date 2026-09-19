@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0c1512">
+<meta name="description" content="Kestra-9: Gümrük Noktası — belgeleri kontrol et, kuralları uygula, aileni geçindir.">
+<title>Kestra-9: Gümrük Noktası</title>
+<link rel="manifest" href="manifest.json">
+<link rel="icon" href="assets/icon.svg" type="image/svg+xml">
+<link rel="apple-touch-icon" href="assets/icon.svg">
+<link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<div id="app">
+
+  <!-- TITLE -->
+  <section id="screen-title" class="screen active">
+    <div class="title-wrap">
+      <div class="badge-logo" id="title-badge"></div>
+      <h1 class="game-title">KESTRA-9</h1>
+      <p class="game-subtitle">GÜMRÜK NOKTASI</p>
+      <p class="game-flavor">Birlik sınır istasyonu · Gişe 4</p>
+      <div class="title-buttons">
+        <button class="btn btn-primary btn-big" id="btn-new-game">YENİ VARDİYA</button>
+        <button class="btn btn-ghost btn-big" id="btn-continue" hidden>DEVAM ET</button>
+        <button class="btn btn-ghost" id="btn-howto">NASIL OYNANIR</button>
+      </div>
+      <p class="title-credit">İstasyon saati: 3413.9 · Sektör Yönetimi onaylıdır</p>
+    </div>
+  </section>
+
+  <!-- HOWTO -->
+  <section id="screen-howto" class="screen">
+    <div class="panel-scroll">
+      <h2>GÖREV TALİMATI</h2>
+      <ul class="howto-list">
+        <li><strong>Belgeleri incele.</strong> Her yolcunun kimlik, geçiş izni ve gerekirse kargo manifestosu gibi belgeleri olur. Kartlara dokunarak alanları büyüt.</li>
+        <li><strong>Kural kitapçığına bak.</strong> Üst çubuktaki 📖 simgesiyle o günün geçerli kurallarını (izinli sistemler, yasaklı kargo, gerekli belgeler) her an açabilirsin.</li>
+        <li><strong>Tutarsızlıkları yakala.</strong> Adlar, tarihler, tür/görsel eşleşmeleri, son kullanma tarihleri ve kargo içerikleri belgeler arasında çelişebilir.</li>
+        <li><strong>Damgala.</strong> Her şey uygunsa GİRİŞ ONAYLA, bir sorun varsa REDDET, aranan biriyse GÖZALTI uygula.</li>
+        <li><strong>Aileni geçindir.</strong> Gün sonunda kazandığın kredi ile kira, yemek ve ısınma ihtiyaçlarını karşıla — aksi halde bedeli ağır olur.</li>
+        <li><strong>Sadakatine dikkat et.</strong> Bazı yolcular gölge bir örgüt için haber taşır, bazıları rüşvet teklif eder, bazıları seni sınayan denetmenlerdir. Seçimlerin hikâyenin sonunu belirler.</li>
+      </ul>
+      <button class="btn btn-primary btn-big" id="btn-howto-back">ANLADIM</button>
+    </div>
+  </section>
+
+  <!-- BRIEFING -->
+  <section id="screen-briefing" class="screen">
+    <div class="panel-scroll">
+      <p class="briefing-day" id="briefing-day">GÜN 1</p>
+      <h2 id="briefing-title">Sektör Yönetimi Emirnamesi</h2>
+      <div id="briefing-rules" class="briefing-rules"></div>
+      <div id="briefing-note" class="briefing-note"></div>
+      <div class="briefing-quota" id="briefing-quota"></div>
+      <button class="btn btn-primary btn-big" id="btn-start-shift">GİŞEYE GEÇ</button>
+    </div>
+  </section>
+
+  <!-- DESK (main gameplay) -->
+  <section id="screen-desk" class="screen">
+    <header class="desk-topbar">
+      <div class="stat-chip"><span class="stat-label">GÜN</span><span class="stat-value" id="hud-day">1</span></div>
+      <div class="stat-chip"><span class="stat-label">KREDİ</span><span class="stat-value" id="hud-credits">0</span></div>
+      <div class="stat-chip"><span class="stat-label">SIRA</span><span class="stat-value" id="hud-queue">0</span></div>
+      <button class="icon-btn" id="btn-open-rulebook" title="Kural Kitapçığı">📖</button>
+    </header>
+
+    <div class="timer-track"><div class="timer-fill" id="timer-fill"></div></div>
+
+    <div class="desk-stage">
+      <div class="booth-window">
+        <svg class="booth-bg" id="booth-bg-svg" viewBox="0 0 400 220" preserveAspectRatio="xMidYMax slice"></svg>
+        <div class="traveler-wrap">
+          <div class="traveler-portrait" id="traveler-portrait"></div>
+          <div class="traveler-slot">
+            <div class="traveler-name" id="traveler-name">—</div>
+            <div class="traveler-purpose" id="traveler-purpose">—</div>
+          </div>
+          <div class="traveler-speech" id="traveler-speech"></div>
+        </div>
+      </div>
+
+      <div class="cargo-strip hidden" id="cargo-strip">
+        <div class="cargo-icon-wrap">
+          <div class="cargo-icon" id="cargo-icon"></div>
+          <button class="btn btn-small" id="btn-scan-cargo">KARGOYU TARA</button>
+        </div>
+        <div class="cargo-compare hidden" id="cargo-compare">
+          <div class="cargo-col">
+            <h4>Beyan Edilen</h4>
+            <ul id="cargo-declared"></ul>
+          </div>
+          <div class="cargo-col">
+            <h4>Taranan İçerik</h4>
+            <ul id="cargo-actual"></ul>
+          </div>
+        </div>
+      </div>
+
+      <div class="doc-list" id="doc-list"></div>
+    </div>
+
+    <footer class="desk-actionbar">
+      <button class="stamp-btn stamp-approve" id="btn-approve">
+        <span class="stamp-icon">✅</span><span>GİRİŞE İZİN VER</span>
+      </button>
+      <button class="stamp-btn stamp-deny" id="btn-deny">
+        <span class="stamp-icon">⛔</span><span>REDDET</span>
+      </button>
+      <button class="stamp-btn stamp-detain" id="btn-detain">
+        <span class="stamp-icon">🚨</span><span>GÖZALTI</span>
+      </button>
+    </footer>
+
+    <div class="feedback-flash" id="feedback-flash"></div>
+  </section>
+
+  <!-- HOME / END OF DAY -->
+  <section id="screen-home" class="screen">
+    <div class="panel-scroll">
+      <h2>VARDİYA RAPORU</h2>
+      <div class="report-box" id="report-box"></div>
+
+      <h3>KUARTER 7 — AİLE</h3>
+      <div class="family-panel" id="family-panel"></div>
+
+      <h3>BÜTÇE DAĞITIMI</h3>
+      <p class="budget-balance">Kullanılabilir Kredi: <strong id="budget-balance">0</strong></p>
+      <div class="budget-list" id="budget-list"></div>
+
+      <button class="btn btn-primary btn-big" id="btn-end-home">GECEYİ GEÇİR</button>
+    </div>
+  </section>
+
+  <!-- ENDING -->
+  <section id="screen-ending" class="screen">
+    <div class="title-wrap">
+      <div class="badge-logo ending-badge" id="ending-badge"></div>
+      <h1 class="game-title" id="ending-title">SON</h1>
+      <p class="game-subtitle" id="ending-subtitle">—</p>
+      <p class="ending-text" id="ending-text"></p>
+      <div class="title-buttons">
+        <button class="btn btn-primary btn-big" id="btn-restart">YENİDEN BAŞLA</button>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<!-- RULEBOOK MODAL -->
+<div class="modal hidden" id="modal-rulebook">
+  <div class="modal-card">
+    <div class="modal-header"><h3>KURAL KİTAPÇIĞI — GÜN <span id="rb-day">1</span></h3><button class="icon-btn" id="btn-close-rulebook">✕</button></div>
+    <div class="modal-body" id="rulebook-body"></div>
+  </div>
+</div>
+
+<!-- EVENT MODAL -->
+<div class="modal hidden" id="modal-event">
+  <div class="modal-card">
+    <div class="modal-header"><h3 id="event-title">OLAY</h3></div>
+    <div class="modal-body">
+      <div class="event-portrait" id="event-portrait"></div>
+      <p id="event-text"></p>
+      <div class="event-choices" id="event-choices"></div>
+    </div>
+  </div>
+</div>
+
+<!-- DOC ZOOM MODAL -->
+<div class="modal hidden" id="modal-doc">
+  <div class="modal-card">
+    <div class="modal-header"><h3 id="doc-title">BELGE</h3><button class="icon-btn" id="btn-close-doc">✕</button></div>
+    <div class="modal-body" id="doc-body"></div>
+  </div>
+</div>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>
