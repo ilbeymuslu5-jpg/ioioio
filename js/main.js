@@ -2,7 +2,7 @@
 
 import { DAY_CONFIGS, PURPOSE_LABELS, BUDGET_ITEMS, HOME_EVENTS, BRIBE_TEXT, SIGNAL_INTRO_NOTE, CONTRABAND_BY_DAY } from './data.js';
 import { generateDay, dayNumberFor } from './generate.js';
-import { badgeLogoSVG, boothBackgroundSVG, portraitSVG, cargoCrateSVG, docIconSVG } from './art.js';
+import { badgeLogoSVG, boothBackgroundSVG, portraitSVG, cargoCrateSVG, docIconSVG, stampMarkSVG } from './art.js';
 import * as State from './state.js';
 import { clamp } from './util.js';
 
@@ -13,6 +13,7 @@ let session = null;
 let timerHandle = null;
 let timerLeft = 0;
 const TIMER_TOTAL = 38;
+const STAMP_REVEAL_DELAY = 550;
 
 function showScreen(id) {
   document.querySelectorAll('.screen').forEach((s) => s.classList.remove('active'));
@@ -21,6 +22,39 @@ function showScreen(id) {
 
 function openModal(id) { $(id).classList.remove('hidden'); }
 function closeModal(id) { $(id).classList.add('hidden'); }
+
+// Bir CSS animasyon sınıfını, element aynı sınıfı zaten taşısa da yeniden
+// başlatır (reflow tetikleyerek).
+function playAnim(el, className) {
+  if (!el) return;
+  el.classList.remove(className);
+  void el.offsetWidth;
+  el.classList.add(className);
+}
+
+const EXIT_CLASS_BY_ACTION = {
+  approve: 'tw-leave-approve',
+  deny: 'tw-leave-deny',
+  detain: 'tw-leave-detain',
+};
+const STAMP_KIND_BY_ACTION = {
+  approve: 'approved',
+  deny: 'denied',
+  detain: 'detained',
+};
+
+function playStampAndExit(action) {
+  const stampKind = STAMP_KIND_BY_ACTION[action];
+  if (stampKind) {
+    const slam = $('stamp-slam');
+    slam.innerHTML = stampMarkSVG(stampKind);
+    slam.classList.remove('show');
+    void slam.offsetWidth;
+    slam.classList.add('show');
+  }
+  const exitClass = EXIT_CLASS_BY_ACTION[action] || 'tw-leave-deny';
+  setTimeout(() => playAnim($('traveler-wrap'), exitClass), 180);
+}
 
 function unlockedFlawsUpTo(dayIndex) {
   const set = new Set();
@@ -168,6 +202,7 @@ function skipTraveler() {
   session.report.processed += 1;
   session.report.wrong += 1;
   state.mistakes += 1;
+  playAnim($('traveler-wrap'), 'tw-leave-deny');
   showFeedback(false, 'SIRA GEÇTİ', 'Yolcu, karar veremeden sabırsızlanıp geri çekildi.');
   setTimeout(() => {
     if (checkGameOver()) return;
@@ -187,7 +222,13 @@ function nextTraveler() {
   session.cargoScanned = false;
   session.focusedDocIndex = 0;
   updateHud();
+  const stampSlam = $('stamp-slam');
+  stampSlam.classList.remove('show');
+  stampSlam.innerHTML = '';
+  const wrap = $('traveler-wrap');
+  wrap.classList.remove('tw-leave-approve', 'tw-leave-deny', 'tw-leave-detain');
   renderTraveler(session.current);
+  playAnim(wrap, 'tw-enter');
   startTimer();
   if (session.current.special === 'bribe') {
     setTimeout(() => showBribeEvent(session.current), 500);
@@ -209,6 +250,7 @@ function renderFocusedDoc() {
   $('doc-open-fields').innerHTML = Object.entries(doc.fields)
     .map(([k, v]) => `<div class="field-row"><span class="f-label">${k}</span><span class="f-value">${v}</span></div>`)
     .join('');
+  playAnim($('desk-doc-open'), 'doc-swap');
 
   $('desk-doc-tabs').querySelectorAll('.doc-tab').forEach((el) => {
     el.classList.toggle('active', Number(el.dataset.idx) === session.focusedDocIndex);
@@ -221,9 +263,12 @@ function selectDoc(idx) {
 }
 
 function renderTraveler(t) {
-  $('traveler-portrait').innerHTML = portraitSVG(t.species, t.seed);
+  const portraitEl = $('traveler-portrait');
+  portraitEl.innerHTML = portraitSVG(t.species, t.seed);
+  playAnim(portraitEl, 'talking');
   $('traveler-name').textContent = t.name;
   $('traveler-purpose').textContent = t.purposeLabel;
+  playAnim($('traveler-speech'), 'speech-pop');
   $('traveler-speech').textContent = `"${t.speech}"`;
 
   $('desk-doc-tabs').innerHTML = t.documents.map((d, i) => docTabHtml(d, i, i === 0)).join('');
@@ -248,7 +293,9 @@ function scanCargo() {
   const t = session.current;
   if (!t || !t.cargo) return;
   session.cargoScanned = true;
-  $('cargo-icon').innerHTML = cargoCrateSVG(true);
+  const cargoIcon = $('cargo-icon');
+  cargoIcon.innerHTML = cargoCrateSVG(true);
+  playAnim(cargoIcon, 'scan-pop');
   $('cargo-compare').classList.remove('hidden');
   const declaredCounts = {};
   t.cargo.declared.forEach((it) => { declaredCounts[it] = (declaredCounts[it] || 0) + 1; });
@@ -348,11 +395,13 @@ function finalizeTraveler(t, action, { bribed = false } = {}) {
   session.report.processed += 1;
 
   if (bribed) {
-    showFeedback(true, 'RÜŞVET KABUL EDİLDİ', 'Yolcu sessizce geçti. Kimse fark etmedi... şimdilik.');
-    setTimeout(() => { if (!checkGameOver()) nextTraveler(); }, 1300);
+    playStampAndExit('approve');
+    setTimeout(() => showFeedback(true, 'RÜŞVET KABUL EDİLDİ', 'Yolcu sessizce geçti. Kimse fark etmedi... şimdilik.'), STAMP_REVEAL_DELAY);
+    setTimeout(() => { if (!checkGameOver()) nextTraveler(); }, STAMP_REVEAL_DELAY + 1300);
     return;
   }
 
+  playStampAndExit(action);
   const isCorrect = action === t.correctAction;
 
   if (isCorrect) {
@@ -400,12 +449,12 @@ function finalizeTraveler(t, action, { bribed = false } = {}) {
       ? 'Bu yolcunun belgeleri aslında sorunsuzdu.'
       : (t.flawNote || 'Bu karar hatalıydı.');
   }
-  showFeedback(isCorrect, title, note);
+  setTimeout(() => showFeedback(isCorrect, title, note), STAMP_REVEAL_DELAY);
 
   setTimeout(() => {
     if (checkGameOver()) return;
     nextTraveler();
-  }, 1400);
+  }, STAMP_REVEAL_DELAY + 1400);
 }
 
 function showFeedback(correct, title, note) {

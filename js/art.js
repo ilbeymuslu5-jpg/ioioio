@@ -31,14 +31,14 @@ export function boothBackgroundSVG() {
     ${Array.from({ length: 9 }).map((_, i) => `<rect x="${i * 46}" y="0" width="2" height="140" fill="#0a1416" opacity="0.6"/>`).join('')}
     <path d="M40 10 Q200 -18 360 10 L360 118 Q200 138 40 118 Z" fill="#0c2b2c" stroke="#3fb7ab" stroke-width="2" opacity="0.9"/>
     <path d="M40 10 Q200 -18 360 10 L360 30 Q200 4 40 30 Z" fill="#4fd7c9" opacity="0.10"/>
-    ${Array.from({ length: 5 }).map((_, i) => `<circle cx="${70 + i * 65}" cy="8" r="3" fill="#3fb7ab"/>`).join('')}
+    <g class="bg-blip-row">${Array.from({ length: 5 }).map((_, i) => `<circle class="bg-blip" style="animation-delay:-${(i * 0.6).toFixed(2)}s" cx="${70 + i * 65}" cy="8" r="3" fill="#3fb7ab"/>`).join('')}</g>
     <rect x="6" y="150" width="388" height="16" fill="#caa227"/>
     ${Array.from({ length: 22 }).map((_, i) => `<rect x="${6 + i * 18}" y="150" width="9" height="16" fill="#1a1a16" transform="skewX(-20)"/>`).join('')}
     <rect x="0" y="166" width="400" height="54" fill="#1b2b2e"/>
     <rect x="16" y="176" width="70" height="34" rx="3" fill="#0a1416" stroke="#3fb7ab" stroke-width="1.5"/>
     <text x="51" y="197" text-anchor="middle" font-family="'Courier New',monospace" font-size="10" fill="#3fb7ab">K-9</text>
-    <circle cx="360" cy="30" r="10" fill="#ffb454" opacity="0.9"/>
-    <circle cx="360" cy="30" r="18" fill="#ffb454" opacity="0.18"/>
+    <circle class="lamp-glow" cx="360" cy="30" r="10" fill="#ffb454" opacity="0.9"/>
+    <circle class="lamp-glow" cx="360" cy="30" r="18" fill="#ffb454" opacity="0.18"/>
   `;
 }
 
@@ -57,6 +57,10 @@ function backdrop() {
   <rect x="0" y="128" width="160" height="32" fill="#8b9a9c"/>`;
 }
 
+function blinkDelay(rng) {
+  return `style="animation-delay:-${(rng() * 4.4).toFixed(2)}s"`;
+}
+
 export function portraitSVG(species, seed) {
   const rng = makeRng(hashString(species + ':' + seed));
   let body = '';
@@ -65,20 +69,22 @@ export function portraitSVG(species, seed) {
       const skin = pick(rng, ['#e8b98c', '#c68a5f', '#8a5a3a', '#f2d3b3', '#6b4128']);
       const hair = pick(rng, ['#241d1a', '#5a3a22', '#161616', '#8a6b3f', '#cfcfcf', null]);
       const eye = pick(rng, ['#2f2318', '#254a3c', '#1c2c4a']);
+      const d1 = blinkDelay(rng), d2 = blinkDelay(rng);
       body = `
         <path d="M40 160 Q80 118 120 160 Z" fill="#33424a"/>
         <rect x="70" y="96" width="20" height="26" fill="${skin}"/>
         <ellipse cx="80" cy="72" rx="30" ry="34" fill="${skin}"/>
         ${hair ? `<path d="M50 58 Q80 24 110 58 Q112 40 80 34 Q48 40 50 58 Z" fill="${hair}"/>` : ''}
-        <ellipse cx="68" cy="74" rx="4.2" ry="5.4" fill="${eye}"/>
-        <ellipse cx="92" cy="74" rx="4.2" ry="5.4" fill="${eye}"/>
-        <path d="M74 92 Q80 96 86 92" stroke="#5a3a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <g class="pf-eye" ${d1}><ellipse cx="68" cy="74" rx="4.2" ry="5.4" fill="${eye}"/></g>
+        <g class="pf-eye" ${d2}><ellipse cx="92" cy="74" rx="4.2" ry="5.4" fill="${eye}"/></g>
+        <path class="pf-mouth" d="M74 92 Q80 96 86 92" stroke="#5a3a2e" stroke-width="2" fill="none" stroke-linecap="round"/>
       `;
       break;
     }
     case 'surungen': {
       const skin = pick(rng, ['#5f8f4f', '#7fae4a', '#8f9f3f', '#4f7f6f', '#6f9f8f']);
       const eyeColor = pick(rng, ['#e8d13f', '#e8862f', '#cfe83f']);
+      const d1 = blinkDelay(rng), d2 = blinkDelay(rng);
       body = `
         <path d="M42 160 Q80 122 118 160 Z" fill="#33424a"/>
         <rect x="72" y="98" width="16" height="24" fill="${skin}"/>
@@ -89,31 +95,29 @@ export function portraitSVG(species, seed) {
           const x = 58 + rng() * 44, y = 54 + rng() * 34;
           return `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="3" ry="2" fill="#00000022"/>`;
         }).join('')}
-        <ellipse cx="67" cy="70" rx="6" ry="6.4" fill="${eyeColor}"/>
-        <ellipse cx="93" cy="70" rx="6" ry="6.4" fill="${eyeColor}"/>
-        <rect x="65.5" y="66" width="3" height="9" fill="#161616"/>
-        <rect x="91.5" y="66" width="3" height="9" fill="#161616"/>
-        <path d="M70 90 Q80 94 90 90" stroke="#2f3f28" stroke-width="2" fill="none" stroke-linecap="round"/>
+        <g class="pf-eye" ${d1}><ellipse cx="67" cy="70" rx="6" ry="6.4" fill="${eyeColor}"/><rect x="65.5" y="66" width="3" height="9" fill="#161616"/></g>
+        <g class="pf-eye" ${d2}><ellipse cx="93" cy="70" rx="6" ry="6.4" fill="${eyeColor}"/><rect x="91.5" y="66" width="3" height="9" fill="#161616"/></g>
+        <path class="pf-mouth" d="M70 90 Q80 94 90 90" stroke="#2f3f28" stroke-width="2" fill="none" stroke-linecap="round"/>
       `;
       break;
     }
     case 'zarif': {
       const skin = pick(rng, ['#c9d6d9', '#b9c9d1', '#d9d0c9', '#c3d9cf']);
+      const d1 = blinkDelay(rng), d2 = blinkDelay(rng);
       body = `
         <path d="M46 160 Q80 128 114 160 Z" fill="#33424a"/>
         <rect x="74" y="102" width="12" height="20" fill="${skin}"/>
         <ellipse cx="80" cy="66" rx="24" ry="38" fill="${skin}"/>
-        <ellipse cx="66" cy="66" rx="9" ry="12" fill="#141414"/>
-        <ellipse cx="94" cy="66" rx="9" ry="12" fill="#141414"/>
-        <ellipse cx="63" cy="62" rx="3" ry="4" fill="#ffffff" opacity="0.5"/>
-        <ellipse cx="91" cy="62" rx="3" ry="4" fill="#ffffff" opacity="0.5"/>
-        <path d="M76 92 Q80 94 84 92" stroke="#6f7f7f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+        <g class="pf-eye" ${d1}><ellipse cx="66" cy="66" rx="9" ry="12" fill="#141414"/><ellipse cx="63" cy="62" rx="3" ry="4" fill="#ffffff" opacity="0.5"/></g>
+        <g class="pf-eye" ${d2}><ellipse cx="94" cy="66" rx="9" ry="12" fill="#141414"/><ellipse cx="91" cy="62" rx="3" ry="4" fill="#ffffff" opacity="0.5"/></g>
+        <path class="pf-mouth" d="M76 92 Q80 94 84 92" stroke="#6f7f7f" stroke-width="1.5" fill="none" stroke-linecap="round"/>
       `;
       break;
     }
     case 'tuylu': {
       const fur = pick(rng, ['#8a6f4f', '#5f4f3f', '#a98f6f', '#3f3f3f', '#c9b38f']);
       const eye = pick(rng, ['#2f2318', '#4a3a1c']);
+      const d1 = blinkDelay(rng), d2 = blinkDelay(rng);
       body = `
         <path d="M40 160 Q80 120 120 160 Z" fill="#33424a"/>
         <rect x="70" y="98" width="20" height="24" fill="${fur}"/>
@@ -126,9 +130,9 @@ export function portraitSVG(species, seed) {
           const x2 = 80 + Math.cos(a) * (r + 6), y2 = 70 + Math.sin(a) * (r + 6);
           return `<line x1="${x.toFixed(1)}" y1="${y.toFixed(1)}" x2="${x2.toFixed(1)}" y2="${y2.toFixed(1)}" stroke="${fur}" stroke-width="2"/>`;
         }).join('')}
-        <ellipse cx="68" cy="70" rx="4.5" ry="5" fill="${eye}"/>
-        <ellipse cx="92" cy="70" rx="4.5" ry="5" fill="${eye}"/>
-        <ellipse cx="80" cy="88" rx="9" ry="7" fill="${fur}" stroke="#00000030"/>
+        <g class="pf-eye" ${d1}><ellipse cx="68" cy="70" rx="4.5" ry="5" fill="${eye}"/></g>
+        <g class="pf-eye" ${d2}><ellipse cx="92" cy="70" rx="4.5" ry="5" fill="${eye}"/></g>
+        <ellipse class="pf-mouth" cx="80" cy="88" rx="9" ry="7" fill="${fur}" stroke="#00000030"/>
         <ellipse cx="80" cy="86" rx="2.6" ry="2" fill="#241c14"/>
       `;
       break;
@@ -143,19 +147,20 @@ export function portraitSVG(species, seed) {
         <rect x="52" y="38" width="56" height="64" rx="14" fill="${plate}"/>
         <rect x="52" y="66" width="56" height="3" fill="#00000022"/>
         <rect x="58" y="68" width="44" height="12" rx="4" fill="#0e1a1c"/>
-        <rect x="60" y="71" width="40" height="6" rx="2" fill="${visor}"/>
+        <rect class="pf-visor" x="60" y="71" width="40" height="6" rx="2" fill="${visor}"/>
         <rect x="78" y="30" width="4" height="10" fill="${plate}"/>
-        <circle cx="80" cy="28" r="4" fill="${visor}"/>
+        <circle class="pf-visor" cx="80" cy="28" r="4" fill="${visor}"/>
       `;
       break;
     }
   }
-  return `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg">${backdrop()}${body}</svg>`;
+  return `<svg viewBox="0 0 160 160" xmlns="http://www.w3.org/2000/svg"><g class="pf-face">${backdrop()}${body}</g></svg>`;
 }
 
 export function cargoCrateSVG(scanned = false) {
   const glow = scanned ? '<rect x="4" y="4" width="152" height="118" fill="#4fd7c9" opacity="0.12"/>' : '';
   return `<svg viewBox="0 0 160 130" xmlns="http://www.w3.org/2000/svg">
+    <g class="crate-body">
     ${glow}
     <path d="M20 46 L80 20 L140 46 L140 100 L80 118 L20 100 Z" fill="#8a6a3f" stroke="#4a3a20" stroke-width="2"/>
     <path d="M20 46 L80 66 L140 46" fill="none" stroke="#4a3a20" stroke-width="2"/>
@@ -164,7 +169,8 @@ export function cargoCrateSVG(scanned = false) {
     <path d="M120 55 L120 92" stroke="#4a3a20" stroke-width="1.5" opacity="0.6"/>
     <polygon points="55,80 65,80 60,68" fill="#e8b93f" stroke="#4a3a20" stroke-width="1"/>
     <text x="60" y="90" font-family="'Courier New',monospace" font-size="9" fill="#4a3a20">!</text>
-    ${scanned ? '<path d="M20 46 L140 46" stroke="#4fd7c9" stroke-width="2" opacity="0.9"/>' : ''}
+    ${scanned ? '<path class="crate-scan-line" d="M20 46 L140 46" stroke="#4fd7c9" stroke-width="2" opacity="0.9"/>' : ''}
+    </g>
   </svg>`;
 }
 
