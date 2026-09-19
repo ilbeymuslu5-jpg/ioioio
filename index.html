@@ -82,24 +82,31 @@
         </div>
       </div>
 
-      <div class="cargo-strip hidden" id="cargo-strip">
-        <div class="cargo-icon-wrap">
-          <div class="cargo-icon" id="cargo-icon"></div>
-          <button class="btn btn-small" id="btn-scan-cargo">KARGOYU TARA</button>
+      <div class="desk-surface">
+        <div class="desk-doc-open" id="desk-doc-open">
+          <div class="doc-open-title" id="doc-open-title">—</div>
+          <div class="doc-open-fields" id="doc-open-fields"></div>
         </div>
-        <div class="cargo-compare hidden" id="cargo-compare">
-          <div class="cargo-col">
-            <h4>Beyan Edilen</h4>
-            <ul id="cargo-declared"></ul>
+
+        <div class="desk-doc-tabs" id="desk-doc-tabs"></div>
+
+        <div class="cargo-strip hidden" id="cargo-strip">
+          <div class="cargo-icon-wrap">
+            <div class="cargo-icon" id="cargo-icon"></div>
+            <button class="btn btn-small" id="btn-scan-cargo">KARGOYU TARA</button>
           </div>
-          <div class="cargo-col">
-            <h4>Taranan İçerik</h4>
-            <ul id="cargo-actual"></ul>
+          <div class="cargo-compare hidden" id="cargo-compare">
+            <div class="cargo-col">
+              <h4>Beyan Edilen</h4>
+              <ul id="cargo-declared"></ul>
+            </div>
+            <div class="cargo-col">
+              <h4>Taranan İçerik</h4>
+              <ul id="cargo-actual"></ul>
+            </div>
           </div>
         </div>
       </div>
-
-      <div class="doc-list" id="doc-list"></div>
     </div>
 
     <footer class="desk-actionbar">
@@ -166,14 +173,6 @@
       <p id="event-text"></p>
       <div class="event-choices" id="event-choices"></div>
     </div>
-  </div>
-</div>
-
-<!-- DOC ZOOM MODAL -->
-<div class="modal hidden" id="modal-doc">
-  <div class="modal-card">
-    <div class="modal-header"><h3 id="doc-title">BELGE</h3><button class="icon-btn" id="btn-close-doc">✕</button></div>
-    <div class="modal-body" id="doc-body"></div>
   </div>
 </div>
 

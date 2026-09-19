@@ -2,7 +2,7 @@
 
 import { DAY_CONFIGS, PURPOSE_LABELS, BUDGET_ITEMS, HOME_EVENTS, BRIBE_TEXT, SIGNAL_INTRO_NOTE, CONTRABAND_BY_DAY } from './data.js';
 import { generateDay, dayNumberFor } from './generate.js';
-import { badgeLogoSVG, boothBackgroundSVG, portraitSVG, cargoCrateSVG, stampMarkSVG, docIconSVG } from './art.js';
+import { badgeLogoSVG, boothBackgroundSVG, portraitSVG, cargoCrateSVG, docIconSVG } from './art.js';
 import * as State from './state.js';
 import { clamp } from './util.js';
 
@@ -62,7 +62,6 @@ function init() {
   $('btn-start-shift').addEventListener('click', beginShift);
   $('btn-open-rulebook').addEventListener('click', openRulebook);
   $('btn-close-rulebook').addEventListener('click', () => closeModal('modal-rulebook'));
-  $('btn-close-doc').addEventListener('click', () => closeModal('modal-doc'));
 
   $('btn-scan-cargo').addEventListener('click', scanCargo);
 
@@ -178,7 +177,6 @@ function skipTraveler() {
 
 function nextTraveler() {
   clearTimer();
-  closeModal('modal-doc');
   closeModal('modal-event');
   if (!session.queue.length) {
     session.current = null;
@@ -187,6 +185,7 @@ function nextTraveler() {
   }
   session.current = session.queue.shift();
   session.cargoScanned = false;
+  session.focusedDocIndex = 0;
   updateHud();
   renderTraveler(session.current);
   startTimer();
@@ -195,14 +194,30 @@ function nextTraveler() {
   }
 }
 
-function docCardHtml(doc, idx) {
-  const entries = Object.entries(doc.fields).slice(0, 2);
-  const preview = entries.map(([k, v]) => `${k}: ${v}`).join('<br>');
-  return `<div class="doc-card" data-idx="${idx}">
-    <div class="doc-icon">${docIconSVG(doc.icon)}</div>
-    <div class="doc-title">${doc.title}</div>
-    <div class="doc-mini">${preview}</div>
+function docTabHtml(doc, idx, active) {
+  return `<div class="doc-tab ${active ? 'active' : ''}" data-idx="${idx}">
+    <span class="doc-tab-icon">${docIconSVG(doc.icon)}</span>
+    <span>${doc.title}</span>
   </div>`;
+}
+
+function renderFocusedDoc() {
+  const t = session.current;
+  if (!t) return;
+  const doc = t.documents[session.focusedDocIndex] || t.documents[0];
+  $('doc-open-title').textContent = doc.title;
+  $('doc-open-fields').innerHTML = Object.entries(doc.fields)
+    .map(([k, v]) => `<div class="field-row"><span class="f-label">${k}</span><span class="f-value">${v}</span></div>`)
+    .join('');
+
+  $('desk-doc-tabs').querySelectorAll('.doc-tab').forEach((el) => {
+    el.classList.toggle('active', Number(el.dataset.idx) === session.focusedDocIndex);
+  });
+}
+
+function selectDoc(idx) {
+  session.focusedDocIndex = idx;
+  renderFocusedDoc();
 }
 
 function renderTraveler(t) {
@@ -211,10 +226,11 @@ function renderTraveler(t) {
   $('traveler-purpose').textContent = t.purposeLabel;
   $('traveler-speech').textContent = `"${t.speech}"`;
 
-  $('doc-list').innerHTML = t.documents.map((d, i) => docCardHtml(d, i)).join('');
-  $('doc-list').querySelectorAll('.doc-card').forEach((el) => {
-    el.addEventListener('click', () => openDocModal(t.documents[Number(el.dataset.idx)]));
+  $('desk-doc-tabs').innerHTML = t.documents.map((d, i) => docTabHtml(d, i, i === 0)).join('');
+  $('desk-doc-tabs').querySelectorAll('.doc-tab').forEach((el) => {
+    el.addEventListener('click', () => selectDoc(Number(el.dataset.idx)));
   });
+  renderFocusedDoc();
 
   const cargoStrip = $('cargo-strip');
   if (t.cargo) {
@@ -226,14 +242,6 @@ function renderTraveler(t) {
   } else {
     cargoStrip.classList.add('hidden');
   }
-}
-
-function openDocModal(doc) {
-  $('doc-title').textContent = doc.title;
-  $('doc-body').innerHTML = Object.entries(doc.fields)
-    .map(([k, v]) => `<div class="doc-detail-field"><span class="f-label">${k}</span><span class="f-value">${v}</span></div>`)
-    .join('');
-  openModal('modal-doc');
 }
 
 function scanCargo() {
