@@ -8,6 +8,8 @@ Türk temalı, **birinci şahıs (POV)** bakışlı, tamamen **el çizimi** gör
 
 - **Padişah Slot** – kolu parmağınla aşağı çek ya da **ÇEVİR**'e bas.
 - **Yirmi Bir (Blackjack)** – fesli Van kedisi krupiye. **ÇEK**, **DUR**, **KATLA**. Blackjack 3:2 öder, krupiye 17'de durur, 4 desteli ayakkabı.
+- **Okey** – 106 taş, gösterge/okey, sahte okey; seri, per ve çift ile bitirme (12-13-1 dahil). Taşları ıstakada sürükle, **DİZ** ile otomatik diz. Rakipler: Tarçın, Pamuk, Duman. Bitiren 4 katını alır, taşlar biterse berabere.
+- **Tavla** – Kahveci Reis'e karşı; kırma, bar, toplama, zar kullanma zorunluluğu, çift zar, **GERİ** ile hamleyi geri alma. Mars çifte öder.
 
 Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi ortaktır.
 
