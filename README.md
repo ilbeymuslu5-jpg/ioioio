@@ -4,7 +4,12 @@ Türk temalı, **birinci şahıs (POV)** bakışlı, tamamen **el çizimi** gör
 **Sadece eğlence amaçlıdır; sanal akçe kullanılır, gerçek para yoktur.**
 
 ## Oynamak
-`index.html` dosyasını telefonda/tarayıcıda açın. Kolu parmağınla aşağı çek ya da **ÇEVİR**'e bas.
+`index.html` dosyasını telefonda/tarayıcıda açın. Saray salonunda oyununu seç:
+
+- **Padişah Slot** – kolu parmağınla aşağı çek ya da **ÇEVİR**'e bas.
+- **Yirmi Bir (Blackjack)** – fesli Van kedisi krupiye. **ÇEK**, **DUR**, **KATLA**. Blackjack 3:2 öder, krupiye 17'de durur, 4 desteli ayakkabı.
+
+Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi ortaktır.
 
 ## Özellikler
 - **POV sahne:** Osmanlı sarayında, masada oturuyorsun. Önünde makine, masada ince belli çay (buharı tütüyor), tespih ve bakiyene göre büyüyen akçe yığını.

@@ -189,7 +189,7 @@ function drawNazar(c) {
   trace(c, Array.from({ length: 8 }, (_, i) => { const a = -2.8 + i * .14; return [100 + Math.cos(a) * 70, 102 + Math.sin(a) * 68]; }), false, .6); c.stroke();
   c.globalAlpha = 1;
 }
-function drawKedi(c, blink) {
+function drawKedi(c, blink, happy) {
   seed(303);
   const eL = sub([[40, 100], [36, 26], [88, 66]], 12, true), eR = mirror(eL).reverse();
   wash(c, eL, '#fbf8f2'); wash(c, eR, '#fbf8f2');
@@ -200,7 +200,9 @@ function drawKedi(c, blink) {
   c.save(); trace(c, head, true, 0); c.clip(); wash(c, ell(64, 72, 34, 22), '#d9963c', 2, .95); wash(c, ell(140, 70, 20, 14), '#d9963c', 2, .8); c.restore();
   hatch(c, ell(100, 170, 64, 22), .4, 6, '#7d7468', .25);
   ink(c, head, true, 4);
-  if (blink) {
+  if (happy) {
+    ink(c, [[60, 118], [74, 104], [88, 118]], false, 3.4); ink(c, [[112, 118], [126, 104], [140, 118]], false, 3.4);
+  } else if (blink) {
     ink(c, [[60, 114], [74, 120], [88, 114]], false, 3.2); ink(c, [[112, 114], [126, 120], [140, 114]], false, 3.2);
   } else {
     [[74, '#3a8ee6'], [126, '#e8a317']].forEach(([x, col]) => {
@@ -413,7 +415,7 @@ const coinPing = (d = 0) => tone('triangle', 1800 + Math.random() * 900, .18, .0
 //  EKRAN / KATMANLAR
 // =============================================================
 let W = 0, H = 0, DPR = 1, S = 1, M = 100;
-let symSprites = [], wheelSprites = [], lanternSprites = [], bgLayers = [], fgLayers = [], vignette = null, grainPat = null, glowSpr = null;
+let symSprites = [], wheelSprites = [], lanternSprites = [], bgLayers = [], fgLayers = [], bjLayers = [], vignette = null, grainPat = null, glowSpr = null;
 const painting = new Image(); let paintingOK = false;
 painting.onload = () => { paintingOK = true; if (W) buildLayers(); };
 painting.src = 'assets/bg.png';
@@ -425,6 +427,7 @@ function spriteOf(px, fn, b, box = 200) {
 }
 function buildSprites() {
   const px = Math.max(72, Math.ceil(CELL * S * DPR * 1.25));
+  cardCache = {};
   symSprites = SYM.map(s => [0, 1, 2].map(b => spriteOf(px, s.draw, b)));
   const wp = Math.ceil(WHEEL_C.r * 2.15 * S * DPR * 2.1);
   wheelSprites = [0, 1, 2].map(b => { const k = makeCanvas(wp, wp), c = k.getContext('2d'); c.translate(wp / 2, wp / 2); c.scale(wp / 330, wp / 330); const o = BOIL; BOIL = b; drawWheelFace(c); BOIL = o; return k; });
@@ -452,6 +455,7 @@ function visRect(margin = 0) { const hw = (W / 2 + M) / S + margin, hh = (H / 2 
 function buildLayers() {
   bgLayers = [0, 1].map(b => { BOIL = b; return renderLayer(drawBackground, 1.1); });
   fgLayers = [0, 1].map(b => { BOIL = b; return renderLayer(drawTable, 0); });
+  bjLayers = [0, 1].map(b => { BOIL = b; return renderLayer(drawBJTable, 0); });
   BOIL = 0;
   vignette = makeCanvas(W * DPR, H * DPR);
   const v = vignette.getContext('2d'), g = v.createRadialGradient(W * DPR / 2, H * DPR * .45, Math.min(W, H) * DPR * .3, W * DPR / 2, H * DPR * .5, Math.max(W, H) * DPR * .75);
@@ -488,7 +492,6 @@ function drawBackground(c) {
   // çini paneli
   const T = 110;
   for (let ty = 404; ty < 1560; ty += T) for (let tx = Math.floor(v.x0 / T) * T; tx < v.x1; tx += T) {
-    if (tx > 90 && tx + T < 910 && ty > 420 && ty < 1440) continue; // makinenin arkası
     seed(1000 + tx * 7 + ty);
     const t = rr(tx + 2, ty + 2, T - 4, T - 4, 6, 20); wash(c, t, '#efe3c6', 1.5);
     const cx = tx + T / 2, cy = ty + T / 2;
@@ -583,8 +586,8 @@ const bulbs = [];
   for (let x = 140; x <= 860; x += 48) { bulbs.push({ x, y: 434, g: 1 }); bulbs.push({ x, y: 538, g: 1 }); }
 })();
 
-function btnDraw(id, col, label, t, size = 40) {
-  const b = BTN[id], pr = press[id] && t - press[id] < 160, dy = pr ? 5 : 0;
+function btnDraw(id, col, label, t, size = 40, set = BTN) {
+  const b = set[id], pr = press[id] && t - press[id] < 160, dy = pr ? 5 : 0;
   seed(300 + id.length * 7 + b.x);
   const base = ell(b.x, b.y + 8, b.r, b.r * .92, 26); wash(ctx, base, '#2a140a', 1.5);
   const p = ell(b.x, b.y + dy, b.r, b.r * .92, 26); wash(ctx, p, pr ? shade(col, -.2).replace(/rgb\((\d+),(\d+),(\d+)\)/, (m, r, g, bb) => '#' + [r, g, bb].map(v => (+v).toString(16).padStart(2, '0')).join('')) : col, 1.5);
@@ -811,12 +814,12 @@ function drawParticles(dt) {
   ctx.globalAlpha = 1;
 }
 // ---------- kurdele afişler ----------
-function banner(text, sub, opts = {}) { banners.push({ text, sub, t0: performance.now(), dur: opts.dur || 2200, big: !!opts.big, top: !!opts.top, col: opts.col || '#cf4b32' }); }
+function banner(text, sub, opts = {}) { banners.push({ text, sub, t0: performance.now(), dur: opts.dur || 2200, big: !!opts.big, top: !!opts.top, y: opts.y || 0, col: opts.col || '#cf4b32' }); }
 function drawBanners(t) {
   banners = banners.filter(b => t - b.t0 < b.dur);
   const b = banners[banners.length - 1]; if (!b) return;
   const age = t - b.t0, sc = easeOutBack(clamp(age / 380, 0, 1)), out = clamp((b.dur - age) / 300, 0, 1);
-  const y = b.top ? H * .16 : toScreen(500, RY + RH / 2).y, w = Math.min(W * .88, b.big ? 460 : 380), h = b.big ? 108 : 78;
+  const y = b.top ? H * .16 : b.y ? H * b.y : scene === 'slot' ? toScreen(500, RY + RH / 2).y : H * .42, w = Math.min(W * .88, b.big ? 460 : 380), h = b.big ? 108 : 78;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.translate(W / 2, y); ctx.scale(sc, sc); ctx.rotate(-.025); ctx.globalAlpha = out;
   BOIL = Math.floor(t / 140) % 3; seed(90);
   for (const s of [-1, 1]) { const tail = sub([[s * (w / 2 - 14), -h * .22], [s * (w / 2 + 34), -h * .22], [s * (w / 2 + 18), h * .16], [s * (w / 2 + 34), h * .55], [s * (w / 2 - 14), h * .55]], 10, true); wash(ctx, tail, '#d9c39a', 1.2); ink(ctx, tail, true, 2.5, INK, 1); }
@@ -957,6 +960,10 @@ function hitBtn(w) { for (const k in BTN) { const b = BTN[k]; if (Math.hypot(w.x
 cv.addEventListener('pointerdown', e => {
   audio(); askGyro();
   const w = toWorld(e.clientX, e.clientY);
+  if (!trans.done) return;
+  if (scene !== 'lobby' && e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h) { if (canLeave()) go('lobby', e.clientX, e.clientY); return; }
+  if (scene === 'lobby') { const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); go(SIGNS[i].id, e.clientX, e.clientY); } return; }
+  if (scene === 'bj') { bjDown(w); return; }
   if (state === 'bonusReady') { spinWheel(); return; }
   const th = lever.a, tipX = PIVOT.x - 16 * Math.sin(th), tipY = PIVOT.y - LEVER_L * Math.cos(th);
   if (state === 'idle' && (Math.hypot(w.x - tipX, w.y - tipY) < 90 || (w.x > 900 && w.y > tipY - 60 && w.y < PIVOT.y + 40))) {
@@ -972,7 +979,7 @@ cv.addEventListener('pointerdown', e => {
   else if (b === 'sound') { muted = !muted; store.set('mute', muted); }
 });
 cv.addEventListener('pointermove', e => {
-  if (e.pointerType === 'mouse') { ptr.tx = (e.clientX / W - .5) * -16; ptr.ty = (e.clientY / H - .5) * -10; }
+  if (e.pointerType === 'mouse' && W > 0 && H > 0) { ptr.tx = (e.clientX / W - .5) * -16; ptr.ty = (e.clientY / H - .5) * -10; }
   if (!lever.drag || e.pointerId !== ptrId) return;
   const w = toWorld(e.clientX, e.clientY);
   const na = clamp(lever.startA + (w.y - lever.startY) / LEVER_L * 1.5, 0, Math.PI * .92);
@@ -982,7 +989,10 @@ cv.addEventListener('pointermove', e => {
 });
 const endDrag = e => { if (lever.drag && e.pointerId === ptrId) { lever.drag = false; lever.v = 0; ptrId = null; } };
 cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
-addEventListener('keydown', e => { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); if (state === 'bonusReady') spinWheel(); else pullLever(); } });
+addEventListener('keydown', e => {
+  if (scene === 'slot' && (e.code === 'Space' || e.code === 'Enter')) { e.preventDefault(); if (state === 'bonusReady') spinWheel(); else pullLever(); }
+  if (scene === 'bj') { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); bjDeal(); } if (e.key === 'h' || e.key === 'ç') bjHit(); if (e.key === 's' || e.key === 'd') bjStand(); }
+});
 document.getElementById('payClose').onclick = () => document.getElementById('pay').classList.remove('show');
 let gyroAsked = false;
 function askGyro() {
@@ -1003,6 +1013,340 @@ function buildPayTable() {
 }
 
 // =============================================================
+//  SALON (oyun seçimi), GEÇİŞ, GERİ DÜĞMESİ
+// =============================================================
+let scene = 'lobby';
+const SIGNS = [
+  { id: 'slot', x: 500, y: 655, w: 720, h: 430, title: 'Padişah Slot', sub: 'Nazar değerse çark döner', rope: 0 },
+  { id: 'bj', x: 500, y: 1175, w: 720, h: 430, title: 'Yirmi Bir', sub: 'Blackjack · krupiye Van kedisi', rope: 1.3 },
+];
+const trans = { t0: 0, to: null, done: true, x: 0, y: 0 };
+const safeTop = (() => { try { const d = document.createElement('div'); d.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden'; document.body.appendChild(d); const h = d.offsetHeight; d.remove(); return h; } catch { return 0; } })();
+const BACK = { x: 12, y: 12 + safeTop, w: 116, h: 48 };
+function go(to, sx = W / 2, sy = H / 2) {
+  if (!trans.done) return;
+  Object.assign(trans, { t0: performance.now(), to, done: false, switched: false, x: sx, y: sy });
+  tone('sine', 520, .25, .05, 0, 260); thud(.08, 600);
+}
+function updateTrans(t) {
+  if (trans.done) return;
+  const u = (t - trans.t0) / 900;
+  if (u >= .5 && !trans.switched) {
+    trans.switched = true; scene = trans.to; banners = []; coins = []; sparks = [];
+    cam.x = cam.tx = CAM0.x; cam.y = cam.ty = CAM0.y; cam.z = cam.tz = 1;
+    if (scene !== 'slot') { auto = false; cat.until = 0; cat.show = 0; }
+    if (scene === 'bj') { bjReset(); banner('Hoş geldin!', 'Bahsini seç, DAĞIT\'a bas', { dur: 2400, col: '#1f4e9c', y: .45 }); }
+    if (scene === 'slot') banner('Bol şans!', 'Kolu aşağı çek ya da ÇEVİR\'e bas', { dur: 2400, col: '#1f4e9c' });
+    trans.x = W / 2; trans.y = H / 2;
+  }
+  if (u >= 1) trans.done = true;
+}
+function drawIris(t) {
+  if (trans.done) return;
+  const u = clamp((t - trans.t0) / 900, 0, 1), R = Math.hypot(W, H);
+  const r = u < .5 ? R * (1 - u * 2) : R * ((u - .5) * 2);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  ctx.fillStyle = '#120806'; ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(trans.x, trans.y, Math.max(0, r), 0, Math.PI * 2, true); ctx.fill();
+  if (r > 2) { seed(77); ctx.strokeStyle = INK; ctx.lineWidth = 6; trace(ctx, ell(trans.x, trans.y, r, r, 40), true, 3); ctx.stroke(); }
+}
+function canLeave() { return scene === 'slot' ? state === 'idle' : scene === 'bj' ? (bj.state === 'bet' || bj.state === 'result') : false; }
+function drawBack(t) {
+  if (scene === 'lobby') return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.globalAlpha = canLeave() ? 1 : .35;
+  seed(66); const p = rr(BACK.x, BACK.y, BACK.w, BACK.h, 10, 14);
+  wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5, INK, 1);
+  inkText(ctx, '‹ Salon', BACK.x + BACK.w / 2, BACK.y + BACK.h / 2 + 1, 28, INK, { outline: false });
+  ctx.globalAlpha = 1;
+}
+function drawLobby(t) {
+  setWorld(1);
+  seed(50);
+  inkText(ctx, 'Nazar Sarayı', 500, 140, 120, '#f2cf74', { ow: 12 });
+  inkText(ctx, 'Hangi oyunu oynayalım?', 500, 240, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  const pl = rr(330, 290, 340, 74, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3);
+  inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), 500, 328, 42, INK, { outline: false });
+  SIGNS.forEach((s, i) => {
+    const sway = Math.sin(t * .0011 + s.rope) * .012, hov = press['sign' + i] && t - press['sign' + i] < 200 ? .97 : 1;
+    ctx.save(); ctx.translate(s.x, s.y - s.h / 2); ctx.rotate(sway); ctx.scale(hov, hov);
+    seed(60 + i);
+    const top = i === 0 ? 400 : SIGNS[0].y + SIGNS[0].h / 2 - 10, rl = s.y - s.h / 2 - top;
+    for (const sx of [-1, 1]) { ink(ctx, [[sx * s.w * .36, 4], [sx * s.w * .36, -rl]], false, 3.5, '#1a0e06', 1.5); const hk = ell(sx * s.w * .36, -rl, 9, 9, 10); wash(ctx, hk, '#d9a441', 1); ink(ctx, hk, true, 2); }
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; trace(ctx, rr(-s.w / 2 + 12, 16, s.w, s.h, 18, 30), true, 2); ctx.fill();
+    const fr = rr(-s.w / 2, 0, s.w, s.h, 18, 30); wash(ctx, fr, '#7a1e28', 2); ink(ctx, fr, true, 4);
+    const pp = rr(-s.w / 2 + 22, 22, s.w - 44, s.h - 44, 10, 30); wash(ctx, pp, '#f4e8cc', 2); ink(ctx, pp, true, 2.5, '#b8862b', 1.2);
+    for (const [x, y] of [[-s.w / 2 + 22, 22], [s.w / 2 - 22, 22], [-s.w / 2 + 22, s.h - 22], [s.w / 2 - 22, s.h - 22]]) { const st = star4(x, y, 18); wash(ctx, st, '#f2cf74', 1); ink(ctx, st, true, 1.8); }
+    inkText(ctx, s.title, -s.w / 2 + 60, 92, 74, '#cf4b32', { align: 'left', ow: 8 });
+    inkText(ctx, s.sub, -s.w / 2 + 62, 158, 34, INK, { align: 'left', outline: false, font: '"Caveat"', weight: 700 });
+    if (s.id === 'slot') {
+      const win = rr(-s.w / 2 + 60, 200, 360, 150, 14, 20); wash(ctx, win, '#2a0a0f', 1.5); ink(ctx, win, true, 4, '#d9a441', 1);
+      [0, 1, 3].forEach((si, k) => { const sp = symSprites[si] && symSprites[si][BOIL]; if (sp) { const bob = Math.sin(t * .004 + k) * 4; ctx.drawImage(sp, -s.w / 2 + 72 + k * 114, 216 + bob, 110, 110); } });
+    } else {
+      [['A', 'maca', -.35], ['K', 'kupa', 0], ['10', 'karo', .35]].forEach(([r, su, rot], k) => {
+        ctx.save(); ctx.translate(-s.w / 2 + 200 + k * 70, 360); ctx.rotate(rot + Math.sin(t * .002 + k) * .03);
+        ctx.drawImage(cardSprite(r + su, c => drawCardFace(c, r, su)), -60, -170, 120, 170); ctx.restore();
+      });
+      ctx.save(); ctx.translate(-s.w / 2 + 390, 196); ctx.scale(.62, .62); drawKedi(ctx, (t % 2900) < 150); drawFez(ctx); ctx.restore();
+    }
+    const k = .5 + .5 * Math.sin(t * .005 + i * 2);
+    const pb = rr(s.w / 2 - 210, s.h - 120, 160, 70, 34, 16); wash(ctx, pb, '#cf4b32', 1.5); ink(ctx, pb, true, 3);
+    inkText(ctx, 'Oyna ›', s.w / 2 - 130 + k * 4, s.h - 84, 44, '#fbf1da', { ow: 6 });
+    ctx.restore();
+  });
+}
+function signAt(w) { for (let i = 0; i < SIGNS.length; i++) { const s = SIGNS[i]; if (Math.abs(w.x - s.x) < s.w / 2 && w.y > s.y - s.h / 2 && w.y < s.y + s.h / 2 + 20) return i; } return -1; }
+
+// =============================================================
+//  YİRMİ BİR (BLACKJACK)
+// =============================================================
+const SUITS = ['kupa', 'karo', 'sinek', 'maca'], RANKS = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+const SHOE = { x: 845, y: 640 };
+const BJB = {
+  bjMinus: { x: 210, y: 1540, r: 52 }, bjPlus: { x: 360, y: 1540, r: 52 }, bjDeal: { x: 700, y: 1540, r: 100 },
+  bjHit: { x: 220, y: 1540, r: 88 }, bjStand: { x: 500, y: 1540, r: 88 }, bjDouble: { x: 780, y: 1540, r: 88 },
+};
+const bj = { state: 'bet', shoe: [], player: [], dealer: [], discard: [], bet: 0, doubled: false, mood: 0, pawT: 0, result: '' };
+let cardCache = {};
+const wait = ms => new Promise(r => setTimeout(r, ms));
+
+function suitShape(s, cx, cy, size) {
+  const k = size / 34, out = [];
+  const heart = (flip) => Array.from({ length: 30 }, (_, i) => { const a = i / 30 * Math.PI * 2, x = 16 * Math.pow(Math.sin(a), 3), y = -(13 * Math.cos(a) - 5 * Math.cos(2 * a) - 2 * Math.cos(3 * a) - Math.cos(4 * a)); return [cx + x * k, cy + (flip ? -y - 4 : y + 2) * k]; });
+  if (s === 'kupa') out.push(heart(false));
+  else if (s === 'karo') out.push(sub([[cx, cy - size * .55], [cx + size * .4, cy], [cx, cy + size * .55], [cx - size * .4, cy]], 4, true));
+  else if (s === 'maca') { out.push(heart(true)); out.push(sub([[cx, cy + size * .1], [cx + size * .18, cy + size * .55], [cx - size * .18, cy + size * .55]], 4, true)); }
+  else { const r = size * .23; out.push(ell(cx, cy - size * .22, r, r, 16), ell(cx - size * .25, cy + size * .08, r, r, 16), ell(cx + size * .25, cy + size * .08, r, r, 16)); out.push(sub([[cx, cy], [cx + size * .16, cy + size * .52], [cx - size * .16, cy + size * .52]], 4, true)); }
+  return out;
+}
+function drawSuit(c, s, cx, cy, size) { const col = s === 'kupa' || s === 'karo' ? '#c0392b' : '#22222e'; suitShape(s, cx, cy, size).forEach(p => { wash(c, p, col, .6); ink(c, p, true, 1.6, INK, .4); }); }
+function drawFez(c) {
+  const f = sub([[72, 66], [128, 66], [121, 10], [79, 10]], 8, true); wash(c, f, '#b8231c', 1.5); ink(c, f, true, 3);
+  const top = ell(100, 10, 21, 5, 14); wash(c, top, '#8a1812', 1); ink(c, top, true, 2);
+  ink(c, [[100, 8], [116, 20], [124, 44]], false, 3, '#151515', 1); ink(c, [[124, 44], [118, 60]], false, 2, '#151515', 1); ink(c, [[124, 44], [130, 60]], false, 2, '#151515', 1);
+}
+function drawCardFace(c, r, s) {
+  seed(2000 + RANKS.indexOf(r) * 4 + SUITS.indexOf(s));
+  const card = rr(3, 3, 114, 164, 12, 18); wash(c, card, '#fbf4e2', 1.2); ink(c, card, true, 3, INK, 1);
+  const col = s === 'kupa' || s === 'karo' ? '#c0392b' : '#22222e';
+  const corner = () => { inkText(c, r, 22, 24, r === '10' ? 30 : 36, col, { outline: false }); drawSuit(c, s, 22, 52, 18); };
+  corner(); c.save(); c.translate(120, 170); c.rotate(Math.PI); corner(); c.restore();
+  if ('JQK'.includes(r)) {
+    const fr = rr(30, 30, 60, 110, 8, 14); wash(c, fr, r === 'K' ? '#f6e3b0' : r === 'Q' ? '#f7d9d2' : '#d8ecec', 1); ink(c, fr, true, 2, '#b8862b', .8);
+    c.save(); c.translate(30, 52); c.scale(.3, .3); (r === 'K' ? drawKavuk : r === 'Q' ? drawLale : drawKedi)(c); c.restore();
+    drawSuit(c, s, 60, 124, 16);
+  } else if (r === 'A') { const e = ell(60, 85, 34, 34, 22); ink(c, e, true, 3, '#d9a441', 1); drawSuit(c, s, 60, 85, 48); }
+  else drawSuit(c, s, 60, 85, 44);
+}
+function drawCardBack(c) {
+  seed(2999);
+  const card = rr(3, 3, 114, 164, 12, 18); wash(c, card, '#1f4e9c', 1.2);
+  c.save(); trace(c, card, true, 0); c.clip(); c.strokeStyle = '#5c8fd6'; c.globalAlpha = .5; c.lineWidth = 1.5;
+  for (let i = -170; i < 170; i += 16) { c.beginPath(); c.moveTo(i, 0); c.lineTo(i + 170, 170); c.moveTo(i + 170, 0); c.lineTo(i, 170); c.stroke(); }
+  c.restore(); c.globalAlpha = 1;
+  ink(c, rr(12, 12, 96, 146, 8, 14), true, 2.5, '#d9a441', 1);
+  c.save(); c.translate(24, 49); c.scale(.36, .36); drawNazar(c); c.restore();
+  ink(c, card, true, 3, INK, 1);
+}
+function cardSprite(key, fn) {
+  const b = BOIL % 2, k = key + b;
+  if (!cardCache[k]) {
+    const w = Math.ceil(120 * S * DPR * 1.5), h = Math.ceil(170 * S * DPR * 1.5), cv2 = makeCanvas(w, h), c = cv2.getContext('2d');
+    c.scale(w / 120, h / 170); const o = BOIL; BOIL = b; fn(c); BOIL = o; cardCache[k] = cv2;
+  }
+  return cardCache[k];
+}
+function newShoe() {
+  bj.shoe = []; for (let d = 0; d < 4; d++) for (const s of SUITS) for (const r of RANKS) bj.shoe.push({ r, s });
+  for (let i = bj.shoe.length - 1; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [bj.shoe[i], bj.shoe[j]] = [bj.shoe[j], bj.shoe[i]]; }
+}
+function handVal(cards, all = true) {
+  let v = 0, aces = 0;
+  for (const c of cards) { if (!all && !c.face) continue; if (c.r === 'A') { v += 11; aces++; } else if ('JQK'.includes(c.r)) v += 10; else v += +c.r; }
+  while (v > 21 && aces) { v -= 10; aces--; }
+  return { v, soft: aces > 0 };
+}
+const isBJ = cards => cards.length === 2 && handVal(cards).v === 21;
+function bjReset() { if (bj.shoe.length < 60) newShoe(); if (bj.state !== 'bet' && bj.state !== 'result') return; }
+function layoutHands() {
+  const lay = (cards, cy, sc) => { const n = cards.length, gap = Math.min(86, 400 / Math.max(1, n - 1)) * sc; cards.forEach((cd, i) => { cd.tx = 500 + (i - (n - 1) / 2) * gap; cd.ty = cy; cd.tsc = sc; }); };
+  lay(bj.dealer, 720, .9); lay(bj.player, 1150, 1.2);
+}
+async function dealTo(who, face) {
+  if (bj.shoe.length < 20) newShoe();
+  const c = bj.shoe.pop(); const cd = { r: c.r, s: c.s, face, t0: performance.now(), x: SHOE.x, y: SHOE.y, rot: (Math.random() - .5) * .12, flipT: 0 };
+  bj[who].push(cd); layoutHands(); bj.pawT = performance.now();
+  thud(.06, 3200); tone('triangle', 900, .05, .015);
+  await wait(400);
+}
+async function flipHole() {
+  const h = bj.dealer.find(c => !c.face); if (!h) return;
+  h.face = true; h.flipT = performance.now(); tone('triangle', 700, .08, .03); await wait(420);
+}
+async function bjDeal() {
+  if (bj.state !== 'bet' && bj.state !== 'result') return;
+  const bet = BETS[betIdx];
+  if (balance < bet) { if (!dailyGift()) banner('Akçe yetmedi', 'Bahsi düşür, yarın hediye var', { y: .45 }); return; }
+  if (bj.player.length) { const now = performance.now(); bj.discard = [...bj.dealer, ...bj.player].map(c => Object.assign(c, { dt0: now })); bj.player = []; bj.dealer = []; tone('sine', 300, .2, .03, 0, 150); await wait(280); }
+  setBalance(balance - bet); bj.bet = bet; bj.doubled = false; bj.state = 'dealing'; bj.mood = 0; lastWin = 0; banners = [];
+  await dealTo('player', true); await dealTo('dealer', true); await dealTo('player', true); await dealTo('dealer', false);
+  if (isBJ(bj.player) || isBJ(bj.dealer)) { await flipHole(); return bjResolve(); }
+  bj.state = 'play';
+}
+async function bjHit() {
+  if (bj.state !== 'play') return; bj.state = 'busy';
+  await dealTo('player', true);
+  const v = handVal(bj.player).v;
+  if (v > 21) { await flipHole(); return bjResolve(); }
+  if (v === 21) return bjStand(true);
+  bj.state = 'play';
+}
+async function bjStand(force) {
+  if (bj.state !== 'play' && !force) return; bj.state = 'dealer';
+  await flipHole();
+  while (handVal(bj.dealer).v < 17) { await wait(380); await dealTo('dealer', true); }
+  bjResolve();
+}
+async function bjDouble() {
+  if (bj.state !== 'play' || bj.player.length !== 2 || balance < bj.bet) return;
+  bj.state = 'busy'; setBalance(balance - bj.bet); bj.bet *= 2; bj.doubled = true; tone('triangle', 660, .1, .04);
+  await dealTo('player', true);
+  if (handVal(bj.player).v > 21) { await flipHole(); return bjResolve(); }
+  bjStand(true);
+}
+function bjResolve() {
+  const p = handVal(bj.player).v, d = handVal(bj.dealer).v, pb = isBJ(bj.player), db = isBJ(bj.dealer);
+  let pay = 0, title, subt, col = '#cf4b32', big = false;
+  if (p > 21) { title = 'Battın!'; subt = p + ' oldu, 21\'i geçti'; bj.mood = 1; col = '#1f4e9c'; }
+  else if (pb && !db) { pay = bj.bet * 2.5; title = 'BLACKJACK!'; subt = 'Maşallah, 3:2 ödendi'; big = true; }
+  else if (db && !pb) { title = 'Krupiye Blackjack'; subt = 'Kedi bu eli aldı'; bj.mood = 1; col = '#1f4e9c'; }
+  else if (pb && db) { pay = bj.bet; title = 'Berabere'; subt = 'İkiniz de 21'; col = '#2a7a5a'; }
+  else if (d > 21) { pay = bj.bet * 2; title = 'Kazandın!'; subt = 'Krupiye battı (' + d + ')'; }
+  else if (p > d) { pay = bj.bet * 2; title = 'Kazandın!'; subt = p + ' – ' + d; }
+  else if (p === d) { pay = bj.bet; title = 'Berabere'; subt = p + ' – ' + d + ', bahis iade'; col = '#2a7a5a'; }
+  else { title = 'Kaybettin'; subt = p + ' – ' + d + ' · Kısmet değilmiş'; bj.mood = 1; col = '#1f4e9c'; }
+  if (pay > 0) { setBalance(balance + pay); lastWin = pay - (pay === bj.bet ? pay : 0); }
+  const net = pay - bj.bet;
+  banner(title, net > 0 ? subt + ' · +' + Math.round(net).toLocaleString('tr-TR') + ' akçe' : subt, { big, col, dur: 2600, y: .45 });
+  if (net > 0) { spawnCoins(big ? 70 : 25, 500, 1340); melody(big ? [0, 1, 2, 3, 4, 5, 6, 7, 6, 4, 7] : [4, 5, 7], big ? .11 : .13); if (big) { shake = 12; zoomKick = .05; } if (navigator.vibrate) navigator.vibrate(big ? [60, 40, 120] : 40); }
+  else if (net < 0) { tone('sine', 220, .4, .05, 0, 150); }
+  bj.state = 'result';
+}
+function drawBJTable(c) {
+  const v = visRect(300);
+  seed(31);
+  wash(c, sub([[30, 530], [970, 530], [v.x1 + 700, v.y1 + 500], [v.x0 - 700, v.y1 + 500]], 60, true), '#4a2412', 3);
+  hatch(c, sub([[30, 530], [970, 530], [985, 566], [15, 566]], 30, true), .2, 6, INK, .35);
+  const felt = sub([[70, 566], [930, 566], [v.x1 + 640, v.y1 + 500], [v.x0 - 640, v.y1 + 500]], 60, true);
+  wash(c, felt, '#1d5a40', 3); hatch(c, felt, .35, 13, '#0b2b1d', .16);
+  const g = c.createRadialGradient(500, 1050, 60, 500, 1100, 820); g.addColorStop(0, 'rgba(255,220,150,.22)'); g.addColorStop(1, 'rgba(0,0,0,.25)'); c.fillStyle = g; c.fillRect(v.x0, 560, v.x1 - v.x0, v.y1 - 560 + 400);
+  ink(c, [[70, 566], [930, 566]], false, 4, '#1a0c05', 2);
+  const arc = Array.from({ length: 30 }, (_, i) => { const a = .18 + i / 29 * (Math.PI - .36); return [500 + Math.cos(a) * 470, 640 + Math.sin(a) * 360]; });
+  ink(c, arc, false, 4, '#d9a441', 2); ink(c, arc.map(([x, y]) => [x, y + 16]), false, 2, '#d9a441', 2);
+  inkText(c, 'BLACKJACK 3:2 ÖDER', 500, 925, 50, '#f2cf74', { ow: 6 });
+  inkText(c, 'Krupiye 17\'de durur', 500, 976, 36, '#e9d9a8', { outline: false, font: '"Caveat"', weight: 700 });
+  for (const x of [130, 870]) { c.save(); c.translate(x - 38, 860); c.scale(.38, .38); drawLale(c); c.restore(); }
+  const bc = ell(500, 1345, 130, 52, 30); ink(c, bc, true, 4, '#d9a441', 1.5); ink(c, ell(500, 1345, 112, 42, 30), true, 2, '#d9a441', 1.5);
+  inkText(c, 'bahis', 500, 1420, 32, '#e9d9a8', { outline: false, font: '"Caveat"', weight: 700 });
+  // kart kutusu (shoe)
+  const sh = sub([[780, 600], [910, 590], [930, 690], [770, 700]], 14, true); wash(c, sh, '#6b3e22', 2); hatch(c, sh, .9, 6, INK, .3); ink(c, sh, true, 3.5);
+  c.save(); c.translate(790, 586); c.rotate(-.12); c.scale(.6, .4); drawCardBack(c); c.restore();
+  const dt = sub([[80, 600], [200, 596], [210, 680], [70, 686]], 14, true); wash(c, dt, '#3a1e0e', 2); ink(c, dt, true, 3);
+}
+function drawCatDealer(t) {
+  setWorld(.8);
+  const br = 1 + Math.sin(t * .002) * .012;
+  ctx.save(); ctx.translate(350, 150); ctx.scale(1.5, 1.5 * br);
+  seed(32);
+  const body = sub([[52, 160], [148, 160], [210, 300], [-10, 300]], 14, true); wash(ctx, body, '#7a1e28', 2); hatch(ctx, sub([[150, 160], [210, 300], [160, 300]], 12, true), .5, 6, INK, .3); ink(ctx, body, true, 3.5);
+  ink(ctx, [[100, 172], [100, 300]], false, 4, '#d9a441', 1); ink(ctx, [[60, 162], [100, 210], [140, 162]], false, 4, '#d9a441', 1);
+  for (let i = 0; i < 4; i++) { ctx.fillStyle = '#f2cf74'; ctx.beginPath(); ctx.arc(100, 222 + i * 20, 4, 0, 7); ctx.fill(); }
+  drawKedi(ctx, (t % 3100) < 150, bj.mood === 1 && bj.state === 'result');
+  drawFez(ctx);
+  ctx.restore();
+}
+function drawPaws(t) {
+  setWorld(.8);
+  const u = clamp((t - bj.pawT) / 380, 0, 1), k = Math.sin(u * Math.PI);
+  for (const [x, dx, dy] of [[420, 0, 0], [580, 120 * k, -30 * k]]) {
+    seed(33 + x); const p = ell(x + dx, 580 + dy, 38, 22, 18); wash(ctx, p, '#fbf8f2', 1); ink(ctx, p, true, 3);
+    for (let j = -1; j <= 1; j++) ink(ctx, [[x + dx + j * 12, 588 + dy], [x + dx + j * 12, 598 + dy]], false, 2);
+  }
+}
+function drawChips(t) {
+  if (!bj.bet || bj.state === 'bet') return;
+  const cols = ['#cf4b32', '#1f4e9c', '#2aa3a0', '#d9a441', '#7a1e28', '#f4e8cc'];
+  const stacks = bj.doubled ? [440, 560] : [500];
+  stacks.forEach((sx, si) => {
+    const n = clamp(Math.round(Math.log2(bj.bet / (bj.doubled ? 2 : 1) / 10)) + 2, 2, 8);
+    for (let i = 0; i < n; i++) {
+      seed(400 + i + si * 10); const y = 1350 - i * 12, e = ell(sx, y, 46, 17, 20), col = cols[(i + betIdx) % cols.length];
+      ctx.fillStyle = '#1a0c05'; ctx.beginPath(); ctx.ellipse(sx, y + 6, 46, 17, 0, 0, 7); ctx.fill();
+      wash(ctx, e, col, .8); ink(ctx, ell(sx, y, 32, 11, 16), true, 2, '#fbf1da', .6); ink(ctx, e, true, 2.2, INK, .6);
+    }
+  });
+  const tg = rr(560 + (bj.doubled ? 50 : 0), 1300, 130, 52, 12, 14); wash(ctx, tg, '#f4e8cc', 1); ink(ctx, tg, true, 2.4);
+  inkText(ctx, bj.bet.toLocaleString('tr-TR'), 625 + (bj.doubled ? 50 : 0), 1327, 36, INK, { outline: false });
+}
+function drawCards(t) {
+  const draw1 = (cd, alpha = 1) => {
+    const u = clamp((t - cd.t0) / 420, 0, 1), e = 1 - Math.pow(1 - u, 3);
+    if (u < 1) { cd.x = lerp(SHOE.x, cd.tx, e); cd.y = lerp(SHOE.y, cd.ty, e) - Math.sin(u * Math.PI) * 60; }
+    else { cd.x = lerp(cd.x, cd.tx, .2); cd.y = lerp(cd.y, cd.ty, .2); }
+    const sc = lerp(.55, cd.tsc, e), rot = cd.rot * e + (1 - e) * .9;
+    let sx = 1, face = cd.face;
+    if (cd.flipT) { const v = clamp((t - cd.flipT) / 380, 0, 1); sx = Math.abs(Math.cos(v * Math.PI)); face = v > .5; }
+    const spr = face ? cardSprite(cd.r + cd.s, c => drawCardFace(c, cd.r, cd.s)) : cardSprite('back', drawCardBack);
+    ctx.save(); ctx.translate(cd.x, cd.y); ctx.rotate(rot); ctx.globalAlpha = alpha;
+    ctx.fillStyle = 'rgba(5,15,10,.45)'; ctx.fillRect(-60 * sc * sx + 8, -85 * sc + 10, 120 * sc * sx, 170 * sc);
+    ctx.drawImage(spr, -60 * sc * sx, -85 * sc, 120 * sc * sx, 170 * sc); ctx.restore(); ctx.globalAlpha = 1;
+  };
+  bj.discard = bj.discard.filter(cd => t - cd.dt0 < 400);
+  bj.discard.forEach(cd => { const u = (t - cd.dt0) / 400; cd.tx = 140; cd.ty = 640; cd.x = lerp(cd.x, 140, .25); cd.y = lerp(cd.y, 640, .25); draw1(cd, 1 - u); });
+  bj.dealer.forEach(cd => draw1(cd)); bj.player.forEach(cd => draw1(cd));
+  const tag = (x, y, txt, hot) => { seed(500 + x); const p = rr(x - 44, y - 28, 88, 56, 14, 14); wash(ctx, p, hot ? '#f2cf74' : '#f4e8cc', 1); ink(ctx, p, true, 2.5); inkText(ctx, txt, x, y + 2, 40, INK, { outline: false }); };
+  if (bj.dealer.length && bj.dealer.every(c => t - c.t0 > 420)) { const hv = handVal(bj.dealer, false); tag(Math.max(...bj.dealer.map(c => c.tx)) + 100, 720, (hv.soft && hv.v < 21 && bj.dealer.every(c => c.face) ? 'y' : '') + hv.v + (bj.dealer.some(c => !c.face) ? '+?' : ''), false); }
+  if (bj.player.length && bj.player.every(c => t - c.t0 > 420)) { const hv = handVal(bj.player); tag(Math.max(...bj.player.map(c => c.tx)) + 120, 1150, String(hv.v), hv.v === 21); }
+}
+function drawBJ(t) {
+  drawCatDealer(t);
+  const bl = Math.floor(t / 280) % 2; if (bjLayers[bl]) drawLayer(bjLayers[bl], 1);
+  drawPaws(t);
+  setWorld(1);
+  drawChips(t); drawCards(t);
+  const betting = bj.state === 'bet' || bj.state === 'result';
+  if (betting) {
+    btnDraw('bjMinus', '#2aa3a0', '−', t, 62, BJB); btnDraw('bjPlus', '#2aa3a0', '+', t, 58, BJB);
+    inkText(ctx, 'bahis ' + BETS[betIdx], 285, 1625, 38, '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 });
+    const dy = btnDraw('bjDeal', '#cf4b32', null, t, 40, BJB); inkText(ctx, bj.state === 'result' ? 'YENİ EL' : 'DAĞIT', BJB.bjDeal.x, BJB.bjDeal.y + dy, bj.state === 'result' ? 44 : 52, '#fbf1da', { ow: 7 });
+    ink(ctx, ell(BJB.bjDeal.x, BJB.bjDeal.y + dy, 108, 100, 30), true, 4, '#f2cf74', 1.5);
+  } else {
+    const on = bj.state === 'play', dbl = on && bj.player.length === 2 && balance >= bj.bet;
+    ctx.globalAlpha = on ? 1 : .45; btnDraw('bjHit', '#2aa3a0', 'ÇEK', t, 44, BJB); btnDraw('bjStand', '#cf4b32', 'DUR', t, 44, BJB);
+    ctx.globalAlpha = dbl ? 1 : .35; btnDraw('bjDouble', '#d9a441', 'KATLA', t, 36, BJB); ctx.globalAlpha = 1;
+  }
+  seed(34);
+  const st = rr(170, 1660, 660, 76, 16, 20); wash(ctx, st, '#f4e8cc', 1.5); ink(ctx, st, true, 3);
+  inkText(ctx, 'AKÇE', 200, 1698, 28, '#6a1b24', { align: 'left', outline: false, font: '"Caveat"', weight: 700 });
+  inkText(ctx, Math.round(dispBal).toLocaleString('tr-TR'), 270, 1700, 46, INK, { align: 'left', outline: false });
+  inkText(ctx, 'KAZANÇ', 610, 1698, 28, '#6a1b24', { align: 'right', outline: false, font: '"Caveat"', weight: 700 });
+  inkText(ctx, Math.round(dispWin).toLocaleString('tr-TR'), 800, 1700, 46, dispWin > 0 ? '#b8321f' : INK, { align: 'right', outline: false });
+}
+function bjDown(w) {
+  for (const k in BJB) {
+    const b = BJB[k]; if (Math.hypot(w.x - b.x, w.y - b.y) > b.r + 14) continue;
+    const betting = bj.state === 'bet' || bj.state === 'result';
+    if (betting !== ['bjMinus', 'bjPlus', 'bjDeal'].includes(k)) continue;
+    press[k] = performance.now(); tone('triangle', 520, .05, .05);
+    if (k === 'bjMinus') { betIdx = Math.max(0, betIdx - 1); store.set('bet', betIdx); }
+    else if (k === 'bjPlus') { betIdx = Math.min(BETS.length - 1, betIdx + 1); store.set('bet', betIdx); }
+    else if (k === 'bjDeal') bjDeal();
+    else if (k === 'bjHit') bjHit();
+    else if (k === 'bjStand') bjStand();
+    else if (k === 'bjDouble') bjDouble();
+    return;
+  }
+}
+
+// =============================================================
 //  ANA DÖNGÜ
 // =============================================================
 let last = performance.now(), started = false;
@@ -1015,6 +1359,7 @@ function frame(t) {
   zoomKick *= Math.pow(.05, dt / 1000);
   gyro.x = lerp(gyro.x, gyro.tx, .08); gyro.y = lerp(gyro.y, gyro.ty, .08); ptr.x = lerp(ptr.x, ptr.tx, .06); ptr.y = lerp(ptr.y, ptr.ty, .06);
   shake *= Math.pow(.02, dt / 1000);
+  for (const o of [gyro, ptr]) for (const k in o) if (!Number.isFinite(o[k])) o[k] = 0;
   off.x = Math.sin(t * .00061) * 5 + Math.sin(t * .00023) * 3 + gyro.x + ptr.x + (Math.random() - .5) * shake;
   off.y = Math.sin(t * .00093) * 4 + gyro.y + ptr.y + (Math.random() - .5) * shake + Math.sin(lever.a) * 9;
   // kol fiziği
@@ -1029,7 +1374,7 @@ function frame(t) {
   dispBal = Math.abs(balance - dispBal) < 1 ? balance : lerp(dispBal, balance, 1 - Math.pow(.02, dt / 1000));
   dispWin = Math.abs(lastWin - dispWin) < 1 ? lastWin : lerp(dispWin, lastWin, 1 - Math.pow(.03, dt / 1000));
   // kedi
-  if (state === 'idle' && t > cat.next) { cat.until = t + 3800; cat.next = t + 30000 + Math.random() * 30000; }
+  if (scene === 'slot' && state === 'idle' && t > cat.next) { cat.until = t + 3800; cat.next = t + 30000 + Math.random() * 30000; }
   cat.show = lerp(cat.show, t < cat.until ? 1 : 0, .06);
 
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#120806'; ctx.fillRect(0, 0, cv.width, cv.height);
@@ -1037,12 +1382,22 @@ function frame(t) {
   const bl = Math.floor(t / 280) % 2;
   if (bgLayers[bl]) drawLayer(bgLayers[bl], .35);
   drawLanterns(t);
-  drawCat(t);
-  setWorld(1); drawMachine(t);
-  if (fgLayers[bl]) drawLayer(fgLayers[bl], 1.5);
-  drawTableLive(t);
+  updateTrans(t);
+  if (scene === 'slot') {
+    drawCat(t);
+    setWorld(1); drawMachine(t);
+    if (fgLayers[bl]) drawLayer(fgLayers[bl], 1.5);
+    drawTableLive(t);
+  } else if (scene === 'bj') drawBJ(t);
+  else {
+    if (fgLayers[bl]) drawLayer(fgLayers[bl], 1.5);
+    drawTableLive(t);
+    drawLobby(t);
+  }
   drawParticles(dt);
   drawBanners(t);
+  drawBack(t);
+  drawIris(t);
   // kağıt dokusu + vinyet
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .28; ctx.fillStyle = grainPat; ctx.fillRect(0, 0, W, H);
@@ -1054,10 +1409,11 @@ requestAnimationFrame(frame);
 const fontsReady = document.fonts ? Promise.race([Promise.all([document.fonts.load('40px "Caveat Brush"'), document.fonts.load('700 40px "Caveat"')]), new Promise(r => setTimeout(r, 2500))]) : Promise.resolve();
 fontsReady.catch(() => {}).then(() => {
   resize(); started = true;
-  if (!dailyGift()) banner('Hoş geldin!', 'Kolu aşağı çek ya da ÇEVİR\'e bas', { dur: 2800, col: '#1f4e9c' });
+  newShoe();
+  dailyGift();
 });
 // test kancası
-window.__nazar = { get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__nazar = { get scene() { return scene; }, bj, go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>
