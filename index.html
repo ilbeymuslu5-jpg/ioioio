@@ -1,0 +1,265 @@
+<!doctype html>
+<html lang="tr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#3b2a1e">
+<title>Kılıç Avı</title>
+<style>
+  * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; user-select: none; -webkit-user-select: none; }
+  html, body { margin: 0; height: 100%; }
+  body {
+    background: radial-gradient(circle at 50% 30%, #6b4a32, #2a1c12 75%);
+    color: #3b2a1e;
+    font-family: "Trebuchet MS", system-ui, sans-serif;
+    display: flex; justify-content: center; align-items: center;
+    overflow: hidden; touch-action: manipulation;
+    padding: env(safe-area-inset-top) 12px env(safe-area-inset-bottom);
+  }
+  .panel {
+    border: 14px solid transparent;
+    border-image: url(assets/panel_brown.png) 14 fill stretch;
+  }
+  .light {
+    border: 14px solid transparent;
+    border-image: url(assets/panel_beigeLight.png) 14 fill stretch;
+  }
+  #game { width: min(94vw, 440px); position: relative; }
+  .hud { display: flex; justify-content: space-between; align-items: center; gap: 10px; margin-bottom: 10px; color: #f3e3c3; font-weight: bold; }
+  .score { font-size: 26px; text-shadow: 0 2px 0 #000a; }
+  .combo { font-size: 14px; opacity: .85; min-height: 18px; }
+  .bar { display: flex; height: 18px; width: 150px; position: relative; }
+  .bar .cap, .bar .mid { height: 18px; background-size: 100% 100%; }
+  .bar .cap { width: 9px; flex: none; }
+  .bar .mid { flex: 1; }
+  .bar.back .l { background-image: url(assets/barBack_horizontalLeft.png); }
+  .bar.back .m { background-image: url(assets/barBack_horizontalMid.png); }
+  .bar.back .r { background-image: url(assets/barBack_horizontalRight.png); }
+  .bar .fill { position: absolute; inset: 0 auto 0 0; display: flex; overflow: hidden; transition: width .2s; }
+  .bar .fill .l { background-image: url(assets/barRed_horizontalLeft.png); }
+  .bar .fill .m { background-image: url(assets/barRed_horizontalMid.png); }
+  .bar .fill .r { background-image: url(assets/barRed_horizontalRight.png); }
+  .grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .cell {
+    aspect-ratio: 45 / 49; border: 0; padding: 0; cursor: pointer;
+    background: url(assets/buttonSquare_beige.png) center / 100% 100% no-repeat;
+    position: relative; display: grid; place-items: center;
+  }
+  .cell.down { background-image: url(assets/buttonSquare_beige_pressed.png); transform: translateY(3px); }
+  .cell img { width: 58%; image-rendering: auto; pointer-events: none; animation: pop .15s ease-out; }
+  .cell img.trap { width: 44%; }
+  @keyframes pop { from { transform: scale(.2); } to { transform: scale(1); } }
+  .cell.hit { animation: flash .25s; }
+  .cell.bad { animation: shake .3s; }
+  @keyframes flash { 50% { filter: brightness(1.5); } }
+  @keyframes shake { 25% { transform: translateX(-5px); } 75% { transform: translateX(5px); } }
+  .float { position: absolute; font-weight: bold; font-size: 20px; pointer-events: none; animation: rise .7s forwards; text-shadow: 0 1px 0 #fff8; }
+  @keyframes rise { to { transform: translateY(-40px); opacity: 0; } }
+  .overlay { position: absolute; inset: -6px; display: flex; align-items: center; justify-content: center; background: #0006; }
+  .overlay.hidden { display: none; }
+  .card { width: 86%; text-align: center; }
+  .card h1 { margin: 0 0 6px; font-size: 30px; }
+  .card p { margin: 6px 0; font-size: 15px; line-height: 1.4; }
+  .legend { display: flex; justify-content: center; gap: 12px; margin: 10px 0; font-size: 14px; font-weight: bold; }
+  .legend span { display: flex; align-items: center; gap: 4px; }
+  .legend img { height: 24px; }
+  .btn {
+    width: 190px; height: 49px; border: 0; margin-top: 10px;
+    background: url(assets/buttonLong_blue.png) center / 100% 100% no-repeat;
+    color: #fff; font-weight: bold; font-size: 20px; font-family: inherit; text-shadow: 0 2px 0 #0005; cursor: pointer;
+  }
+  .btn:active { background-image: url(assets/buttonLong_blue_pressed.png); height: 45px; margin-top: 14px; }
+  .credit { text-align: center; color: #f3e3c388; font-size: 11px; margin-top: 8px; }
+</style>
+</head>
+<body>
+<div id="game">
+  <div class="hud">
+    <div>
+      <div class="score" id="score">0</div>
+      <div class="combo" id="combo"></div>
+    </div>
+    <div class="bar back" id="life">
+      <div class="cap l"></div><div class="mid m"></div><div class="cap r"></div>
+      <div class="fill" id="lifeFill" style="width:100%"><div class="cap l"></div><div class="mid m" style="min-width:0"></div><div class="cap r"></div></div>
+    </div>
+  </div>
+  <div class="panel"><div class="grid" id="grid"></div></div>
+  <div class="credit">Grafikler: Kenney (CC0)</div>
+
+  <div class="overlay" id="overlay">
+    <div class="card light">
+      <h1 id="title">Kılıç Avı</h1>
+      <p id="msg">Çıkan silahlara hemen dokun.<br>Çarpıya dokunma!</p>
+      <div class="legend">
+        <span><img src="assets/cursorSword_silver.png" alt="">+1</span>
+        <span><img src="assets/cursorGauntlet_bronze.png" alt="">+2</span>
+        <span><img src="assets/cursorSword_gold.png" alt="">+5</span>
+        <span><img src="assets/iconCross_brown.png" alt="">−can</span>
+      </div>
+      <p id="best"></p>
+      <button class="btn" id="start">Başla</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const TYPES = [
+  { key: 'silver', img: 'assets/cursorSword_silver.png',   pts: 1, w: 50 },
+  { key: 'gaunt',  img: 'assets/cursorGauntlet_bronze.png', pts: 2, w: 18 },
+  { key: 'gold',   img: 'assets/cursorSword_gold.png',      pts: 5, w: 10 },
+  { key: 'trap',   img: 'assets/iconCross_brown.png',       pts: 0, w: 22, trap: true },
+];
+const MAX_LIVES = 5;
+const $ = id => document.getElementById(id);
+const grid = $('grid');
+const cells = [];
+let state = null, raf = 0;
+
+for (let i = 0; i < 9; i++) {
+  const b = document.createElement('button');
+  b.className = 'cell';
+  b.addEventListener('pointerdown', e => { e.preventDefault(); tap(i); });
+  grid.appendChild(b);
+  cells.push({ el: b, item: null });
+}
+
+// --- ses (WebAudio, dosya gerekmez) ---
+let ac;
+function beep(freq, dur = .08, type = 'square', vol = .06) {
+  try {
+    ac = ac || new (window.AudioContext || window.webkitAudioContext)();
+    const o = ac.createOscillator(), g = ac.createGain();
+    o.type = type; o.frequency.value = freq;
+    g.gain.setValueAtTime(vol, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(.0001, ac.currentTime + dur);
+    o.connect(g).connect(ac.destination); o.start(); o.stop(ac.currentTime + dur);
+  } catch {}
+}
+const buzz = () => { try { navigator.vibrate && navigator.vibrate(60); } catch {} };
+
+function getBest() { try { return +localStorage.getItem('kilicAviBest') || 0; } catch { return 0; } }
+function setBest(v) { try { localStorage.setItem('kilicAviBest', v); } catch {} }
+
+function pickType() {
+  const total = TYPES.reduce((s, t) => s + t.w, 0);
+  let r = Math.random() * total;
+  for (const t of TYPES) { if ((r -= t.w) < 0) return t; }
+  return TYPES[0];
+}
+
+function start() {
+  cells.forEach(c => clear(c));
+  state = { score: 0, lives: MAX_LIVES, combo: 0, t0: performance.now(), nextSpawn: 0, over: false };
+  $('overlay').classList.add('hidden');
+  render();
+  cancelAnimationFrame(raf);
+  raf = requestAnimationFrame(loop);
+}
+
+// zorluk: zamanla hızlanır
+function difficulty(now) {
+  const s = (now - state.t0) / 1000;
+  const k = Math.min(1, s / 60);
+  return { spawnEvery: 850 - 470 * k, life: 1400 - 750 * k, maxActive: 2 + Math.floor(k * 3) };
+}
+
+function loop(now) {
+  if (state.over) return;
+  const d = difficulty(now);
+  for (const c of cells) {
+    if (c.item && now > c.item.expires) {
+      const wasGood = !c.item.type.trap;
+      clear(c);
+      if (wasGood) { loseLife(c); }
+    }
+  }
+  if (now >= state.nextSpawn) {
+    const free = cells.filter(c => !c.item);
+    const active = 9 - free.length;
+    if (free.length && active < d.maxActive) {
+      const c = free[Math.floor(Math.random() * free.length)];
+      const type = pickType();
+      c.item = { type, expires: now + d.life * (type.key === 'gold' ? .7 : 1) };
+      const img = document.createElement('img');
+      img.src = type.img; img.alt = '';
+      if (type.trap) img.className = 'trap';
+      c.el.appendChild(img);
+    }
+    state.nextSpawn = now + d.spawnEvery * (0.7 + Math.random() * 0.6);
+  }
+  raf = requestAnimationFrame(loop);
+}
+
+function clear(c) { c.item = null; c.el.innerHTML = ''; }
+
+function tap(i) {
+  if (!state || state.over) return;
+  const c = cells[i];
+  c.el.classList.add('down');
+  setTimeout(() => c.el.classList.remove('down'), 90);
+  if (!c.item) return;
+  const t = c.item.type;
+  clear(c);
+  if (t.trap) {
+    state.combo = 0;
+    flash(c, 'bad');
+    loseLife(c);
+    return;
+  }
+  state.combo++;
+  const mult = 1 + Math.floor(state.combo / 10);
+  const gain = t.pts * mult;
+  state.score += gain;
+  flash(c, 'hit');
+  floatText(c, '+' + gain, t.key === 'gold' ? '#b8860b' : '#2e6b2e');
+  beep(t.key === 'gold' ? 1046 : 660 + Math.min(state.combo, 20) * 15);
+  render();
+}
+
+function loseLife(c) {
+  state.lives--;
+  state.combo = 0;
+  floatText(c, '−♥', '#a12020');
+  beep(140, .18, 'sawtooth', .08); buzz();
+  render();
+  if (state.lives <= 0) gameOver();
+}
+
+function flash(c, cls) {
+  c.el.classList.remove('hit', 'bad'); void c.el.offsetWidth; c.el.classList.add(cls);
+}
+
+function floatText(c, txt, color) {
+  const f = document.createElement('div');
+  f.className = 'float'; f.textContent = txt; f.style.color = color;
+  c.el.appendChild(f);
+  setTimeout(() => f.remove(), 700);
+}
+
+function render() {
+  $('score').textContent = state.score;
+  const mult = 1 + Math.floor(state.combo / 10);
+  $('combo').textContent = state.combo >= 3 ? `Kombo ${state.combo}` + (mult > 1 ? `  ×${mult}` : '') : '';
+  $('lifeFill').style.width = (Math.max(0, state.lives) / MAX_LIVES * 100) + '%';
+}
+
+function gameOver() {
+  state.over = true;
+  cancelAnimationFrame(raf);
+  const best = Math.max(getBest(), state.score);
+  const isNew = state.score > 0 && state.score >= best && state.score > getBest();
+  setBest(best);
+  $('title').textContent = 'Oyun bitti';
+  $('msg').innerHTML = `Puanın: <b>${state.score}</b>` + (isNew ? '<br>Yeni rekor!' : '');
+  $('best').textContent = 'En iyi: ' + best;
+  $('start').textContent = 'Tekrar';
+  setTimeout(() => cells.forEach(clear), 300);
+  $('overlay').classList.remove('hidden');
+}
+
+$('best').textContent = getBest() ? 'En iyi: ' + getBest() : '';
+$('start').addEventListener('click', start);
+</script>
+</body>
+</html>
