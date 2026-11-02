@@ -13,6 +13,17 @@ Türk temalı, **birinci şahıs (POV)** bakışlı, tamamen **el çizimi** gör
 
 Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi ortaktır.
 
+## Karakter, çanta ve koleksiyon
+- **Karakter:** sen de bir kedisin: kürk, göz, şapka, aksesuar ve kaftan rengini seç. Çok oyunculu masalarda diğerleri seni böyle görür.
+- **Eşya düşmesi:** her çevirme, el ve oyun sonunda şans: Yaygın 1/25, Nadir 1/200, **Destansı 1/1.000**, **Efsanevi 1/1.000.000** (Kaşıkçı Elması, Topkapı Hançeri, Altın Sultan Tacı, Altın Tüy Kürkü).
+- **Çanta:** eşyayı giy, akçeye **sat** ya da **koleksiyona koy** (satılamaz, Hazine Odası'nda sergilenir; bulunmayanlar gölge).
+
+## Çok oyunculu
+- Salondaki **Arkadaşlarla** düğmesi: masa kur (Tavla 2 kişi, Okey 2-4 kişi + kediler, Yirmi Bir 1-3 kişi), kodu paylaş, açık masalara katıl.
+- Masalar claude.ai Artifact paylaşımlı veritabanında tutulur; anlık bildirim için Artifact odaları kullanılır. Oyun claude.ai'de paylaşılmalı ve arkadaşların **Katkıda bulunabilir (Contributor)** yetkisine sahip olmalı.
+- Aynı cihazda iki kişilik Tavla da var.
+- Akçe, çanta ve karakter her cihazda yerel olarak saklanır.
+
 Telefon **dikey ve yatay** tutulabilir: her sahnenin yatay düzeni ayrıdır (yatayda tavla tahtası standart yatay dizilime döner), oyun ortasında çevirince kaldığı yerden devam eder. Çentikli ekranlarda güvenli alan dikkate alınır.
 
 ## Özellikler
