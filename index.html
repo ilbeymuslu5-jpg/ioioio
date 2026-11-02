@@ -418,7 +418,7 @@ const coinPing = (d = 0) => tone('triangle', 1800 + Math.random() * 900, .18, .0
 let W = 0, H = 0, DPR = 1, S = 1, M = 100;
 let symSprites = [], wheelSprites = [], lanternSprites = [], bgLayers = [], fgLayers = [], bjLayers = [], tvLayers = [], okLayers = [], vignette = null, grainPat = null, glowSpr = null;
 const painting = new Image(); let paintingOK = false;
-painting.onload = () => { paintingOK = true; if (W) buildLayers(); };
+painting.onload = () => { paintingOK = true; };
 painting.src = 'assets/bg.png';
 
 function makeCanvas(w, h) { const k = document.createElement('canvas'); k.width = Math.max(1, Math.ceil(w)); k.height = Math.max(1, Math.ceil(h)); return k; }
@@ -443,23 +443,68 @@ function buildSprites() {
   for (let i = 0; i < 70; i++) { gc.beginPath(); const x = Math.random() * 256, y = Math.random() * 256; gc.moveTo(x, y); gc.quadraticCurveTo(x + Math.random() * 30 - 15, y + Math.random() * 30 - 15, x + Math.random() * 40 - 20, y + Math.random() * 40 - 20); gc.stroke(); }
   grainPat = ctx.createPattern(gk, 'repeat');
 }
-function renderLayer(fn, blur) {
-  const k = makeCanvas((W + 2 * M) * DPR, (H + 2 * M) * DPR), c = k.getContext('2d');
-  c.setTransform(DPR * S, 0, 0, DPR * S, DPR * (M + W / 2 - CAM0.x * S), DPR * (M + H / 2 - CAM0.y * S));
+function renderLayer(fn, blur, dim) {
+  const R = dim ? Math.min(DPR, 1) : DPR;
+  const k = makeCanvas((W + 2 * M) * R, (H + 2 * M) * R), c = k.getContext('2d');
+  c.setTransform(R * S, 0, 0, R * S, R * (M + W / 2 - CAM0.x * S), R * (M + H / 2 - CAM0.y * S));
   fn(c);
+  if (dim) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-atop'; c.fillStyle = 'rgba(12,4,2,.58)'; c.fillRect(0, 0, k.width, k.height); c.globalCompositeOperation = 'source-over'; }
   if (blur && 'filter' in c) {
-    const k2 = makeCanvas(k.width, k.height), c2 = k2.getContext('2d'); c2.filter = `blur(${(blur * DPR).toFixed(1)}px)`; c2.drawImage(k, 0, 0); return k2;
+    const k2 = makeCanvas(k.width, k.height), c2 = k2.getContext('2d'); c2.filter = `blur(${(blur * R).toFixed(1)}px)`; c2.drawImage(k, 0, 0); return k2;
   }
   return k;
 }
 function visRect(margin = 0) { const hw = (W / 2 + M) / S + margin, hh = (H / 2 + M) / S + margin; return { x0: CAM0.x - hw, x1: CAM0.x + hw, y0: CAM0.y - hh, y1: CAM0.y + hh }; }
+const layerCache = {};
+function getLayers(name) {
+  const key = `${W}x${H}|${DPR}|${S.toFixed(5)}|${CAM0.x},${CAM0.y}|${LAND}|${paintingOK}`;
+  let e = layerCache[name];
+  if (!e || e.key !== key) {
+    const fn = { bg: drawBackground, fg: drawTable, bj: drawBJTable, tv: drawTavlaTable, ok: drawOkeyTable }[name], o = BOIL;
+    e = { key, l: [0, 1].map(b => { BOIL = b; return renderLayer(fn, name === 'bg' ? 1.1 : 0, name === 'bg'); }) }; BOIL = o; layerCache[name] = e;
+  }
+  return e.l;
+}
+// ---------- dikey / yatay yerleşim ----------
+let LAND = false;
+const SAFE = { t: 0, r: 0, l: 0 };
+function readSafe() {
+  try { const d = document.createElement('div'); d.style.cssText = 'position:fixed;visibility:hidden;padding:env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left)'; document.body.appendChild(d); const cs = getComputedStyle(d); SAFE.t = parseFloat(cs.paddingTop) || 0; SAFE.r = parseFloat(cs.paddingRight) || 0; SAFE.l = parseFloat(cs.paddingLeft) || 0; d.remove(); } catch {}
+}
+function sceneView(sc) {
+  if (!LAND) return { cx: 500, cy: 900, w: 1000, h: 1800 };
+  return ({ lobby: { cx: 1000, cy: 470, w: 2000, h: 840 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 712, w: 2020, h: 1030 }, okey: { cx: 900, cy: 655, w: 1580, h: 1100 } })[sc];
+}
+function setView(sc) {
+  const v = sceneView(sc), nS = Math.min(W / v.w, H / v.h), changed = Math.abs(nS - S) > 1e-6;
+  S = nS; CAM0.x = v.cx; CAM0.y = v.cy; cam.x = cam.tx = v.cx; cam.y = cam.ty = v.cy; cam.z = cam.tz = 1;
+  return changed;
+}
+const P = (o, x, y, r) => { o.x = x; o.y = y; if (r) o.r = r; };
+function applyLayout() {
+  LAND = W > H * 1.15;
+  readSafe(); BACK.x = 12 + SAFE.l; BACK.y = 12 + SAFE.t;
+  if (LAND) {
+    LY.lx = 1000; [290, 770, 1250, 1730].forEach((x, i) => { SIGNS[i].x = x; SIGNS[i].y = 640; });
+    P(BJB.bjMinus, -210, 1130); P(BJB.bjPlus, -60, 1130); P(BJB.bjDeal, 1180, 1130); P(BJB.bjHit, 1180, 680); P(BJB.bjStand, 1180, 900); P(BJB.bjDouble, 1180, 1120);
+    Object.assign(LY.tv, { T: true, bx: 900, by: 740, cat: { x: 1760, y: 560, s: .8 }, status: { x: 50, y: 740, w: 340 } });
+    P(TVB.tvGo, 1760, 850); P(TVB.tvRoll, 1760, 850); P(TVB.tvUndo, 1760, 1060); P(TVB.tvMinus, 1690, 1050); P(TVB.tvPlus, 1830, 1050);
+    Object.assign(OKL, { floor: 900, table: [250, 230, 1300, 700], rack: [430, 940, 940, 262], ledges: [1055, 1167], sx0: 472, rowY: [1002, 1114], cats: [[900, 165, .85, 0], [1650, 560, .82, -.2], [150, 560, .82, .2]], think: { 1: [-110, -200], 2: [300, -20], 3: [110, -200] }, rev: [900, 470], status: [900, 770, 400] });
+    OK_D = [{ x: 1380, y: 800 }, { x: 1380, y: 360 }, { x: 420, y: 360 }, { x: 420, y: 800 }];
+    OK_RACK = [null, { x: 1500, y: 580 }, { x: 900, y: 300 }, { x: 300, y: 580 }]; P(OK_PILE, 840, 580); P(OK_IND, 965, 580);
+    P(OKB.okMinus, 220, 1040); P(OKB.okPlus, 350, 1040); P(OKB.okGo, 1560, 1060); P(OKB.okSort, 330, 1070); P(OKB.okDisc, 1470, 1070);
+  } else {
+    LY.lx = 500; [[268, 650], [732, 650], [268, 1125], [732, 1125]].forEach(([x, y], i) => { SIGNS[i].x = x; SIGNS[i].y = y; });
+    P(BJB.bjMinus, 210, 1540); P(BJB.bjPlus, 360, 1540); P(BJB.bjDeal, 700, 1540); P(BJB.bjHit, 220, 1540); P(BJB.bjStand, 500, 1540); P(BJB.bjDouble, 780, 1540);
+    Object.assign(LY.tv, { T: false, bx: 500, by: 900, cat: { x: 500, y: 150, s: .95 }, status: { x: 490, y: 1780, w: 520 } });
+    P(TVB.tvGo, 730, 1660); P(TVB.tvRoll, 730, 1660); P(TVB.tvUndo, 250, 1660); P(TVB.tvMinus, 190, 1660); P(TVB.tvPlus, 330, 1660);
+    Object.assign(OKL, { floor: 1380, table: [100, 290, 800, 1170], rack: [30, 1438, 940, 262], ledges: [1553, 1665], sx0: 82, rowY: [1500, 1612], cats: [[500, 175, .9, 0], [970, 760, .82, -.3], [30, 760, .82, .3]], think: { 1: [-130, -280], 2: [260, -60], 3: [130, -280] }, rev: [500, 760], status: [500, 1345, 400] });
+    OK_D = [{ x: 830, y: 1215 }, { x: 830, y: 560 }, { x: 170, y: 560 }, { x: 170, y: 1215 }];
+    OK_RACK = [null, { x: 880, y: 860 }, { x: 500, y: 425 }, { x: 120, y: 860 }]; P(OK_PILE, 440, 860); P(OK_IND, 565, 860);
+    P(OKB.okMinus, 190, 1330); P(OKB.okPlus, 320, 1330); P(OKB.okGo, 720, 1320); P(OKB.okSort, 200, 1345); P(OKB.okDisc, 800, 1345);
+  }
+}
 function buildLayers() {
-  bgLayers = [0, 1].map(b => { BOIL = b; return renderLayer(drawBackground, 1.1); });
-  fgLayers = [0, 1].map(b => { BOIL = b; return renderLayer(drawTable, 0); });
-  bjLayers = [0, 1].map(b => { BOIL = b; return renderLayer(drawBJTable, 0); });
-  tvLayers = [0, 1].map(b => { BOIL = b; return renderLayer(drawTavlaTable, 0); });
-  okLayers = [0, 1].map(b => { BOIL = b; return renderLayer(drawOkeyTable, 0); });
-  BOIL = 0;
   vignette = makeCanvas(W * DPR, H * DPR);
   const v = vignette.getContext('2d'), g = v.createRadialGradient(W * DPR / 2, H * DPR * .45, Math.min(W, H) * DPR * .3, W * DPR / 2, H * DPR * .5, Math.max(W, H) * DPR * .75);
   g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(12,4,2,.82)'); v.fillStyle = g; v.fillRect(0, 0, vignette.width, vignette.height);
@@ -468,11 +513,25 @@ let resizeT = 0;
 function resize() {
   W = innerWidth; H = innerHeight; DPR = Math.min(window.devicePixelRatio || 1, 2);
   cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
-  S = Math.min(W / 1000, H / 1800);
+  applyLayout(); setView(scene);
   buildSprites(); buildLayers(); buildPayTable();
 }
 addEventListener('resize', () => { clearTimeout(resizeT); resizeT = setTimeout(resize, 150); });
 
+function drawWallTile(c, tx, ty, T) {
+  seed(1000 + BOIL * 17);
+  const t = rr(tx + 2, ty + 2, T - 4, T - 4, 6, 20); wash(c, t, '#d8c49c', 1.5);
+  const cx = tx + T / 2, cy = ty + T / 2;
+  for (let k = 0; k < 4; k++) {
+    const a = k * Math.PI / 2 + Math.PI / 4, px = cx + Math.cos(a) * 28, py = cy + Math.sin(a) * 28;
+    const leaf = [[cx, cy], [cx + Math.cos(a - .5) * 22, cy + Math.sin(a - .5) * 22], [px, py], [cx + Math.cos(a + .5) * 22, cy + Math.sin(a + .5) * 22]];
+    wash(c, sub(leaf, 6, true), '#1f4e9c', 1); ink(c, sub(leaf, 6, true), true, 1.4);
+  }
+  const ctr = ell(cx, cy, 11, 11, 12); wash(c, ctr, '#cf4b32', 1); ink(c, ctr, true, 1.4);
+  for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { wash(c, ell(tx + T / 2 + dx * 50, ty + T / 2 + dy * 50, 9, 9, 10), '#2aa3a0', 1); }
+  ink(c, t, true, 1.8, '#3a2a1c', 1);
+}
+let tileStamps = [];
 // ---------- arka plan: duvar, çini, pencere, Canva tablosu ----------
 function drawBackground(c) {
   const v = visRect(200);
@@ -494,19 +553,12 @@ function drawBackground(c) {
   wash(c, rr(v.x0, 360, v.x1 - v.x0, 44, 3, 80), '#c99a3b', 2); ink(c, wave, false, 2.5, '#5a1520', 1.5);
   // çini paneli
   const T = 110;
-  for (let ty = 404; ty < 1560; ty += T) for (let tx = Math.floor(v.x0 / T) * T; tx < v.x1; tx += T) {
-    seed(1000 + tx * 7 + ty);
-    const t = rr(tx + 2, ty + 2, T - 4, T - 4, 6, 20); wash(c, t, '#efe3c6', 1.5);
-    const cx = tx + T / 2, cy = ty + T / 2;
-    for (let k = 0; k < 4; k++) {
-      const a = k * Math.PI / 2 + Math.PI / 4, px = cx + Math.cos(a) * 28, py = cy + Math.sin(a) * 28;
-      const leaf = [[cx, cy], [cx + Math.cos(a - .5) * 22, cy + Math.sin(a - .5) * 22], [px, py], [cx + Math.cos(a + .5) * 22, cy + Math.sin(a + .5) * 22]];
-      wash(c, sub(leaf, 6, true), '#1f4e9c', 1); ink(c, sub(leaf, 6, true), true, 1.4);
-    }
-    const ctr = ell(cx, cy, 11, 11, 12); wash(c, ctr, '#cf4b32', 1); ink(c, ctr, true, 1.4);
-    for (const [dx, dy] of [[-1, -1], [1, -1], [1, 1], [-1, 1]]) { wash(c, ell(tx + T / 2 + dx * 50, ty + T / 2 + dy * 50, 9, 9, 10), '#2aa3a0', 1); }
-    ink(c, t, true, 1.8, '#3a2a1c', 1);
+  if (!tileStamps.length || tileStamps.S !== S) {
+    tileStamps = [0, 1, 2].map(k => { const px = Math.ceil(T * S * 1.2), cc = makeCanvas(px, px).getContext('2d'); cc.scale(px / T, px / T); const o = BOIL; BOIL = k; drawWallTile(cc, 0, 0, T); BOIL = o; return cc.canvas; }); tileStamps.S = S;
   }
+  for (let ty = 404; ty < 1560; ty += T) for (let tx = Math.floor(v.x0 / T) * T; tx < v.x1; tx += T) c.drawImage(tileStamps[Math.abs(Math.round(tx / T) * 7 + Math.round(ty / T) * 3 + BOIL) % 3], tx, ty, T, T);
+  // İznik çini panelleri: hazır damgalarla
+  seed(3);
   // pencere (sağ üst): gece İstanbul
   seed(3);
   const win = arch(770, 110, 190, 230);
@@ -1006,7 +1058,7 @@ function askGyro() {
   const D = window.DeviceOrientationEvent;
   if (D && typeof D.requestPermission === 'function') D.requestPermission().then(s => { if (s === 'granted') listenGyro(); }).catch(() => {});
 }
-function listenGyro() { addEventListener('deviceorientation', e => { if (e.gamma == null) return; gyro.tx = clamp(e.gamma / 25, -1, 1) * -16; gyro.ty = clamp((e.beta - 50) / 25, -1, 1) * -12; }); }
+function listenGyro() { addEventListener('deviceorientation', e => { if (e.gamma == null) return; const a = (screen.orientation && screen.orientation.angle) || window.orientation || 0; if (Math.abs(a) === 90) { const sg = a === 90 ? 1 : -1; gyro.tx = clamp(e.beta * sg / 25, -1, 1) * -16; gyro.ty = clamp((Math.abs(e.gamma) - 50) / 25, -1, 1) * 12; } else { gyro.tx = clamp(e.gamma / 25, -1, 1) * -16; gyro.ty = clamp((e.beta - 50) / 25, -1, 1) * -12; } }); }
 listenGyro();
 
 function buildPayTable() {
@@ -1022,6 +1074,7 @@ function buildPayTable() {
 //  SALON (oyun seçimi), GEÇİŞ, GERİ DÜĞMESİ
 // =============================================================
 let scene = 'lobby';
+const LY = { lx: 500, tv: { T: false, bx: 500, by: 900, cat: { x: 500, y: 150, s: .95 }, status: { x: 490, y: 1780, w: 520 } } };
 const SIGNS = [
   { id: 'slot', x: 268, y: 650, w: 456, h: 420, title: 'Padişah Slot', sub: 'Nazar değerse çark döner', rope: 0 },
   { id: 'bj', x: 732, y: 650, w: 456, h: 420, title: 'Yirmi Bir', sub: 'Blackjack · kedi krupiye', rope: .9 },
@@ -1041,7 +1094,7 @@ function updateTrans(t) {
   const u = (t - trans.t0) / 900;
   if (u >= .5 && !trans.switched) {
     trans.switched = true; scene = trans.to; banners = []; coins = []; sparks = [];
-    cam.x = cam.tx = CAM0.x; cam.y = cam.ty = CAM0.y; cam.z = cam.tz = 1;
+    if (setView(scene)) { buildSprites(); buildPayTable(); }
     if (scene !== 'slot') { auto = false; cat.until = 0; cat.show = 0; }
     if (scene === 'bj') { bjReset(); banner('Hoş geldin!', 'Bahsini seç, DAĞIT\'a bas', { dur: 2400, col: '#1f4e9c', y: .45 }); }
     if (scene === 'tavla' && (tv.state === 'bet' || tv.state === 'over')) { tv.state = 'bet'; tv.st = tvInit(); tv.dice = []; tv.mood = 0; banner('Tavla', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2400, col: '#1f4e9c', y: .45 }); }
@@ -1071,15 +1124,16 @@ function drawBack(t) {
 function drawLobby(t) {
   setWorld(1);
   seed(50);
-  inkText(ctx, 'Nazar Sarayı', 500, 140, 120, '#f2cf74', { ow: 12 });
-  inkText(ctx, 'Hangi oyunu oynayalım?', 500, 240, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
-  const pl = rr(330, 290, 340, 74, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3);
-  inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), 500, 328, 42, INK, { outline: false });
+  const LX = LY.lx;
+  inkText(ctx, 'Nazar Sarayı', LX, 140, 120, '#f2cf74', { ow: 12 });
+  inkText(ctx, 'Hangi oyunu oynayalım?', LX, 240, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  const pl = rr(LX - 170, 290, 340, 74, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3);
+  inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), LX, 328, 42, INK, { outline: false });
   SIGNS.forEach((s, i) => {
     const sway = Math.sin(t * .0011 + s.rope) * .012, hov = press['sign' + i] && t - press['sign' + i] < 200 ? .96 : 1;
     ctx.save(); ctx.translate(s.x, s.y - s.h / 2); ctx.rotate(sway); ctx.scale(hov, hov);
     seed(60 + i);
-    const top = i < 2 ? 400 : SIGNS[i - 2].y + SIGNS[i - 2].h / 2 - 10, rl = s.y - s.h / 2 - top;
+    const top = LAND || i < 2 ? 400 : SIGNS[i - 2].y + SIGNS[i - 2].h / 2 - 10, rl = s.y - s.h / 2 - top;
     for (const sx of [-1, 1]) { ink(ctx, [[sx * s.w * .34, 4], [sx * s.w * .34, -rl]], false, 3.5, '#1a0e06', 1.5); const hk = ell(sx * s.w * .34, -rl, 9, 9, 10); wash(ctx, hk, '#d9a441', 1); ink(ctx, hk, true, 2); }
     ctx.fillStyle = 'rgba(0,0,0,.35)'; trace(ctx, rr(-s.w / 2 + 10, 14, s.w, s.h, 16, 30), true, 2); ctx.fill();
     const fr = rr(-s.w / 2, 0, s.w, s.h, 16, 30); wash(ctx, fr, '#7a1e28', 2); ink(ctx, fr, true, 4);
@@ -1327,14 +1381,14 @@ function drawCards(t) {
 }
 function drawBJ(t) {
   drawCatDealer(t);
-  const bl = Math.floor(t / 280) % 2; if (bjLayers[bl]) drawLayer(bjLayers[bl], 1);
+  const bl = Math.floor(t / 280) % 2; drawLayer(getLayers('bj')[bl], 1);
   drawPaws(t);
   setWorld(1);
   drawChips(t); drawCards(t);
   const betting = bj.state === 'bet' || bj.state === 'result';
   if (betting) {
     btnDraw('bjMinus', '#2aa3a0', '−', t, 62, BJB); btnDraw('bjPlus', '#2aa3a0', '+', t, 58, BJB);
-    inkText(ctx, 'bahis ' + BETS[betIdx], 285, 1625, 38, '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 });
+    inkText(ctx, 'bahis ' + BETS[betIdx], (BJB.bjMinus.x + BJB.bjPlus.x) / 2, BJB.bjMinus.y + 85, 38, '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 });
     const dy = btnDraw('bjDeal', '#cf4b32', null, t, 40, BJB); inkText(ctx, bj.state === 'result' ? 'YENİ EL' : 'DAĞIT', BJB.bjDeal.x, BJB.bjDeal.y + dy, bj.state === 'result' ? 44 : 52, '#fbf1da', { ow: 7 });
     ink(ctx, ell(BJB.bjDeal.x, BJB.bjDeal.y + dy, 108, 100, 30), true, 4, '#f2cf74', 1.5);
   } else {
@@ -1343,11 +1397,18 @@ function drawBJ(t) {
     ctx.globalAlpha = dbl ? 1 : .35; btnDraw('bjDouble', '#d9a441', 'KATLA', t, 36, BJB); ctx.globalAlpha = 1;
   }
   seed(34);
-  const st = rr(170, 1660, 660, 76, 16, 20); wash(ctx, st, '#f4e8cc', 1.5); ink(ctx, st, true, 3);
-  inkText(ctx, 'AKÇE', 200, 1698, 28, '#6a1b24', { align: 'left', outline: false, font: '"Caveat"', weight: 700 });
-  inkText(ctx, Math.round(dispBal).toLocaleString('tr-TR'), 270, 1700, 46, INK, { align: 'left', outline: false });
-  inkText(ctx, 'KAZANÇ', 610, 1698, 28, '#6a1b24', { align: 'right', outline: false, font: '"Caveat"', weight: 700 });
-  inkText(ctx, Math.round(dispWin).toLocaleString('tr-TR'), 800, 1700, 46, dispWin > 0 ? '#b8321f' : INK, { align: 'right', outline: false });
+  const bal = Math.round(dispBal).toLocaleString('tr-TR'), wn = Math.round(dispWin).toLocaleString('tr-TR'), wc = dispWin > 0 ? '#b8321f' : INK, lbl = { align: 'left', outline: false, font: '"Caveat"', weight: 700 };
+  if (LAND) {
+    const st = rr(-420, 690, 400, 190, 16, 20); wash(ctx, st, '#f4e8cc', 1.5); ink(ctx, st, true, 3);
+    inkText(ctx, 'AKÇE', -395, 735, 28, '#6a1b24', lbl); inkText(ctx, bal, -45, 737, 46, INK, { align: 'right', outline: false });
+    inkText(ctx, 'KAZANÇ', -395, 825, 28, '#6a1b24', lbl); inkText(ctx, wn, -45, 827, 46, wc, { align: 'right', outline: false });
+  } else {
+    const st = rr(170, 1660, 660, 76, 16, 20); wash(ctx, st, '#f4e8cc', 1.5); ink(ctx, st, true, 3);
+    inkText(ctx, 'AKÇE', 200, 1698, 28, '#6a1b24', lbl);
+    inkText(ctx, bal, 270, 1700, 46, INK, { align: 'left', outline: false });
+    inkText(ctx, 'KAZANÇ', 610, 1698, 28, '#6a1b24', { align: 'right', outline: false, font: '"Caveat"', weight: 700 });
+    inkText(ctx, wn, 800, 1700, 46, wc, { align: 'right', outline: false });
+  }
 }
 function bjDown(w) {
   for (const k in BJB) {
@@ -1521,10 +1582,10 @@ function drawCatAt(x, y, sc, rot, v, hat, t, happy, body = '#7a1e28') {
 }
 function drawCornerBal() {
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(67);
-  const w = 150, x = W - w - 12, y = BACK.y, p = rr(x, y, w, 48, 10, 14); wash(ctx, p, '#b8862b', 1); ink(ctx, p, true, 2.5, INK, 1);
+  const w = 150, x = W - w - 12 - SAFE.r, y = BACK.y, p = rr(x, y, w, 48, 10, 14); wash(ctx, p, '#b8862b', 1); ink(ctx, p, true, 2.5, INK, 1);
   inkText(ctx, Math.round(dispBal).toLocaleString('tr-TR') + ' akçe', x + w / 2, y + 25, 26, INK, { outline: false });
 }
-function statusTag(x, y, txt, w = 360) { seed(68); const p = rr(x - w / 2, y - 30, w, 60, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5); inkText(ctx, txt, x, y + 2, 34, INK, { outline: false, font: '"Caveat"', weight: 700 }); }
+function statusTag(x, y, txt, w = 360) { seed(68); const p = rr(x - w / 2, y - 30, w, 60, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5); let fs = 34; ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(txt).width; if (mw > w - 30) fs *= (w - 30) / mw; inkText(ctx, txt, x, y + 2, fs, INK, { outline: false, font: '"Caveat"', weight: 700 }); }
 function betRow(set, ids, t, label) {
   btnDraw(ids[0], '#2aa3a0', '−', t, 62, set); btnDraw(ids[1], '#2aa3a0', '+', t, 58, set);
   const a = set[ids[0]], b = set[ids[1]];
@@ -1578,6 +1639,7 @@ function drawTavlaTable(c) {
   wash(c, sub([[v.x0 - 200, 250], [v.x1 + 200, 250], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#5b321a', 3);
   for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 50, 252], [500 + i * 150, v.y1 + 300]], false, 2, '#2c160a', 3);
   ink(c, [[v.x0, 250], [v.x1, 250]], false, 4, '#1a0c05', 2);
+  c.save(); tvT(c);
   c.fillStyle = 'rgba(10,4,2,.5)'; c.beginPath(); c.ellipse(512, 1515, 480, 34, 0, 0, 7); c.fill();
   seed(120);
   const outer = rr(40, 300, 920, 1200, 22, 30); wash(c, outer, '#6b3a17', 2); hatch(c, outer, .3, 9, INK, .22); ink(c, outer, true, 4.5);
@@ -1593,7 +1655,10 @@ function drawTavlaTable(c) {
   const bar = rr(70, 875, 860, 50, 10, 30); wash(c, bar, '#3d2010', 1.5); ink(c, bar, true, 3);
   for (const x of [300, 700]) { const h = rr(x - 30, 885, 60, 30, 6, 10); wash(c, h, '#d9a441', 1); ink(c, h, true, 2); }
   for (const [x, y] of [[425, 230], [575, 1510]]) { const tr = rr(x - (x < 500 ? 380 : 0) + (x < 500 ? 0 : -10), y, 380, 60, 12, 20); wash(c, tr, '#3a1e0e', 1.5); ink(c, tr, true, 3); }
+  c.restore();
 }
+function tvT(c) { if (LY.tv.T) { c.translate(LY.tv.bx, LY.tv.by); c.transform(0, 1, 1, 0, 0, 0); c.translate(-500, -900); } }
+function tvLocal(w) { return LY.tv.T ? { x: w.y - LY.tv.by + 500, y: w.x - LY.tv.bx + 900 } : w; }
 function tvOptions() {
   const k = tv.made.length;
   return tv.all.filter(s => s.path.length > k && tv.made.every((m, i) => s.path[i].from === m.from && s.path[i].to === m.to && s.path[i].d === m.d)).map(s => s.path[k]);
@@ -1670,19 +1735,22 @@ function tvAt(w) {
 }
 function tvDown(w) {
   if (tv.state === 'bet' || tv.state === 'over') { const k = hitSet(TVB, w, ['tvMinus', 'tvPlus', 'tvGo']); if (k && !betKey(k)) tvStart(); return; }
-  if (tv.state === 'roll') { if (hitSet(TVB, w, ['tvRoll']) || Math.abs(w.x - 500) < 70 && w.y > 960 && w.y < 1460) tvRoll(); return; }
+  const L = tvLocal(w);
+  if (tv.state === 'roll') { if (hitSet(TVB, w, ['tvRoll']) || Math.abs(L.x - 500) < 70 && L.y > 960 && L.y < 1460) tvRoll(); return; }
   if (tv.state !== 'move') return;
   if (hitSet(TVB, w, ['tvUndo'])) { tvUndo(); return; }
-  const at = tvAt(w); if (at === null) { tv.sel = tv.st.bar[0] ? 25 : 0; return; }
+  const at = tvAt(L); if (at === null) { tv.sel = tv.st.bar[0] ? 25 : 0; return; }
   const opts = tvOptions(), rel = at === 'bar' ? 25 : at === 'off' ? 0 : at;
   if (tv.sel) { const m = opts.filter(o => o.from === tv.sel && o.to === rel).sort((a, b) => a.d - b.d); if (m.length) return tvPlayerMove(m[0]); }
   if (opts.some(o => o.from === rel)) { tv.sel = rel; tone('triangle', 760, .05, .04); return; }
   tv.sel = tv.st.bar[0] ? 25 : 0;
 }
 function drawTavla(t) {
-  drawCatAt(500, 150, .95, 0, 1, 'kasket', t, tv.mood === 1, '#5a4632');
-  const bl = Math.floor(t / 280) % 2; if (tvLayers[bl]) drawLayer(tvLayers[bl], 1);
-  setWorld(1);
+  const C = LY.tv.cat, cat = () => drawCatAt(C.x, C.y, C.s, 0, 1, 'kasket', t, tv.mood === 1, '#5a4632');
+  if (!LY.tv.T) cat();
+  const bl = Math.floor(t / 280) % 2; drawLayer(getLayers('tv')[bl], 1);
+  if (LY.tv.T) cat();
+  setWorld(1); ctx.save(); tvT(ctx);
   const b2 = BOIL % 2, cs = 80, an = tv.anim && t - tv.anim.t0 < 380 ? tv.anim : null;
   const put = (s, p) => ctx.drawImage(checkerSpr[s][b2], p.x - cs / 2, p.y - cs / 2, cs, cs);
   const opts = tv.state === 'move' ? tvOptions() : [], froms = new Set(opts.map(o => o.from));
@@ -1691,7 +1759,7 @@ function drawTavla(t) {
     for (let k = 0; k < n; k++) {
       if (an && an.key === 'p' + a && k === n - 1) continue;
       const p = checkerPos(a, k, n); put(s, p);
-      if (k === n - 1 && n > 5) inkText(ctx, String(n), p.x, p.y + 2, 34, s ? '#f2cf74' : INK, { outline: false });
+      if (k === n - 1 && n > 5) { ctx.save(); ctx.translate(p.x, p.y); if (LY.tv.T) ctx.transform(0, 1, 1, 0, 0, 0); inkText(ctx, String(n), 0, 2, 34, s ? '#f2cf74' : INK, { outline: false }); ctx.restore(); }
     }
     if (s === 0 && froms.has(a)) { const p = checkerPos(a, n - 1, n), k = .5 + .5 * Math.sin(t / 180); ctx.globalAlpha = tv.sel === a ? 1 : .35 + k * .35; ctx.strokeStyle = '#f2cf74'; ctx.lineWidth = tv.sel === a ? 7 : 4; ctx.beginPath(); ctx.arc(p.x, p.y, 45, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
   }
@@ -1726,11 +1794,12 @@ function drawTavla(t) {
       list.forEach((v, i) => drawD(v, 500, base + i * (list.length > 2 ? 92 : 120) + (list.length > 2 ? 0 : 60), i, i < used && !rolling));
     }
   }
+  ctx.restore();
   // arayüz
   if (tv.state === 'bet' || tv.state === 'over') betRow(TVB, ['tvMinus', 'tvPlus', 'tvGo'], t, tv.state === 'over' ? 'YENİ OYUN' : 'BAŞLA');
   else {
     const txt = { roll: 'Sıra sende: zar at', move: tv.st.bar[0] ? 'Kırık pulunu sok' : 'Pul seç, sonra yerine dokun', ai: 'Reis düşünüyor…', wait: 'Sıra Reis\'te', rolling: 'Zarlar dönüyor…', opening: 'Kim başlayacak?' }[tv.state] || '';
-    statusTag(490, 1780, txt, 520);
+    statusTag(LY.tv.status.x, LY.tv.status.y, txt, LY.tv.status.w);
     if (tv.state === 'roll') { const dy = btnDraw('tvRoll', '#cf4b32', null, t, 40, TVB); inkText(ctx, 'ZAR AT', TVB.tvRoll.x, TVB.tvRoll.y + dy, 46, '#fbf1da', { ow: 7 }); ink(ctx, ell(TVB.tvRoll.x, TVB.tvRoll.y + dy, 98, 90, 30), true, 4, '#f2cf74', 1.5); }
     if (tv.state === 'move') { ctx.globalAlpha = tv.made.length ? 1 : .4; btnDraw('tvUndo', '#f4e8cc', null, t, 40, TVB); inkText(ctx, 'GERİ', TVB.tvUndo.x, TVB.tvUndo.y + 2, 36, INK, { outline: false }); ctx.globalAlpha = 1; }
   }
@@ -1741,13 +1810,14 @@ function drawTavla(t) {
 // =============================================================
 const OK_COL = ['#d99a1e', '#1f4e9c', '#22222e', '#c0392b'], OK_CNAME = ['Sarı', 'Mavi', 'Siyah', 'Kırmızı'];
 const OK_NAMES = ['Sen', 'Tarçın', 'Pamuk', 'Duman'];
-const OK_D = [{ x: 830, y: 1215 }, { x: 830, y: 560 }, { x: 170, y: 560 }, { x: 170, y: 1215 }];
-const OK_RACK = [null, { x: 880, y: 860 }, { x: 500, y: 425 }, { x: 120, y: 860 }];
+let OK_D = [{ x: 830, y: 1215 }, { x: 830, y: 560 }, { x: 170, y: 560 }, { x: 170, y: 1215 }];
+let OK_RACK = [null, { x: 880, y: 860 }, { x: 500, y: 425 }, { x: 120, y: 860 }];
+const OKL = { floor: 1380, table: [100, 290, 800, 1170], rack: [30, 1438, 940, 262], ledges: [1553, 1665], sx0: 82, rowY: [1500, 1612], cats: [[500, 175, .9, 0], [970, 760, .82, -.3], [30, 760, .82, .3]], think: { 1: [-130, -280], 2: [260, -60], 3: [130, -280] }, rev: [500, 760], status: [500, 1345, 400] };
 const OK_PILE = { x: 440, y: 860 }, OK_IND = { x: 565, y: 860 };
 const OKB = { okMinus: { x: 190, y: 1330, r: 48 }, okPlus: { x: 320, y: 1330, r: 48 }, okGo: { x: 720, y: 1320, r: 84 }, okSort: { x: 200, y: 1345, r: 52 }, okDisc: { x: 800, y: 1345, r: 52 } };
 const ok = { state: 'bet', pile: [], hands: [[], [], [], []], disc: [[], [], [], []], ind: null, turn: 0, phase: '', slots: new Array(24).fill(null), sel: -1, drag: null, fly: [], bet: 0, think: -1, winner: -2, mood: [0, 0, 0, 0], sortMode: 0 };
 let tileCache = {};
-const slotPos = i => ({ x: 82 + (i % 12) * 76.4, y: i < 12 ? 1500 : 1612 });
+const slotPos = i => ({ x: OKL.sx0 + (i % 12) * 76.4, y: OKL.rowY[i < 12 ? 0 : 1] });
 function drawTileFace(c, t) {
   seed(3000 + (t.fj ? 999 : t.c * 13 + t.n));
   const p = rr(3, 3, 64, 94, 10, 14); wash(c, p, '#fbf4e2', 1); hatch(c, rr(3, 70, 64, 27, 8), .25, 6, INK, .15); ink(c, p, true, 2.6, INK, .8);
@@ -1763,17 +1833,18 @@ function tileSpr(t) {
 }
 function drawOkeyTable(c) {
   const v = visRect(300); seed(129);
-  wash(c, sub([[v.x0 - 200, 1380], [v.x1 + 200, 1380], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#5b321a', 3);
-  for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 50, 1382], [500 + i * 150, v.y1 + 300]], false, 2, '#2c160a', 3);
+  const F = OKL.floor, [tx, ty, tw, th] = OKL.table, [rx, ry, rw, rh] = OKL.rack, cx = tx + tw / 2, cy = ty + th / 2;
+  wash(c, sub([[v.x0 - 200, F], [v.x1 + 200, F], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#5b321a', 3);
+  for (let i = -24; i <= 24; i++) ink(c, [[cx + i * 50, F + 2], [cx + i * 150, v.y1 + 300]], false, 2, '#2c160a', 3);
   seed(130);
-  const rim = rr(100, 290, 800, 1170, 50, 30); wash(c, rim, '#5b321a', 2); hatch(c, rim, .3, 9, INK, .25); ink(c, rim, true, 4);
-  const felt = rr(128, 318, 744, 1114, 38, 30); wash(c, felt, '#24585e', 2.5); hatch(c, felt, .35, 13, '#0f2f33', .15); ink(c, felt, true, 3);
-  const g = c.createRadialGradient(500, 860, 40, 500, 860, 620); g.addColorStop(0, 'rgba(255,220,150,.2)'); g.addColorStop(1, 'rgba(0,0,0,.2)'); c.fillStyle = g; c.fillRect(128, 318, 744, 1114);
-  ink(c, rr(160, 350, 680, 1050, 28, 30), true, 2.5, '#d9a441', 1.5);
-  for (const [x, y] of [[190, 380], [810, 380], [190, 1370], [810, 1370]]) { const s = star4(x, y, 16); wash(c, s, '#f2cf74', 1); ink(c, s, true, 1.6); }
+  const rim = rr(tx, ty, tw, th, 50, 30); wash(c, rim, '#5b321a', 2); hatch(c, rim, .3, 9, INK, .25); ink(c, rim, true, 4);
+  const felt = rr(tx + 28, ty + 28, tw - 56, th - 56, 38, 30); wash(c, felt, '#24585e', 2.5); hatch(c, felt, .35, 13, '#0f2f33', .15); ink(c, felt, true, 3);
+  const g = c.createRadialGradient(cx, cy, 40, cx, cy, Math.max(tw, th) * .55); g.addColorStop(0, 'rgba(255,220,150,.2)'); g.addColorStop(1, 'rgba(0,0,0,.2)'); c.fillStyle = g; c.fillRect(tx + 28, ty + 28, tw - 56, th - 56);
+  ink(c, rr(tx + 60, ty + 60, tw - 120, th - 120, 28, 30), true, 2.5, '#d9a441', 1.5);
+  for (const [x, y] of [[tx + 90, ty + 90], [tx + tw - 90, ty + 90], [tx + 90, ty + th - 90], [tx + tw - 90, ty + th - 90]]) { const s = star4(x, y, 16); wash(c, s, '#f2cf74', 1); ink(c, s, true, 1.6); }
   for (const p of OK_D) ink(c, rr(p.x - 46, p.y - 62, 92, 124, 10, 14), true, 2, 'rgba(242,207,116,.6)', 2);
-  seed(131); const rack = rr(30, 1438, 940, 262, 20, 30); wash(c, rack, '#7a4a22', 2); hatch(c, rack, .2, 8, INK, .25); ink(c, rack, true, 4);
-  for (const y of [1553, 1665]) { const l = rr(36, y, 928, 26, 8, 30); wash(c, l, '#4e2c12', 1.5); ink(c, l, true, 2.5); }
+  seed(131); const rack = rr(rx, ry, rw, rh, 20, 30); wash(c, rack, '#7a4a22', 2); hatch(c, rack, .2, 8, INK, .25); ink(c, rack, true, 4);
+  for (const y of OKL.ledges) { const l = rr(rx + 6, y, rw - 12, 26, 8, 30); wash(c, l, '#4e2c12', 1.5); ink(c, l, true, 2.5); }
 }
 function okNewDeck() {
   const d = []; let id = 0; for (let k = 0; k < 2; k++) for (let c = 0; c < 4; c++) for (let n = 1; n <= 13; n++) d.push({ id: id++, c, n });
@@ -1883,10 +1954,11 @@ function okUp(w) {
 }
 function drawOkey(t) {
   const think = ok.think;
-  drawCatAt(500, 175, .9, 0, 2, null, t, ok.mood[2], '#2a3f6b');
-  drawCatAt(30, 760, .82, .3, 1, 'kasket', t, ok.mood[3], '#4b5a3a');
-  drawCatAt(970, 760, .82, -.3, 3, 'fez', t, ok.mood[1], '#6b2a4a');
-  const bl = Math.floor(t / 280) % 2; if (okLayers[bl]) drawLayer(okLayers[bl], 1);
+  const [c2, c1, c3] = OKL.cats;
+  drawCatAt(c2[0], c2[1], c2[2], c2[3], 2, null, t, ok.mood[2], '#2a3f6b');
+  drawCatAt(c3[0], c3[1], c3[2], c3[3], 1, 'kasket', t, ok.mood[3], '#4b5a3a');
+  drawCatAt(c1[0], c1[1], c1[2], c1[3], 3, 'fez', t, ok.mood[1], '#6b2a4a');
+  const bl = Math.floor(t / 280) % 2; drawLayer(getLayers('ok')[bl], 1);
   setWorld(1);
   const now = t, TW = 70, TH = 100;
   const drawT = (tile, face, x, y, sc = 1, rot = 0, alpha = 1) => { ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = alpha; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(-TW * sc / 2 + 5, -TH * sc / 2 + 6, TW * sc, TH * sc); ctx.drawImage(tileSpr(face ? tile : 'back'), -TW * sc / 2, -TH * sc / 2, TW * sc, TH * sc); ctx.restore(); ctx.globalAlpha = 1; };
@@ -1894,13 +1966,13 @@ function drawOkey(t) {
   for (let p = 1; p <= 3; p++) {
     const n = ok.state === 'play' || ok.state === 'over' ? ok.hands[p].filter(x => !(x.arrive > now)).length : 0;
     if (ok.winner === p) { // eli göster
-      const tiles = ok.hands[p], cols = 7; tiles.forEach((x, k) => drawT(x, true, 500 + (k % cols - 3) * 74, 760 + Math.floor(k / cols) * 104, .95)); continue;
+      const tiles = ok.hands[p], cols = 7; tiles.forEach((x, k) => drawT(x, true, OKL.rev[0] + (k % cols - 3) * 74, OKL.rev[1] + Math.floor(k / cols) * 104, .95)); continue;
     }
     for (let k = 0; k < n; k++) {
       if (p === 2) drawT(null, false, OK_RACK[2].x + (k - (n - 1) / 2) * 34, OK_RACK[2].y, .55);
       else drawT(null, false, OK_RACK[p].x, OK_RACK[p].y + (k - (n - 1) / 2) * 30, .55, Math.PI / 2);
     }
-    if (think === p) { const r = OK_RACK[p], bx = p === 2 ? r.x + 260 : p === 1 ? r.x - 130 : r.x + 130, by = p === 2 ? r.y - 60 : r.y - 280; seed(69); const b = rr(bx - 50, by - 28, 100, 56, 22, 12); wash(ctx, b, '#fbf4e2', 1); ink(ctx, b, true, 2.5); inkText(ctx, '•••'.slice(0, 1 + Math.floor(t / 300) % 3), bx, by, 40, INK, { outline: false }); }
+    if (think === p) { const r = OK_RACK[p], bx = r.x + OKL.think[p][0], by = r.y + OKL.think[p][1]; seed(69); const b = rr(bx - 50, by - 28, 100, 56, 22, 12); wash(ctx, b, '#fbf4e2', 1); ink(ctx, b, true, 2.5); inkText(ctx, '•••'.slice(0, 1 + Math.floor(t / 300) % 3), bx, by, 40, INK, { outline: false }); }
   }
   // orta: deste + gösterge
   if (ok.state !== 'bet') {
@@ -1935,7 +2007,7 @@ function drawOkey(t) {
     const can = ok.turn === 0 && ok.phase === 'discard' && ok.sel >= 0; ctx.globalAlpha = can ? 1 : .35;
     btnDraw('okDisc', '#cf4b32', null, t, 40, OKB); inkText(ctx, 'AT', OKB.okDisc.x, OKB.okDisc.y + 2, 40, '#fbf1da', { ow: 5 }); ctx.globalAlpha = 1;
     const txt = ok.turn !== 0 ? OK_NAMES[ok.turn] + ' oynuyor…' : ok.phase === 'draw' ? 'Taş çek: ortadan ya da soldan' : 'Bir taş at: sürükle ya da seç + AT';
-    statusTag(500, 1345, txt, 400);
+    statusTag(OKL.status[0], OKL.status[1], txt, OKL.status[2]);
   }
 }
 
@@ -1973,19 +2045,19 @@ function frame(t) {
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#120806'; ctx.fillRect(0, 0, cv.width, cv.height);
   if (!started) { requestAnimationFrame(frame); return; }
   const bl = Math.floor(t / 280) % 2;
-  if (bgLayers[bl]) drawLayer(bgLayers[bl], .35);
+  drawLayer(getLayers('bg')[bl], .35);
   drawLanterns(t);
   updateTrans(t);
   if (scene === 'slot') {
     drawCat(t);
     setWorld(1); drawMachine(t);
-    if (fgLayers[bl]) drawLayer(fgLayers[bl], 1.5);
+    drawLayer(getLayers('fg')[bl], 1.5);
     drawTableLive(t);
   } else if (scene === 'bj') drawBJ(t);
   else if (scene === 'tavla') drawTavla(t);
   else if (scene === 'okey') drawOkey(t);
   else {
-    if (fgLayers[bl]) drawLayer(fgLayers[bl], 1.5);
+    drawLayer(getLayers('fg')[bl], 1.5);
     drawTableLive(t);
     drawLobby(t);
   }
@@ -2009,7 +2081,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__nazar = { get scene() { return scene; }, bj,  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__nazar = { get scene() { return scene; }, bj, tv, ok,  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>

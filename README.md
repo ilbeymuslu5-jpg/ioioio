@@ -13,6 +13,8 @@ Türk temalı, **birinci şahıs (POV)** bakışlı, tamamen **el çizimi** gör
 
 Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi ortaktır.
 
+Telefon **dikey ve yatay** tutulabilir: her sahnenin yatay düzeni ayrıdır (yatayda tavla tahtası standart yatay dizilime döner), oyun ortasında çevirince kaldığı yerden devam eder. Çentikli ekranlarda güvenli alan dikkate alınır.
+
 ## Özellikler
 - **POV sahne:** Osmanlı sarayında, masada oturuyorsun. Önünde makine, masada ince belli çay (buharı tütüyor), tespih ve bakiyene göre büyüyen akçe yığını.
 - **Canlı kamera:** nefes alma salınımı, telefon eğimine (jiroskop) göre paralaks, büyük kazançta sarsıntı, bonus sırasında çarka zoom.
