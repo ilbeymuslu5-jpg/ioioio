@@ -19,6 +19,7 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - **Çanta:** eşyayı giy, akçeye **sat** ya da **koleksiyona koy** (satılamaz, Hazine Odası'nda sergilenir; bulunmayanlar gölge).
 
 ## Çok oyunculu
+- Açılışta **Tek Oyunculu / Çok Oyunculu** seçilir. Çok oyunculu salonda bir oyuna dokununca **rastgele bir masaya** bağlanırsın; açık masa yoksa yenisi açılır ve rakip gelince oyun kendiliğinden başlar.
 - Salondaki **Arkadaşlarla** düğmesi: masa kur (Tavla 2 kişi, Okey 2-4 kişi + kediler, Yirmi Bir 1-3 kişi), kodu paylaş, açık masalara katıl.
 - Masalar claude.ai Artifact paylaşımlı veritabanında tutulur; anlık bildirim için Artifact odaları kullanılır. Oyun claude.ai'de paylaşılmalı ve arkadaşların **Katkıda bulunabilir (Contributor)** yetkisine sahip olmalı.
 - Aynı cihazda iki kişilik Tavla da var.
@@ -28,6 +29,7 @@ Telefon **dikey ve yatay** tutulabilir: her sahnenin yatay düzeni ayrıdır (ya
 
 ## Özellikler
 - **POV sahne:** Osmanlı sarayında, masada oturuyorsun. Önünde makine, masada ince belli çay (buharı tütüyor), tespih ve bakiyene göre büyüyen akçe yığını.
+- **Sabit oyun alanı:** makine, masa ve tahta yerinden oynamaz; yalnızca duvar, fenerler ve kediler hafifçe salınır.
 - **Canlı kamera:** nefes alma salınımı, telefon eğimine (jiroskop) göre paralaks, büyük kazançta sarsıntı, bonus sırasında çarka zoom.
 - **El çizimi doku:** emoji yok; tüm semboller kodla çizilmiş mürekkep + suluboya. Titreyen çizgi ("line boil") animasyonu, kağıt dokusu, vinyet.
 - **Semboller:** Padişah Kavuğu (joker), Nazar Boncuğu (bonus), Van Kedisi, Lale, Türk Kahvesi, İnce Belli Çay, Simit, Lokum.

@@ -76,6 +76,7 @@ button.big{display:block;width:100%;font:400 24px "Caveat Brush",cursive;backgro
   <button id="payClose">Tamam</button>
 </div></div>
 
+<div class="modal" id="ask" style="z-index:8"><div class="sheet" style="max-width:380px;text-align:center"><p id="askText" style="font-size:22px"></p><div style="display:flex;gap:8px;justify-content:center"><button class="big" id="askYes" style="width:auto;padding:8px 22px"></button><button class="big" id="askNo" style="width:auto;padding:8px 22px;background:#e8d9b5;color:var(--ink)"></button></div></div></div>
 <div class="modal" id="sheet"><div class="sheet"><button class="x" id="sheetX" aria-label="Kapat">✕</button><div id="sheetBody"></div></div></div>
 <script>
 (() => {
@@ -651,19 +652,20 @@ function drawTable(c) {
 // =============================================================
 //  KAMERA
 // =============================================================
+const pf = d => (d >= .95 && d <= 1.25) ? 0 : d;
 function setWorld(depth) {
-  const z = S * cam.z;
+  const z = S * cam.z; depth = pf(depth);
   ctx.setTransform(DPR * z, 0, 0, DPR * z, DPR * (W / 2 - cam.x * z + off.x * depth), DPR * (H / 2 - cam.y * z + off.y * depth));
 }
 function drawLayer(img, depth) {
-  const z = cam.z;
+  const z = cam.z; depth = pf(depth);
   ctx.setTransform(DPR * z, 0, 0, DPR * z,
     DPR * (W / 2 + (CAM0.x - cam.x) * S * z - (M + W / 2) * z + off.x * depth),
     DPR * (H / 2 + (CAM0.y - cam.y) * S * z - (M + H / 2) * z + off.y * depth));
   ctx.drawImage(img, 0, 0, W + 2 * M, H + 2 * M);
 }
-function toWorld(sx, sy, depth = 1) { const z = S * cam.z; return { x: (sx - W / 2 - off.x * depth) / z + cam.x, y: (sy - H / 2 - off.y * depth) / z + cam.y }; }
-function toScreen(wx, wy, depth = 1) { const z = S * cam.z; return { x: W / 2 + (wx - cam.x) * z + off.x * depth, y: H / 2 + (wy - cam.y) * z + off.y * depth }; }
+function toWorld(sx, sy, depth = 1) { const z = S * cam.z; depth = pf(depth); return { x: (sx - W / 2 - off.x * depth) / z + cam.x, y: (sy - H / 2 - off.y * depth) / z + cam.y }; }
+function toScreen(wx, wy, depth = 1) { const z = S * cam.z; depth = pf(depth); return { x: W / 2 + (wx - cam.x) * z + off.x * depth, y: H / 2 + (wy - cam.y) * z + off.y * depth }; }
 
 // =============================================================
 //  MAKİNE
@@ -704,10 +706,10 @@ function drawMachine(t) {
   wash(c, ell(WHEEL_C.x, WHEEL_C.y - WHEEL_C.r - 22, 8, 8, 10), '#d9a441', 1);
 
   // kabin yan yüzü (bakış açısıyla değişir)
-  const sw = clamp(28 - off.x * 1.6, 6, 60);
+  const sw = 28;
   seed(13);
   const side = sub([[930, 440], [930 + sw, 470], [930 + sw, 1490], [930, 1500]], 30, true); wash(c, side, '#3a0d14', 2); ink(c, side, true, 3);
-  const sideL = clamp(-10 - off.x * 1.6, 0, 50);
+  const sideL = 0;
   if (sideL > 2) { const s2 = sub([[70, 440], [70 - sideL, 470], [70 - sideL, 1490], [70, 1500]], 30, true); wash(c, s2, '#3a0d14', 2); ink(c, s2, true, 3); }
   // kabin
   seed(14);
@@ -860,7 +862,7 @@ function drawCat(t) {
 }
 // ---------- masadaki canlı şeyler ----------
 function drawTableLive(t) {
-  setWorld(1.5);
+  setWorld(1);
   // çay buharı
   ctx.lineCap = 'round';
   for (let i = 0; i < 3; i++) {
@@ -954,7 +956,7 @@ function spin() {
     return false;
   }
   setBalance(balance - bet); lastWin = 0; dispWin = 0;
-  state = 'spinning'; wins = []; banners = []; cam.tz = 1.03;
+  state = 'spinning'; wins = []; banners = [];
   const now = performance.now(); let d = 0, scs = 0;
   reels.forEach((r, c) => {
     const target = [pick(), pick(), pick()], cur = r.strip.slice(1, 4);
@@ -1052,8 +1054,9 @@ cv.addEventListener('pointerdown', e => {
   audio(); askGyro();
   const w = toWorld(e.clientX, e.clientY);
   if (!trans.done) return;
-  if (scene !== 'lobby' && e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h) { if (canLeave()) { if (MP.code) { const playing = MP.t && MP.t.status === 'play'; if (playing && !confirm('Masadan kalkılsın mı? Oyun sürüyor.')) return; mpLeave(); } go('lobby', e.clientX, e.clientY); } return; }
-  if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : 'cok'); return; } const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY); } return; }
+  if (e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h) { if (scene !== 'lobby') leaveGame(e.clientX, e.clientY); else if (LOBBYMODE) { LOBBYMODE = null; tone('sine', 520, .1, .05); } return; }
+  if (scene === 'lobby' && !LOBBYMODE) { const m = modeAt(w); if (m) pickMode(m, e.clientX, e.clientY); return; }
+  if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : 'cok'); return; } const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); if (LOBBYMODE === 'multi' && SIGNS[i].id !== 'slot') { mpQuick(SIGNS[i].id); return; } tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY); } return; }
   if (scene === 'bj') { bjDown(w); return; }
   if (scene === 'tavla') { tvDown(w); return; }
   if (scene === 'okey') { okDown(w, e); return; }
@@ -1113,7 +1116,7 @@ function buildPayTable() {
 // =============================================================
 //  SALON (oyun seçimi), GEÇİŞ, GERİ DÜĞMESİ
 // =============================================================
-let scene = 'lobby';
+let scene = 'lobby', LOBBYMODE = null;
 const LY = { lx: 500, tv: { T: true, k: .72, bx: 500, by: 830, top: 460, catFront: false, cat: { x: 500, y: 330, s: .9 }, status: { x: 490, y: 1480, w: 560 } } };
 const LOBBTN = { kar: { x: 180, y: 1425, w: 300, h: 100 }, canta: { x: 500, y: 1425, w: 300, h: 100 }, cok: { x: 820, y: 1425, w: 300, h: 100 } };
 const SIGNS = [
@@ -1125,9 +1128,9 @@ const SIGNS = [
 const trans = { t0: 0, to: null, done: true, x: 0, y: 0 };
 const safeTop = (() => { try { const d = document.createElement('div'); d.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden'; document.body.appendChild(d); const h = d.offsetHeight; d.remove(); return h; } catch { return 0; } })();
 const BACK = { x: 12, y: 12 + safeTop, w: 116, h: 48 };
-function go(to, sx = W / 2, sy = H / 2) {
+function go(to, sx = W / 2, sy = H / 2, after) {
   if (!trans.done) return;
-  Object.assign(trans, { t0: performance.now(), to, done: false, switched: false, x: sx, y: sy });
+  Object.assign(trans, { t0: performance.now(), to, done: false, switched: false, x: sx, y: sy, after });
   tone('sine', 520, .25, .05, 0, 260); thud(.08, 600);
 }
 function updateTrans(t) {
@@ -1135,6 +1138,7 @@ function updateTrans(t) {
   const u = (t - trans.t0) / 900;
   if (u >= .5 && !trans.switched) {
     trans.switched = true; scene = trans.to; banners = []; coins = []; sparks = [];
+    if (trans.after) { trans.after(); trans.after = null; }
     if (setView(scene)) { buildSprites(); buildPayTable(); }
     if (scene !== 'slot') { auto = false; cat.until = 0; cat.show = 0; }
     if (scene === 'bj' && bj.mode !== 'online') { bjReset(); banner('Hoş geldin!', 'Bahsini seç, DAĞIT\'a bas', { dur: 2400, col: '#1f4e9c', y: .45 }); }
@@ -1153,13 +1157,26 @@ function drawIris(t) {
   ctx.fillStyle = '#120806'; ctx.beginPath(); ctx.rect(0, 0, W, H); ctx.arc(trans.x, trans.y, Math.max(0, r), 0, Math.PI * 2, true); ctx.fill();
   if (r > 2) { seed(77); ctx.strokeStyle = INK; ctx.lineWidth = 6; trace(ctx, ell(trans.x, trans.y, r, r, 40), true, 3); ctx.stroke(); }
 }
+async function leaveGame(x, y) {
+  if (!trans.done) return;
+  if (scene === 'slot' && state !== 'idle') { banner('Önce çevirme bitsin', state.startsWith('bonus') ? 'Çarkı çevir' : null, { dur: 1300, col: '#1f4e9c', top: true }); return; }
+  if (!canLeave()) {
+    const msg = MP.code ? 'Masadan kalkılsın mı? Oyun sürüyor, bu el kaybedilir.' : 'Oyun yarıda kalacak, bahsin geri gelmez. Salona dönülsün mü?';
+    if (!(await ask(msg, 'Salona dön', 'Vazgeç'))) return;
+  } else if (MP.code && MP.t && MP.t.status === 'play' && !(await ask('Masadan kalkılsın mı?', 'Kalk', 'Vazgeç'))) return;
+  if (MP.code) mpLeave();
+  if (scene === 'tavla' && tv.mode !== 'online' && tv.state !== 'bet' && tv.state !== 'over') { tv.state = 'bet'; tv.st = tvInit(); tv.dice = []; tv.made = []; }
+  if (scene === 'okey' && ok.mode !== 'online' && ok.state === 'play') { ok.state = 'bet'; ok.slots = new Array(24).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.fly = []; }
+  if (scene === 'bj' && bj.mode !== 'online' && bj.state !== 'bet' && bj.state !== 'result') { if (bj.state === 'play') { bj.state = 'bet'; bj.player = []; bj.dealer = []; } else bj.abandon = true; }
+  go('lobby', x, y);
+}
 function canLeave() { if (MP.code) return true; return scene === 'slot' ? state === 'idle' : scene === 'bj' ? (bj.state === 'bet' || bj.state === 'result') : scene === 'tavla' ? (tv.state === 'bet' || tv.state === 'over') : scene === 'okey' ? (ok.state === 'bet' || ok.state === 'over') : false; }
 function drawBack(t) {
-  if (scene === 'lobby') return;
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.globalAlpha = canLeave() ? 1 : .35;
+  if (scene === 'lobby' && !LOBBYMODE) return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
   seed(66); const p = rr(BACK.x, BACK.y, BACK.w, BACK.h, 10, 14);
   wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5, INK, 1);
-  inkText(ctx, '‹ Salon', BACK.x + BACK.w / 2, BACK.y + BACK.h / 2 + 1, 28, INK, { outline: false });
+  inkText(ctx, scene === 'lobby' ? '‹ Mod' : '‹ Salon', BACK.x + BACK.w / 2, BACK.y + BACK.h / 2 + 1, 28, INK, { outline: false });
   ctx.globalAlpha = 1;
 }
 function drawLobby(t) {
@@ -1167,7 +1184,7 @@ function drawLobby(t) {
   seed(50);
   const LX = LY.lx;
   inkText(ctx, 'Nazar Sarayı', LX, 140, 120, '#f2cf74', { ow: 12 });
-  inkText(ctx, 'Hangi oyunu oynayalım?', LX, 240, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  inkText(ctx, LOBBYMODE === 'multi' ? 'Çok oyunculu · bir oyuna dokun' : 'Hangi oyunu oynayalım?', LX, 240, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
   const pl = rr(LX - 170, 290, 340, 74, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3);
   inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), LX, 328, 42, INK, { outline: false });
   SIGNS.forEach((s, i) => {
@@ -1181,7 +1198,7 @@ function drawLobby(t) {
     const pp = rr(-s.w / 2 + 18, 18, s.w - 36, s.h - 36, 10, 30); wash(ctx, pp, '#f4e8cc', 2); ink(ctx, pp, true, 2.5, '#b8862b', 1.2);
     for (const [x, y] of [[-s.w / 2 + 18, 18], [s.w / 2 - 18, 18], [-s.w / 2 + 18, s.h - 18], [s.w / 2 - 18, s.h - 18]]) { const st = star4(x, y, 15); wash(ctx, st, '#f2cf74', 1); ink(ctx, st, true, 1.6); }
     inkText(ctx, s.title, 0, 78, 60, '#cf4b32', { ow: 7 });
-    inkText(ctx, s.sub, 0, 128, 30, INK, { outline: false, font: '"Caveat"', weight: 700 });
+    inkText(ctx, LOBBYMODE === 'multi' ? (s.id === 'slot' ? 'Tek kişilik' : 'Rastgele rakip bul') : s.sub, 0, 128, 30, LOBBYMODE === 'multi' && s.id !== 'slot' ? '#1f4e9c' : INK, { outline: false, font: '"Caveat"', weight: 700 });
     const bob = k => Math.sin(t * .004 + k + i) * 4;
     if (s.id === 'slot') {
       const win = rr(-180, 160, 360, 140, 14, 20); wash(ctx, win, '#2a0a0f', 1.5); ink(ctx, win, true, 4, '#d9a441', 1);
@@ -1203,9 +1220,48 @@ function drawLobby(t) {
     }
     const k = .5 + .5 * Math.sin(t * .005 + i * 2);
     const pb = rr(s.w / 2 - 170, s.h - 92, 140, 58, 28, 16); wash(ctx, pb, '#cf4b32', 1.5); ink(ctx, pb, true, 3);
-    inkText(ctx, 'Oyna ›', s.w / 2 - 100 + k * 3, s.h - 62, 38, '#fbf1da', { ow: 5 });
+    inkText(ctx, LOBBYMODE === 'multi' && s.id !== 'slot' ? 'Eşleş ›' : 'Oyna ›', s.w / 2 - 100 + k * 3, s.h - 62, 38, '#fbf1da', { ow: 5 });
     ctx.restore();
   });
+}
+const MODEBTN = { single: { x: 500, y: 760, w: 760, h: 400 }, multi: { x: 500, y: 1210, w: 760, h: 400 } };
+function drawModeSelect(t) {
+  setWorld(1); seed(50);
+  const LX = LY.lx, M2 = MODEBTN;
+  if (LAND) { Object.assign(M2.single, { x: 640, y: 620, w: 640, h: 420 }); Object.assign(M2.multi, { x: 1360, y: 620, w: 640, h: 420 }); }
+  else { Object.assign(M2.single, { x: 500, y: 700, w: 780, h: 380 }); Object.assign(M2.multi, { x: 500, y: 1130, w: 780, h: 380 }); }
+  inkText(ctx, 'Nazar Sarayı', LX, 140, 120, '#f2cf74', { ow: 12 });
+  inkText(ctx, 'Nasıl oynamak istersin?', LX, 240, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  const on = Math.max(0, MP.peers.length - 1);
+  [['single', 'Tek Oyunculu', 'Kedilere karşı, kendi hızında', 'Reis, Paşa, Tarçın ve diğerleri seni bekliyor'], ['multi', 'Çok Oyunculu', 'Gerçek rakiplerle eşleş', MP.ok ? (on ? on + ' kişi çevrimiçi · oyuna dokun, rastgele masaya bağlan' : 'Oyuna dokun, rastgele masaya bağlan') : 'Oyun claude.ai\'de paylaşıldığında açılır']].forEach(([k, title, sub, sub2], i) => {
+    const b = M2[k], sway = Math.sin(t * .0011 + i * 1.7) * .01, hov = press['mode' + k] && t - press['mode' + k] < 200 ? .96 : 1;
+    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(sway); ctx.scale(hov, hov); seed(80 + i);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; trace(ctx, rr(-b.w / 2 + 12, -b.h / 2 + 16, b.w, b.h, 18, 30), true, 2); ctx.fill();
+    const fr = rr(-b.w / 2, -b.h / 2, b.w, b.h, 18, 30); wash(ctx, fr, k === 'single' ? '#7a1e28' : '#1f4e9c', 2); ink(ctx, fr, true, 4);
+    const pp = rr(-b.w / 2 + 20, -b.h / 2 + 20, b.w - 40, b.h - 40, 10, 30); wash(ctx, pp, '#f4e8cc', 2); ink(ctx, pp, true, 2.5, '#b8862b', 1.2);
+    for (const [x, y] of [[-b.w / 2 + 20, -b.h / 2 + 20], [b.w / 2 - 20, -b.h / 2 + 20], [-b.w / 2 + 20, b.h / 2 - 20], [b.w / 2 - 20, b.h / 2 - 20]]) { const st = star4(x, y, 16); wash(ctx, st, '#f2cf74', 1); ink(ctx, st, true, 1.6); }
+    const ix = -b.w / 2 + 150;
+    if (k === 'single') { drawAvatarMini(ix - 30, 0, 170, AV); ctx.save(); ctx.translate(ix + 40, 30); ctx.scale(.55, .55); ctx.translate(-100, -120); drawKedi(ctx, (t % 3100) < 150, false, 1); drawKasket(ctx); ctx.restore(); }
+    else { drawAvatarMini(ix - 40, -10, 150, AV); inkText(ctx, 'vs', ix + 20, 20, 44, '#cf4b32', { ow: 5 }); drawAvatarMini(ix + 80, -10, 150, { fur: 3, eye: 1, hat: 'kasket', acc: 'none', robe: 1 }); }
+    const tx = -b.w / 2 + 300;
+    inkText(ctx, title, tx, -70, 66, k === 'single' ? '#cf4b32' : '#1f4e9c', { ow: 7, align: 'left' });
+    inkText(ctx, sub, tx, -6, 36, INK, { outline: false, font: '"Caveat"', weight: 700, align: 'left' });
+    let fs = 26; ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(sub2).width, room = b.w / 2 - tx - 40; if (mw > room) fs *= room / mw;
+    inkText(ctx, sub2, tx, 46, fs, '#6a5a48', { outline: false, font: '"Caveat"', weight: 700, align: 'left' });
+    if (k === 'multi') { ctx.fillStyle = on ? '#4fd17a' : '#8a7a5a'; ctx.beginPath(); ctx.arc(tx - 22, 46, 10, 0, 7); ctx.fill(); }
+    const kk = .5 + .5 * Math.sin(t * .005 + i * 2), pb = rr(b.w / 2 - 210, b.h / 2 - 110, 170, 64, 30, 16); wash(ctx, pb, k === 'single' ? '#cf4b32' : '#1f4e9c', 1.5); ink(ctx, pb, true, 3);
+    inkText(ctx, 'Seç ›', b.w / 2 - 125 + kk * 3, b.h / 2 - 77, 40, '#fbf1da', { ow: 5 });
+    ctx.restore();
+  });
+}
+function modeAt(w) { for (const k in MODEBTN) { const b = MODEBTN[k]; if (Math.abs(w.x - b.x) < b.w / 2 && Math.abs(w.y - b.y) < b.h / 2) return k; } return null; }
+async function pickMode(k, sx, sy) {
+  press['mode' + k] = performance.now(); tone('triangle', 620, .05, .05);
+  if (k === 'multi') {
+    if (!MP.ready) { await note('Sunucuya bağlanılıyor, birkaç saniye sonra tekrar dene.'); return; }
+    if (!MP.ok) { await note('Çok oyunculu masalar oyun claude.ai üzerinde açılıp paylaşıldığında çalışır. Arkadaşlarının katılabilmesi için onlarla “Katkıda bulunabilir” yetkisiyle paylaş. Şimdilik tek oyunculu oynayabilir ya da aynı cihazda iki kişilik Tavla açabilirsin.'); return; }
+  }
+  go('lobby', sx, sy, () => { LOBBYMODE = k; });
 }
 function drawLobbyButtons(t) {
   const plaque = (b, label, sub) => { seed(70 + b.x); const p = rr(b.x - b.w / 2, b.y - b.h / 2, b.w, b.h, 22, 20); wash(ctx, p, '#b8862b', 1.5); hatch(ctx, p, .3, 9, INK, .15); ink(ctx, p, true, 3.5); inkText(ctx, label, b.x + b.w * .1, b.y - (sub ? 12 : 0), 40, '#fbf1da', { ow: 6 }); if (sub) inkText(ctx, sub, b.x + b.w * .1, b.y + 28, 26, INK, { outline: false, font: '"Caveat"', weight: 700 }); };
@@ -1315,6 +1371,7 @@ async function bjDeal() {
   setBalance(balance - bet); bj.bet = bet; bj.doubled = false; bj.state = 'dealing'; bj.mood = 0; lastWin = 0; banners = [];
   await dealTo('player', true); await dealTo('dealer', true); await dealTo('player', true); await dealTo('dealer', false);
   if (isBJ(bj.player) || isBJ(bj.dealer)) { await flipHole(); return bjResolve(); }
+  if (bj.abandon) { bj.abandon = false; bj.player = []; bj.dealer = []; bj.state = 'bet'; return; }
   bj.state = 'play';
 }
 async function bjHit() {
@@ -1339,6 +1396,7 @@ async function bjDouble() {
   bjStand(true);
 }
 function bjResolve() {
+  if (bj.abandon) { bj.abandon = false; bj.player = []; bj.dealer = []; bj.state = 'bet'; return; }
   const p = handVal(bj.player).v, d = handVal(bj.dealer).v, pb = isBJ(bj.player), db = isBJ(bj.dealer);
   let pay = 0, title, subt, col = '#cf4b32', big = false;
   if (p > 21) { title = 'Battın!'; subt = p + ' oldu, 21\'i geçti'; bj.mood = 1; col = '#1f4e9c'; }
@@ -1390,7 +1448,7 @@ function drawCatDealer(t) {
   ctx.restore();
 }
 function drawPaws(t) {
-  setWorld(.8);
+  setWorld(1);
   const u = clamp((t - bj.pawT) / 380, 0, 1), k = Math.sin(u * Math.PI);
   for (const [x, dx, dy] of [[420, 0, 0], [580, 120 * k, -30 * k]]) {
     seed(33 + x); const p = ell(x + dx, 580 + dy, 38, 22, 18); wash(ctx, p, '#fbf8f2', 1); ink(ctx, p, true, 3);
@@ -1908,8 +1966,10 @@ async function mpTvStart() {
   const t = MP.t; if (!t || t.host !== MP.uid || t.seats.filter(Boolean).length < 2) return;
   let a, b; do { a = 1 + Math.floor(Math.random() * 6); b = 1 + Math.floor(Math.random() * 6); } while (a === b);
   const st = tvInit(), turn = a > b ? 0 : 1;
+  let prev = MP.t;
   await mpWrite(x => { x.status = 'play'; x.round = (x.round || 0) + 1; x.g = { st, turn, dice: [a, b], diceSide: -1, made: [], start: st, phase: 'opening', winner: -1, mars: false }; });
-  setTimeout(() => { if (!MP.t || !MP.t.g || MP.t.g.phase !== 'opening') return; mpWrite(x => { x.g.phase = 'move'; x.g.dice = turn === 0 ? [a, b] : [b, a]; x.g.diceSide = turn; }); }, 1300);
+  tvRemote(MP.t, prev);
+  setTimeout(() => { if (!MP.t || !MP.t.g || MP.t.g.phase !== 'opening') return; prev = MP.t; mpWrite(x => { x.g.phase = 'move'; x.g.dice = turn === 0 ? [a, b] : [b, a]; x.g.diceSide = turn; }).then(() => tvRemote(MP.t, prev)); }, 1300);
 }
 function tvRemote(d, prev) {
   tv.mode = 'online'; tv.view = Math.max(0, MP.seat); tv.bet = d.bet;
@@ -2363,6 +2423,14 @@ function drawItemFlash(t) {
 // ---------- HTML sayfaları: Karakter / Çanta / Koleksiyon ----------
 const sheetEl = document.getElementById('sheet'), sheetBody = document.getElementById('sheetBody');
 let sheetTab = 'karakter';
+function ask(text, yes = 'Evet', no = 'Vazgeç') {
+  return new Promise(res => {
+    const m = document.getElementById('ask'), y = document.getElementById('askYes'), n = document.getElementById('askNo');
+    document.getElementById('askText').textContent = text; y.textContent = yes; n.textContent = no || ''; n.style.display = no ? '' : 'none';
+    const done = v => { m.classList.remove('show'); res(v); }; y.onclick = () => done(true); n.onclick = () => done(false); m.classList.add('show');
+  });
+}
+const note = t => ask(t, 'Tamam', null);
 function el(tag, attrs = {}, kids = []) { const e = document.createElement(tag); for (const k in attrs) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'on') e.onclick = attrs[k]; else if (k === 'style') e.style.cssText = attrs[k]; else e.setAttribute(k, attrs[k]); } (Array.isArray(kids) ? kids : [kids]).forEach(x => x && e.appendChild(x)); return e; }
 function openSheet(tab) { sheetTab = tab; renderSheet(); sheetEl.classList.add('show'); tone('triangle', 660, .06, .04); }
 function closeSheet() { sheetEl.classList.remove('show'); if (typeof mpCloseLobbyList === 'function') mpCloseLobbyList(); }
@@ -2394,8 +2462,8 @@ function itemActions(x) {
     if (it.slot === 'fur') setAV({ fur: worn ? 0 : FURS.findIndex(f => f.item === x.id) }); else setAV({ [it.slot]: worn ? (it.slot === 'hat' ? 'fez' : 'nazar') : x.id });
     renderSheet();
   } }));
-  if (!x.col) btns.push(el('button', { class: 'sell', text: 'Sat +' + it.price.toLocaleString('tr-TR'), on: () => {
-    if (it.tier >= 2 && !confirm(it.name + ' gerçekten satılsın mı? (' + TIERS[it.tier].odds + ' şansla düştü)')) return;
+  if (!x.col) btns.push(el('button', { class: 'sell', text: 'Sat +' + it.price.toLocaleString('tr-TR'), on: async () => {
+    if (it.tier >= 2 && !(await ask(it.name + ' gerçekten satılsın mı? (' + TIERS[it.tier].odds + ' şansla düştü)', 'Sat', 'Vazgeç'))) return;
     if (worn && !wornOther) { if (it.slot === 'fur') setAV({ fur: 0 }); else setAV({ [it.slot]: it.slot === 'hat' ? 'fez' : 'nazar' }); }
     INV = INV.filter(y => y !== x); saveInv(); setBalance(balance + it.price); lastWin = it.price; coinPing(); coinPing(.1); renderSheet();
   } }));
@@ -2461,6 +2529,27 @@ function mpIsRunner() {
   const humans = t.seats.filter(Boolean).map(s => s.uid);
   return humans.includes(t.host) ? t.host === MP.uid : humans[0] === MP.uid;
 }
+async function mpQuick(game) {
+  if (!MP.ok) { await note('Çok oyunculu için oyun claude.ai\'de paylaşılmalı.'); return; }
+  if (MP.searching) return; MP.searching = true;
+  banner('Rakip aranıyor…', GNAME[game], { dur: 1800, top: true, col: '#2a7a5a' }); tone('sine', 660, .2, .05, 0, 990);
+  try {
+    const snap = await MP.db.collection('tables').where('status', '==', 'open').limit(80).get(), now = Date.now();
+    const cands = snap.docs.map(d => d.data()).filter(x => x && x.game === game && x.quick && now - (x.updatedAt || 0) < 75000 && x.seats.some(q => !q) && !x.seats.some(q => q && q.uid === MP.uid) && balance >= x.bet);
+    if (cands.length) { const pick = cands[Math.floor(Math.random() * cands.length)]; MP.searching = false; return mpJoin(pick.code); }
+  } catch { }
+  MP.searching = false;
+  await mpCreate(game, true);
+  if (MP.code) banner('Masa açıldı', 'Rakip gelince oyun kendiliğinden başlar', { dur: 2600, top: true, col: '#2a7a5a' });
+}
+function mpAutoStart() {
+  const t = MP.t; if (!t || !t.quick || t.status !== 'open' || t.host !== MP.uid || MP.starting) return;
+  const n = t.seats.filter(Boolean).length;
+  const later = (ms, fn) => { MP.starting = true; setTimeout(() => { MP.starting = false; if (MP.t && MP.t.status === 'open' && MP.t.host === MP.uid) fn(); }, ms); };
+  if (t.game === 'tavla' && n === 2) later(1200, mpTvStart);
+  else if (t.game === 'okey' && n >= 2) later(n >= 4 ? 1200 : 8000, mpOkStart);
+  else if (t.game === 'bj' && n >= 2 && !t.g) later(2500, bjoDeal);
+}
 function mpCode() { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += A[Math.floor(Math.random() * A.length)]; return s; }
 const mpRef = code => MP.db.doc('tables/' + code);
 function mpWrite(mut) {
@@ -2482,13 +2571,14 @@ function mpOnData(d) {
   mpNames(d.seats.filter(Boolean).map(x => x.uid));
   if (prev) { const was = new Set(prev.seats.filter(Boolean).map(x => x.uid)); d.seats.forEach(s => { if (s && !was.has(s.uid) && s.uid !== MP.uid) { banner(mpName(s.uid) + ' masaya oturdu', null, { dur: 1500, col: '#2a7a5a', top: true }); tone('sine', 880, .12, .05); } }); }
   if (d.game === 'tavla') tvRemote(d, prev); else if (d.game === 'okey') okRemote(d, prev); else if (d.game === 'bj') bjRemote(d, prev);
+  mpAutoStart();
 }
-async function mpCreate(game) {
-  if (!MP.ok) return; const bet = BETS[MP.cBet];
-  if (balance < bet && !dailyGift()) { alert('Bu bahis için akçen yetmiyor.'); return; }
+async function mpCreate(game, quick) {
+  if (!MP.ok) return; const bet = quick ? BETS[Math.min(betIdx, 3)] : BETS[MP.cBet];
+  if (balance < bet && !dailyGift()) { note('Bu bahis için akçen yetmiyor.'); return; }
   const code = mpCode(), seats = new Array(MAXSEATS[game]).fill(null); seats[0] = { uid: MP.uid, av: AV };
-  const t = { game, code, host: MP.uid, bet, status: 'open', seats, createdAt: Date.now(), updatedAt: Date.now(), rev: 1, round: 0, g: null };
-  try { await mpRef(code).set(t); } catch { alert('Masa kurulamadı. Bu sayfada veri yazma yetkin olmayabilir.'); return; }
+  const t = { game, code, quick: !!quick, host: MP.uid, bet, status: 'open', seats, createdAt: Date.now(), updatedAt: Date.now(), rev: 1, round: 0, g: null };
+  try { await mpRef(code).set(t); } catch { note('Masa kurulamadı. Bu sayfada veri yazma yetkin olmayabilir.'); return; }
   mpEnter(code, t);
 }
 async function mpJoin(code) {
@@ -2496,23 +2586,24 @@ async function mpJoin(code) {
   const ref = mpRef(code);
   try {
     const lease = await ref.acquire({ holder: MP.uid, ttlMs: 4000 });
-    if (!lease.acquired) { alert('Masa şu an meşgul, birkaç saniye sonra tekrar dene.'); return; }
-    const s = await ref.get(); if (!s.exists) { alert('Bu kodla bir masa bulunamadı.'); return; }
+    if (!lease.acquired) { note('Masa şu an meşgul, birkaç saniye sonra tekrar dene.'); return; }
+    const s = await ref.get(); if (!s.exists) { note('Bu kodla bir masa bulunamadı.'); return; }
     const t = JSON.parse(JSON.stringify(s.data()));
     if (!t.seats.some(x => x && x.uid === MP.uid)) {
-      if (t.status !== 'open' && t.game !== 'bj') { alert('Bu masada oyun başlamış.'); return; }
-      const free = t.seats.findIndex(x => !x); if (free < 0) { alert('Masa dolu.'); return; }
-      if (balance < t.bet && !dailyGift()) { alert('Bu masanın bahsi için akçen yetmiyor.'); return; }
+      if (t.status !== 'open' && t.game !== 'bj') { note('Bu masada oyun başlamış.'); return; }
+      const free = t.seats.findIndex(x => !x); if (free < 0) { note('Masa dolu.'); return; }
+      if (balance < t.bet && !dailyGift()) { note('Bu masanın bahsi için akçen yetmiyor.'); return; }
       t.seats[free] = { uid: MP.uid, av: AV }; t.rev = (t.rev || 0) + 1; t.updatedAt = Date.now(); t.wid = 'join';
       await ref.set(t);
     }
     mpEnter(code, t);
-  } catch { alert('Masaya katılınamadı.'); }
+  } catch { note('Masaya katılınamadı.'); }
 }
 async function mpEnter(code, t) {
   mpReset(true);
   MP.code = code; MP.t = t; MP.rev = t.rev || 0; MP.seat = t.seats.findIndex(x => x && x.uid === MP.uid);
   MP.unsub = mpRef(code).onSnapshot(s => mpOnData(s.exists ? s.data() : null), () => { });
+  clearInterval(MP.hb); MP.hb = setInterval(() => { if (MP.t && MP.t.status === 'open' && MP.t.host === MP.uid) mpWrite(() => { }); }, 30000);
   clearInterval(MP.poll); MP.poll = setInterval(() => { if (!MP.code || document.hidden) return; mpRef(MP.code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { }); }, 4000);
   if (MP.room) MP.room.join('t-' + code.toLowerCase()).then(r => { MP.nr = r; r.on('poke', () => mpRef(code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { })); }).catch(() => { });
   closeSheet();
@@ -2520,7 +2611,7 @@ async function mpEnter(code, t) {
   go(GSCENE[t.game]); mpPresence();
 }
 function mpReset(keepScene) {
-  clearInterval(MP.poll); try { if (MP.unsub) MP.unsub(); if (MP.nr) MP.nr.leave(); } catch { }
+  clearInterval(MP.poll); clearInterval(MP.hb); MP.starting = false; try { if (MP.unsub) MP.unsub(); if (MP.nr) MP.nr.leave(); } catch { }
   MP.unsub = null; MP.nr = null; MP.code = null; MP.t = null; MP.seat = -1; MP.rev = 0;
   if (!keepScene) { tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; tv.state = 'bet'; ok.state = 'bet'; bj.state = 'bet'; }
   mpPresence();
@@ -2586,7 +2677,7 @@ function renderCok() {
     let timer = setTimeout(() => { if (!MP.tables.length) list.textContent = 'Masalar henüz okunamadı; bağlantını kontrol et.'; }, 10000);
     MP.lobbyUnsub = MP.db.collection('tables').where('status', '==', 'open').limit(40).onSnapshot(snap => {
       clearTimeout(timer);
-      MP.tables = snap.docs.map(d => d.data()).filter(x => x && x.seats && Date.now() - (x.updatedAt || 0) < 3 * 3600e3).sort((a, b) => b.updatedAt - a.updatedAt);
+      MP.tables = snap.docs.map(d => d.data()).filter(x => x && x.seats && Date.now() - (x.updatedAt || 0) < 20 * 60000).sort((a, b) => b.updatedAt - a.updatedAt);
       fill(); mpNames(MP.tables.map(x => x.host)).then(fill);
     }, () => { clearTimeout(timer); list.textContent = 'Masalar okunamadı.'; });
   }
@@ -2713,7 +2804,7 @@ function frame(t) {
   BOIL = Math.floor(t / 140) % 3;
   // kamera
   const k = 1 - Math.pow(.004, dt / 1000 * 1.2);
-  cam.x = lerp(cam.x, cam.tx, k); cam.y = lerp(cam.y, cam.ty, k); cam.z = lerp(cam.z, cam.tz + zoomKick, k);
+  cam.x = lerp(cam.x, cam.tx, k); cam.y = lerp(cam.y, cam.ty, k); cam.z = lerp(cam.z, cam.tz, k);
   zoomKick *= Math.pow(.05, dt / 1000);
   gyro.x = lerp(gyro.x, gyro.tx, .08); gyro.y = lerp(gyro.y, gyro.ty, .08); ptr.x = lerp(ptr.x, ptr.tx, .06); ptr.y = lerp(ptr.y, ptr.ty, .06);
   shake *= Math.pow(.02, dt / 1000);
@@ -2744,15 +2835,15 @@ function frame(t) {
   if (scene === 'slot') {
     drawCat(t);
     setWorld(1); drawMachine(t);
-    drawLayer(getLayers('fg')[bl], 1.5);
+    drawLayer(getLayers('fg')[bl], 1);
     drawTableLive(t);
   } else if (scene === 'bj') drawBJ(t);
   else if (scene === 'tavla') drawTavla(t);
   else if (scene === 'okey') drawOkey(t);
   else {
-    drawLayer(getLayers('fg')[bl], 1.5);
+    drawLayer(getLayers('fg')[bl], 1);
     drawTableLive(t);
-    drawLobby(t); drawLobbyButtons(t);
+    if (LOBBYMODE) { drawLobby(t); drawLobbyButtons(t); } else drawModeSelect(t);
   }
   drawParticles(dt);
   drawBanners(t);
@@ -2776,7 +2867,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__nazar = { get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__nazar = { mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>
