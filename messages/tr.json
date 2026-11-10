@@ -1,0 +1,67 @@
+{
+  "common": {
+    "appName": "DöngüPazar",
+    "skipToContent": "İçeriğe geç"
+  },
+  "metadata": {
+    "title": "DöngüPazar — Palet ve sanayi atığı pazaryeri",
+    "titleTemplate": "%s | DöngüPazar",
+    "description": "Kullanılmış paletleri ve üretim atıklarını ihtiyacı olan firmalarla buluşturan B2B döngüsel ekonomi pazaryeri. İzmir ve Ege bölgesinde ilan verin, teklif alın."
+  },
+  "nav": {
+    "ariaLabel": "Ana menü",
+    "listings": "İlanlar",
+    "howItWorks": "Nasıl çalışır",
+    "login": "Giriş yap",
+    "postListing": "İlan ver",
+    "homeAriaLabel": "DöngüPazar ana sayfa"
+  },
+  "footer": {
+    "tagline": "Bir firmanın atığı, başka bir firmanın hammaddesidir.",
+    "marketplace": "Pazaryeri",
+    "company": "Kurumsal",
+    "legal": "Yasal",
+    "listings": "İlanlar",
+    "postListing": "İlan ver",
+    "howItWorks": "Nasıl çalışır",
+    "about": "Hakkımızda",
+    "contact": "İletişim",
+    "terms": "Kullanım koşulları",
+    "kvkk": "KVKK aydınlatma metni",
+    "privacy": "Gizlilik politikası",
+    "copyright": "© {year} DöngüPazar. Tüm hakları saklıdır."
+  },
+  "home": {
+    "hero": {
+      "badge": "İzmir ve Ege bölgesi",
+      "title": "Paletiniz ve üretim atığınız başka bir firmanın ihtiyacı",
+      "subtitle": "Kullanılmış paletleri ve sanayi yan ürünlerini ihtiyacı olan firmalarla buluşturan B2B pazaryeri. İlan vermek ücretsiz.",
+      "primaryCta": "İlan ver",
+      "secondaryCta": "İlanlara göz at"
+    },
+    "entry": {
+      "heading": "Ne arıyorsunuz?",
+      "palletTitle": "Palet",
+      "palletDescription": "Euro, standart, plastik ve metal palet. Yeni, kullanılmış veya tamir edilecek.",
+      "palletBadge": "ISPM-15 filtresi",
+      "wasteTitle": "Atık ve yan ürün",
+      "wasteDescription": "Ahşap, plastik, kâğıt, tekstil, metal, cam ve organik yan ürünler.",
+      "wasteBadge": "Düzenli tedarik",
+      "cta": "İlanları gör"
+    },
+    "howItWorks": {
+      "heading": "Nasıl çalışır?",
+      "step1Title": "İlan verin",
+      "step1Description": "Elinizdeki paleti veya atığı, ya da aradığınız malzemeyi birkaç dakikada ilan edin.",
+      "step2Title": "Teklif alın",
+      "step2Description": "Yakınınızdaki firmalar teklif verir veya mesaj gönderir. Karşı teklifle pazarlık edin.",
+      "step3Title": "Teslim edin",
+      "step3Description": "Teslimatı kararlaştırın, işlemi tamamlayın ve karşı firmayı puanlayın."
+    }
+  },
+  "notFound": {
+    "title": "Sayfa bulunamadı",
+    "description": "Aradığınız sayfa taşınmış veya henüz yayında olmayabilir.",
+    "backHome": "Ana sayfaya dön"
+  }
+}
