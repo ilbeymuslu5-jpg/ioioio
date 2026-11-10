@@ -1,26 +1,30 @@
 import Link from "next/link";
-import { Plus } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { Plus, UserRound } from "lucide-react";
+import { getTranslations } from "next-intl/server";
 import { Button } from "@/components/ui/button";
+import { getCurrentUser } from "@/lib/auth/session";
 import { routes } from "@/lib/routes";
 import { Container } from "./container";
 import { Logo } from "./logo";
 import { MobileMenu } from "./mobile-menu";
 import { NavLink } from "./nav-link";
 
-export function Header() {
-  const t = useTranslations("nav");
+export async function Header() {
+  const t = await getTranslations("nav");
+  const user = await getCurrentUser();
 
   const links = [
     { href: routes.listings, label: t("listings") },
     { href: routes.howItWorks, label: t("howItWorks") },
   ];
 
-  const mobileLinks = [
-    ...links,
-    { href: routes.login, label: t("login") },
-    { href: routes.register, label: t("register") },
-  ];
+  const mobileLinks = user
+    ? [...links, { href: routes.panel, label: t("panel") }]
+    : [
+        ...links,
+        { href: routes.login, label: t("login") },
+        { href: routes.register, label: t("register") },
+      ];
 
   return (
     <header className="border-line sticky top-0 z-40 border-b bg-white">
@@ -40,7 +44,14 @@ export function Header() {
 
         <div className="flex items-center gap-1 sm:gap-2">
           <Button asChild variant="ghost" size="sm" className="hidden md:inline-flex">
-            <Link href={routes.login}>{t("login")}</Link>
+            {user ? (
+              <Link href={routes.panel}>
+                <UserRound aria-hidden="true" />
+                {t("panel")}
+              </Link>
+            ) : (
+              <Link href={routes.login}>{t("login")}</Link>
+            )}
           </Button>
           <Button asChild size="sm">
             <Link href={routes.newListing}>

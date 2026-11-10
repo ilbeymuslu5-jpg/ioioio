@@ -14,7 +14,7 @@ import {
   Truck,
   Warehouse,
 } from "lucide-react";
-import { useTranslations } from "next-intl";
+import { getTranslations } from "next-intl/server";
 import { HeroPreview } from "@/components/home/hero-preview";
 import { Container } from "@/components/layout/container";
 import { CategoryIcon } from "@/components/listings/category-icon";
@@ -23,12 +23,19 @@ import { SearchForm } from "@/components/listings/search-form";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { rootCategories } from "@/lib/categories";
+import { loadListings } from "@/lib/listings/load";
 import { sampleListings } from "@/lib/listings/sample";
 import { routes } from "@/lib/routes";
 
-export default function HomePage() {
-  const t = useTranslations("home");
-  const tCategory = useTranslations("categories");
+export default async function HomePage() {
+  const t = await getTranslations("home");
+  const tCategory = await getTranslations("categories");
+
+  // Gerçek ilan varsa onları, yoksa "Örnek" etiketli kurgusal ilanları göster.
+  const latest = await loadListings({}, 4);
+  const showSamples = latest.isSample || latest.listings.length === 0;
+  const featured = showSamples ? sampleListings.slice(0, 4) : latest.listings;
+  const featuredKey = showSamples ? "samples" : "latest";
 
   const entries = [
     {
@@ -196,24 +203,26 @@ export default function HomePage() {
             {t("categories.heading")}
           </h3>
           <ul className="mt-4 grid grid-cols-2 gap-3 sm:grid-cols-4">
-            {rootCategories.map((category) => (
-              <li key={category.slug}>
-                <Link
-                  href={`${routes.listings}?kategori=${category.slug}`}
-                  className="border-line hover:border-brand-dark hover:bg-brand-soft flex items-center gap-3 rounded-xl border bg-white p-3 transition-colors"
-                >
-                  <span
-                    aria-hidden="true"
-                    className="bg-brand-soft text-brand-dark flex size-10 shrink-0 items-center justify-center rounded-lg"
+            {rootCategories
+              .filter((category) => category.slug !== "diger")
+              .map((category) => (
+                <li key={category.slug}>
+                  <Link
+                    href={`${routes.listings}?kategori=${category.slug}`}
+                    className="border-line hover:border-brand-dark hover:bg-brand-soft flex items-center gap-3 rounded-xl border bg-white p-3 transition-colors"
                   >
-                    <CategoryIcon slug={category.slug} className="size-5" />
-                  </span>
-                  <span className="text-ink min-w-0 text-sm font-medium">
-                    {tCategory(category.slug)}
-                  </span>
-                </Link>
-              </li>
-            ))}
+                    <span
+                      aria-hidden="true"
+                      className="bg-brand-soft text-brand-dark flex size-10 shrink-0 items-center justify-center rounded-lg"
+                    >
+                      <CategoryIcon slug={category.slug} className="size-5" />
+                    </span>
+                    <span className="text-ink min-w-0 text-sm font-medium">
+                      {tCategory(category.slug)}
+                    </span>
+                  </Link>
+                </li>
+              ))}
           </ul>
         </Container>
       </section>
@@ -223,23 +232,27 @@ export default function HomePage() {
           <div className="flex flex-wrap items-end justify-between gap-4">
             <div>
               <h2 id="samples-heading" className="text-ink text-2xl font-bold">
-                {t("samples.heading")}
+                {t(`${featuredKey}.heading`)}
               </h2>
               <p className="text-ink-muted mt-1 max-w-xl text-sm">
-                {t("samples.description")}
+                {t(`${featuredKey}.description`)}
               </p>
             </div>
             <Button asChild variant="secondary" size="sm">
               <Link href={routes.listings}>
-                {t("samples.cta")}
+                {t(`${featuredKey}.cta`)}
                 <ArrowRight aria-hidden="true" />
               </Link>
             </Button>
           </div>
           <ul className="mt-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            {sampleListings.slice(0, 4).map((listing) => (
+            {featured.map((listing) => (
               <li key={listing.id} className="flex">
-                <ListingCard listing={listing} isSample className="w-full" />
+                <ListingCard
+                  listing={listing}
+                  isSample={showSamples}
+                  className="w-full"
+                />
               </li>
             ))}
           </ul>

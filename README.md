@@ -45,22 +45,18 @@ Renk token'ları `src/app/globals.css` içinde tanımlıdır (Tailwind CSS v4, `
 
 ## Supabase kurulumu
 
-1. [supabase.com](https://supabase.com) üzerinde bir proje oluşturun; URL ve anahtarları `.env.local` dosyasına yazın.
-2. Migration'ları ve seed'i uygulayın:
+### Vercel üzerinden (önerilen)
 
-   ```bash
-   npx supabase login
-   npx supabase link --project-ref <proje-ref>
-   npx supabase db push                 # supabase/migrations/*
-   npx supabase db push --include-seed  # kategori seed'i (supabase/seed.sql)
-   ```
+1. Vercel'de proje → **Storage** → **Create Database** → **Supabase**. Entegrasyon gerekli ortam değişkenlerini (`NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `POSTGRES_URL_NON_POOLING` …) projeye kendisi ekler.
+2. Projeyi yeniden deploy edin. Derleme sırasında `scripts/migrate.mjs`, `supabase/migrations/` altındaki dosyaları ve `supabase/seed.sql` dosyasını veritabanına uygular. Uygulanan dosyalar `app_migrations.applied` tablosunda izlenir; her dosya bir kez çalışır.
+3. Supabase panelinde **Authentication → URL Configuration → Site URL** alanına sitenin adresini yazın (e-posta onay bağlantıları buraya döner). Pilot aşamasında e-posta onayını kapatmak için: **Authentication → Sign In / Providers → Email → Confirm email**.
 
-   Alternatif: dosyaları sırayla Supabase SQL Editor'e yapıştırıp çalıştırın.
+### Yerelde
 
-3. İlk admin kullanıcısı için, kayıt olduktan sonra SQL Editor'de:
+`.env.local` dosyasına Supabase URL, anon key ve `POSTGRES_URL_NON_POOLING` değerlerini yazın, ardından `npm run db:migrate` çalıştırın.
 
-   ```sql
-   update public.profiles set role = 'admin' where id = '<kullanıcı-uuid>';
-   ```
+### Notlar
 
-Tüm tablolarda RLS açıktır. Yetki ve onay alanları (`profiles.role`, `companies.is_verified`, puan ortalaması, ilanın `active` durumuna geçişi) veritabanı tetikleyicileriyle korunur; istemci bunları değiştiremez.
+- İlk admin kullanıcısı için, kayıt olduktan sonra SQL Editor'de: `update public.profiles set role = 'admin' where id = '<kullanıcı-uuid>';`
+- Tüm tablolarda RLS açıktır. Yetki ve onay alanları (`profiles.role`, `companies.is_verified`, puan ortalaması) veritabanı tetikleyicileriyle korunur; istemci bunları değiştiremez.
+- İlanlar şimdilik doğrudan yayına girer. Admin onayı istemek için: `update public.app_settings set require_listing_approval = true;`

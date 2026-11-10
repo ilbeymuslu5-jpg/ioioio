@@ -4,6 +4,7 @@ import {
   Leaf,
   Package,
   Recycle,
+  Shapes,
   Shirt,
   TreePine,
   Wrench,
@@ -20,6 +21,7 @@ const icons: Record<CategorySlug, LucideIcon> = {
   metal: Wrench,
   cam: GlassWater,
   organik: Leaf,
+  diger: Shapes,
 };
 
 type CategoryIconProps = {

@@ -18,7 +18,9 @@
     "register": "Kayıt ol",
     "openMenu": "Menüyü aç",
     "closeMenu": "Menüyü kapat",
-    "mobileAriaLabel": "Mobil menü"
+    "mobileAriaLabel": "Mobil menü",
+    "panel": "Panelim",
+    "signOut": "Çıkış yap"
   },
   "footer": {
     "tagline": "Bir firmanın atığı, başka bir firmanın hammaddesidir.",
@@ -107,6 +109,11 @@
       "description": "İlanınızı birkaç dakikada oluşturun, yakınınızdaki firmalardan teklif alın.",
       "primary": "İlan ver",
       "secondary": "Ücretsiz kayıt ol"
+    },
+    "latest": {
+      "heading": "Son ilanlar",
+      "description": "Platforma en son eklenen ilanlar.",
+      "cta": "Tüm ilanlar"
     }
   },
   "notFound": {
@@ -121,18 +128,6 @@
     "howItWorks": "Nasıl çalışır?"
   },
   "pages": {
-    "newListing": {
-      "title": "İlan ver",
-      "description": "Elinizdeki paleti veya atığı, ya da aradığınız malzemeyi birkaç adımda ilan edebileceksiniz."
-    },
-    "login": {
-      "title": "Giriş yap",
-      "description": "Firma hesabınızla buradan giriş yapacaksınız."
-    },
-    "register": {
-      "title": "Kayıt ol",
-      "description": "Firmanız için buradan ücretsiz hesap açacaksınız."
-    },
     "about": {
       "title": "Hakkımızda",
       "description": "DöngüPazar'ın hikâyesi ve ekibi burada yer alacak."
@@ -181,7 +176,8 @@
     "tekstil": "Tekstil",
     "metal": "Metal",
     "cam": "Cam",
-    "organik": "Organik / Gıda yan ürünü"
+    "organik": "Organik / Gıda yan ürünü",
+    "diger": "Diğer"
   },
   "search": {
     "label": "İlanlarda ara",
@@ -214,7 +210,29 @@
       "fixed": "Sabit fiyat",
       "negotiable": "Teklife açık",
       "free": "Ücretsiz"
-    }
+    },
+    "delivery": {
+      "pickup": "Alıcı alır",
+      "delivery": "Satıcı teslim eder",
+      "negotiable": "Pazarlığa açık"
+    },
+    "condition": {
+      "new": "Yeni",
+      "a": "A sınıfı (temiz, sağlam)",
+      "b": "B sınıfı (kullanılmış, sağlam)",
+      "c": "C sınıfı (tamir gerekir)",
+      "scrap": "Hurda"
+    },
+    "status": {
+      "draft": "Taslak",
+      "pending": "Onay bekliyor",
+      "active": "Yayında",
+      "reserved": "Rezerve",
+      "completed": "Tamamlandı",
+      "removed": "Kaldırıldı"
+    },
+    "quantityUnknown": "Miktar belirtilmedi",
+    "photoAlt": "{title} fotoğrafı"
   },
   "listingsPage": {
     "title": "İlanlar",
@@ -235,6 +253,190 @@
       "title": "Aramanıza uyan ilan yok",
       "description": "Farklı bir kelime deneyin veya filtreleri temizleyin.",
       "reset": "Filtreleri temizle"
+    },
+    "resultCountReal": "{count, plural, =0 {Sonuç bulunamadı} other {# ilan}}",
+    "noListings": {
+      "title": "Henüz ilan yok",
+      "description": "İlk ilanı siz verin; yakınınızdaki firmalar görsün.",
+      "cta": "İlan ver"
     }
+  },
+  "errors": {
+    "generic": "Bir şeyler ters gitti. Lütfen tekrar deneyin.",
+    "required": "Bu alan zorunludur.",
+    "tooLong": "Bu alan çok uzun.",
+    "notConfigured": "Veritabanı bağlantısı henüz kurulmadı. Lütfen daha sonra tekrar deneyin.",
+    "authRequired": "Bu işlem için giriş yapmalısınız.",
+    "companyRequired": "İlan vermek için önce firma bilgilerinizi tamamlayın.",
+    "invalidCredentials": "E-posta veya şifre hatalı.",
+    "emailNotConfirmed": "E-posta adresiniz henüz onaylanmadı. Gelen kutunuzdaki onay bağlantısına tıklayın.",
+    "emailTaken": "Bu e-posta adresiyle zaten bir hesap var. Giriş yapmayı deneyin.",
+    "rateLimited": "Çok fazla deneme yapıldı. Birkaç dakika sonra tekrar deneyin.",
+    "confirmFailed": "Onay bağlantısı geçersiz veya süresi dolmuş. Giriş yapmayı deneyin.",
+    "emailInvalid": "Geçerli bir e-posta adresi girin.",
+    "passwordRequired": "Şifrenizi girin.",
+    "passwordMin": "Şifre en az 8 karakter olmalıdır.",
+    "fullNameMin": "Adınızı ve soyadınızı girin.",
+    "companyNameMin": "Firma adını girin.",
+    "taxNumberInvalid": "Vergi numarası 10 veya 11 haneli olmalıdır.",
+    "taxNumberTaken": "Bu vergi numarasıyla kayıtlı bir firma var.",
+    "phoneInvalid": "Geçerli bir telefon numarası girin.",
+    "cityRequired": "İl seçin.",
+    "categoryRequired": "Kategori seçin.",
+    "titleMin": "Başlık en az 5 karakter olmalıdır.",
+    "titleMax": "Başlık en fazla 140 karakter olabilir.",
+    "descriptionMax": "Açıklama en fazla 4.000 karakter olabilir.",
+    "quantityRequired": "Sıfırdan büyük bir miktar girin.",
+    "priceRequired": "Sabit fiyat için birim fiyatı girin.",
+    "hazardRequired": "Devam etmek için bu beyanı onaylamalısınız.",
+    "imageUploadFailed": "Fotoğraflar yüklenemedi. Bağlantınızı kontrol edip tekrar deneyin.",
+    "imageInvalid": "Fotoğraf adresleri geçersiz. Fotoğrafları yeniden ekleyin.",
+    "tooManyImages": "En fazla 8 fotoğraf ekleyebilirsiniz.",
+    "listingSaveFailed": "İlan kaydedilemedi. Lütfen tekrar deneyin.",
+    "fixFields": "Lütfen işaretli alanları düzeltin."
+  },
+  "auth": {
+    "signInTitle": "Giriş yap",
+    "signInDescription": "Firma hesabınıza giriş yapın.",
+    "signUpTitle": "Kayıt ol",
+    "signUpDescription": "Ücretsiz hesap açın; sonraki adımda firma bilgilerinizi girersiniz.",
+    "email": "E-posta",
+    "password": "Şifre",
+    "passwordHint": "En az 8 karakter.",
+    "fullName": "Ad soyad",
+    "signIn": "Giriş yap",
+    "signUp": "Kayıt ol",
+    "noAccount": "Hesabınız yok mu?",
+    "haveAccount": "Zaten hesabınız var mı?",
+    "checkEmail": "{email} adresine bir onay bağlantısı gönderdik. Bağlantıya tıkladıktan sonra hesabınız açılır. E-posta gelmediyse spam klasörünü kontrol edin.",
+    "termsNote": "Kayıt olarak kullanım koşullarını kabul etmiş olursunuz."
+  },
+  "company": {
+    "title": "Firma bilgileri",
+    "setupDescription": "İlan verebilmek için firmanızı tanıtın. Bu bilgiler ilanlarınızda görünür.",
+    "editTitle": "Firma bilgilerini düzenle",
+    "editDescription": "Bu bilgiler ilanlarınızda görünür.",
+    "name": "Firma adı",
+    "phone": "Telefon",
+    "phoneHint": "Alıcılar size bu numaradan ulaşır.",
+    "taxNumber": "Vergi numarası",
+    "optional": "isteğe bağlı",
+    "city": "İl",
+    "cityPlaceholder": "İl seçin",
+    "aegeanCities": "Ege bölgesi",
+    "otherCities": "Diğer iller",
+    "district": "İlçe",
+    "sector": "Sektör",
+    "sectorHint": "Örn. mobilya, ambalaj, lojistik.",
+    "description": "Firma tanıtımı",
+    "create": "Kaydet ve devam et",
+    "save": "Kaydet"
+  },
+  "listingForm": {
+    "title": "İlan ver",
+    "description": "Birkaç adımda ilanınızı oluşturun.",
+    "stepLabel": "Adım {current} / {total}",
+    "steps": {
+      "type": "Tür ve kategori",
+      "details": "Detaylar",
+      "quantity": "Miktar ve fiyat",
+      "location": "Konum",
+      "photos": "Fotoğraflar",
+      "preview": "Önizleme"
+    },
+    "back": "Geri",
+    "next": "Devam",
+    "submit": "İlanı yayınla",
+    "submitting": "Yayınlanıyor…",
+    "uploading": "Fotoğraflar yükleniyor…",
+    "listingType": "İlan türü",
+    "offerTitle": "Veriyorum",
+    "offerDescription": "Elimde palet veya atık var.",
+    "requestTitle": "Arıyorum",
+    "requestDescription": "Palet veya malzeme arıyorum.",
+    "category": "Kategori",
+    "subcategory": "Alt kategori",
+    "subcategoryPlaceholder": "Alt kategori seçin",
+    "titleLabel": "Başlık",
+    "titleHint": "Örn. 500 adet B sınıfı euro palet",
+    "descriptionLabel": "Açıklama",
+    "descriptionHint": "Durum, ambalaj, yükleme imkânı gibi ayrıntılar.",
+    "optional": "isteğe bağlı",
+    "condition": "Durum sınıfı",
+    "conditionPlaceholder": "Seçin",
+    "ispm15": "ISPM-15 ısıl işlem damgası var",
+    "dimensions": "Ölçü",
+    "dimensionsHint": "Örn. 800×1200 mm",
+    "quantity": "Miktar",
+    "unit": "Birim",
+    "frequency": "Sıklık",
+    "priceType": "Fiyat",
+    "price": "Birim fiyat (₺)",
+    "priceHint": "Seçtiğiniz birim başına fiyat, KDV hariç.",
+    "delivery": "Teslim",
+    "city": "İl",
+    "cityPlaceholder": "İl seçin",
+    "aegeanCities": "Ege bölgesi",
+    "otherCities": "Diğer iller",
+    "district": "İlçe",
+    "photosHeading": "Fotoğraf ekleyin",
+    "photosHint": "En fazla 8 fotoğraf. Fotoğraflı ilanlar daha çok ilgi görür.",
+    "addPhotos": "Fotoğraf çek veya seç",
+    "removePhoto": "Fotoğrafı kaldır",
+    "photoCount": "{count} / {max} fotoğraf",
+    "previewHeading": "İlanınız böyle görünecek",
+    "noPhotos": "Fotoğraf eklenmedi",
+    "hazardLabel": "Bu ilandaki malzemenin tehlikeli atık (kimyasal, tıbbi atık, atık yağ, akü vb.) olmadığını beyan ederim."
+  },
+  "listingDetail": {
+    "created": "İlanınız yayınlandı.",
+    "createdPending": "İlanınız alındı; onaylandıktan sonra yayınlanacak.",
+    "ownerNotice": "Bu sizin ilanınız.",
+    "managePanel": "Panelde yönet",
+    "specs": "Özellikler",
+    "description": "Açıklama",
+    "noDescription": "Açıklama eklenmemiş.",
+    "category": "Kategori",
+    "quantity": "Miktar",
+    "frequency": "Sıklık",
+    "delivery": "Teslim",
+    "condition": "Durum sınıfı",
+    "ispm15": "ISPM-15",
+    "yes": "Var",
+    "no": "Yok",
+    "dimensions": "Ölçü",
+    "location": "Konum",
+    "publishedAt": "İlan tarihi",
+    "company": "Firma",
+    "contactHeading": "İletişim",
+    "call": "Ara",
+    "whatsapp": "WhatsApp'tan yaz",
+    "whatsappMessage": "Merhaba, DöngüPazar'daki \"{title}\" ilanınız için yazıyorum.",
+    "loginToContact": "İletişim bilgilerini görmek için giriş yapın",
+    "noPhone": "Firma telefon numarası eklememiş.",
+    "notPublic": "Bu ilan yayında değil; yalnızca siz görebilirsiniz.",
+    "backToListings": "Tüm ilanlar"
+  },
+  "panel": {
+    "title": "Panelim",
+    "greeting": "Hoş geldiniz",
+    "companyHeading": "Firmanız",
+    "editCompany": "Düzenle",
+    "verified": "Doğrulanmış firma",
+    "listingsHeading": "İlanlarım",
+    "newListing": "Yeni ilan ver",
+    "emptyTitle": "Henüz ilanınız yok",
+    "emptyDescription": "İlk ilanınızı birkaç dakikada oluşturun.",
+    "view": "Görüntüle",
+    "markReserved": "Rezerve et",
+    "markActive": "Yeniden yayınla",
+    "markCompleted": "Tamamlandı",
+    "remove": "Kaldır",
+    "signOut": "Çıkış yap"
+  },
+  "errorPage": {
+    "title": "Bir sorun oluştu",
+    "description": "Sayfa yüklenirken bir hata oluştu. Lütfen tekrar deneyin.",
+    "retry": "Tekrar dene"
   }
 }

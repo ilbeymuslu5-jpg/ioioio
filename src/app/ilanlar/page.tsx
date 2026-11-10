@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import Link from "next/link";
-import { Info, SearchX } from "lucide-react";
+import { Info, Plus, SearchX } from "lucide-react";
 import { getTranslations } from "next-intl/server";
 import { Container } from "@/components/layout/container";
 import { FilterChips, type FilterChip } from "@/components/listings/filter-chips";
@@ -8,8 +8,7 @@ import { ListingCard } from "@/components/listings/listing-card";
 import { SearchForm } from "@/components/listings/search-form";
 import { Button } from "@/components/ui/button";
 import { isCategorySlug, rootCategories } from "@/lib/categories";
-import { filterListings } from "@/lib/listings/filter";
-import { sampleListings } from "@/lib/listings/sample";
+import { loadListings } from "@/lib/listings/load";
 import type { ListingFilters } from "@/lib/listings/types";
 import { routes } from "@/lib/routes";
 
@@ -42,7 +41,7 @@ function buildHref(current: UrlFilters, patch: UrlFilters): string {
 
 export async function generateMetadata(): Promise<Metadata> {
   const t = await getTranslations("listingsPage");
-  return { title: t("title"), description: t("description"), robots: { index: false } };
+  return { title: t("title"), description: t("description") };
 }
 
 export default async function ListingsPage({ searchParams }: ListingsPageProps) {
@@ -69,7 +68,10 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
           : undefined,
   };
 
-  const listings = filterListings(sampleListings, filters);
+  const { listings, isSample } = await loadListings(filters);
+  const hasFilters = Boolean(
+    filters.query || filters.group || filters.categorySlug || filters.listingType,
+  );
 
   const groupChips: FilterChip[] = [
     {
@@ -88,7 +90,7 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
       isActive: filters.group === "waste" && !filters.categorySlug,
     },
     ...rootCategories
-      .filter((category) => category.group === "waste")
+      .filter((category) => category.group === "waste" && category.slug !== "diger")
       .map((category) => ({
         label: tCategory(category.slug),
         href: buildHref(url, { tip: undefined, kategori: category.slug }),
@@ -132,10 +134,12 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
       </section>
 
       <Container className="flex flex-col gap-6 py-8">
-        <p className="border-line text-ink flex items-start gap-3 rounded-xl border p-4 text-sm">
-          <Info aria-hidden="true" className="text-brand-dark mt-0.5 size-5 shrink-0" />
-          {t("sampleNotice")}
-        </p>
+        {isSample ? (
+          <p className="border-line text-ink flex items-start gap-3 rounded-xl border p-4 text-sm">
+            <Info aria-hidden="true" className="text-brand-dark mt-0.5 size-5 shrink-0" />
+            {t("sampleNotice")}
+          </p>
+        ) : null}
 
         <div className="flex flex-col gap-4">
           <FilterChips label={t("filters.categoryLabel")} chips={groupChips} />
@@ -143,17 +147,30 @@ export default async function ListingsPage({ searchParams }: ListingsPageProps) 
         </div>
 
         <p className="text-ink-muted text-sm" aria-live="polite">
-          {t("resultCount", { count: listings.length })}
+          {t(isSample ? "resultCount" : "resultCountReal", { count: listings.length })}
         </p>
 
         {listings.length > 0 ? (
           <ul className="grid gap-4 sm:grid-cols-2 lg:grid-cols-3">
             {listings.map((listing) => (
               <li key={listing.id} className="flex">
-                <ListingCard listing={listing} isSample className="w-full" />
+                <ListingCard listing={listing} isSample={isSample} className="w-full" />
               </li>
             ))}
           </ul>
+        ) : !isSample && !hasFilters ? (
+          <div className="border-line flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-14 text-center">
+            <h2 className="text-ink text-lg font-semibold">{t("noListings.title")}</h2>
+            <p className="text-ink-muted max-w-sm text-sm">
+              {t("noListings.description")}
+            </p>
+            <Button asChild>
+              <Link href={routes.newListing}>
+                <Plus aria-hidden="true" />
+                {t("noListings.cta")}
+              </Link>
+            </Button>
+          </div>
         ) : (
           <div className="border-line flex flex-col items-center gap-3 rounded-xl border border-dashed px-6 py-14 text-center">
             <SearchX aria-hidden="true" className="text-ink-muted size-10" />

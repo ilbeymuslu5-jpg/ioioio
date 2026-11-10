@@ -26,6 +26,9 @@ export async function generateMetadata(): Promise<Metadata> {
   };
 }
 
+// Üst menü oturuma göre değiştiği için sayfalar istek anında üretilir.
+export const dynamic = "force-dynamic";
+
 export const viewport: Viewport = {
   themeColor: "#1f5c3f",
 };
