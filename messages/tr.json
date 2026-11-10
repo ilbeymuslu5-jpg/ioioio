@@ -63,5 +63,68 @@
     "title": "Sayfa bulunamadı",
     "description": "Aradığınız sayfa taşınmış veya henüz yayında olmayabilir.",
     "backHome": "Ana sayfaya dön"
+  },
+  "comingSoon": {
+    "badge": "Yapım aşamasında",
+    "note": "DöngüPazar adım adım geliştiriliyor. Bu sayfa yakında açılacak.",
+    "backHome": "Ana sayfaya dön",
+    "howItWorks": "Nasıl çalışır?"
+  },
+  "pages": {
+    "listings": {
+      "title": "İlanlar",
+      "description": "Palet ve sanayi atığı ilanlarını burada arayıp filtreleyebilecek, haritada görebileceksiniz."
+    },
+    "newListing": {
+      "title": "İlan ver",
+      "description": "Elinizdeki paleti veya atığı, ya da aradığınız malzemeyi birkaç adımda ilan edebileceksiniz."
+    },
+    "login": {
+      "title": "Giriş yap",
+      "description": "Firma hesabınızla buradan giriş yapacaksınız."
+    },
+    "register": {
+      "title": "Kayıt ol",
+      "description": "Firmanız için buradan ücretsiz hesap açacaksınız."
+    },
+    "about": {
+      "title": "Hakkımızda",
+      "description": "DöngüPazar'ın hikâyesi ve ekibi burada yer alacak."
+    },
+    "contact": {
+      "title": "İletişim",
+      "description": "Bize ulaşabileceğiniz iletişim bilgileri burada yer alacak."
+    },
+    "terms": {
+      "title": "Kullanım koşulları",
+      "description": "Kullanım koşulları metni hukuki inceleme tamamlandığında burada yayınlanacak."
+    },
+    "kvkk": {
+      "title": "KVKK aydınlatma metni",
+      "description": "KVKK aydınlatma metni hukuki inceleme tamamlandığında burada yayınlanacak."
+    },
+    "privacy": {
+      "title": "Gizlilik politikası",
+      "description": "Gizlilik politikası hukuki inceleme tamamlandığında burada yayınlanacak."
+    }
+  },
+  "howItWorksPage": {
+    "title": "Nasıl çalışır?",
+    "intro": "DöngüPazar, elinde palet veya üretim atığı olan firmalarla bunlara ihtiyaç duyan firmaları buluşturur. İlan vermek ve teklif almak ücretsizdir.",
+    "stepsHeading": "Üç adımda",
+    "listingTypesHeading": "İki tür ilan",
+    "offerTitle": "Veriyorum",
+    "offerDescription": "Elinizdeki paleti, atığı veya yan ürünü ilan edersiniz. Örnek: \"Elimde 500 adet B sınıfı euro palet var.\"",
+    "requestTitle": "Arıyorum",
+    "requestDescription": "İhtiyacınızı ilan edersiniz, elinde olan firmalar size ulaşır. Örnek: \"Ayda 3 ton PP kırma arıyorum.\"",
+    "priceHeading": "Fiyat seçenekleri",
+    "priceFixed": "Sabit fiyat",
+    "priceFixedDescription": "Birim fiyatı siz belirlersiniz.",
+    "priceNegotiable": "Teklife açık",
+    "priceNegotiableDescription": "Alıcılar teklif verir, karşı teklifle pazarlık edersiniz.",
+    "priceFree": "Ücretsiz",
+    "priceFreeDescription": "Gelip alana verirsiniz; bertaraf maliyetinden kurtulursunuz.",
+    "hazardHeading": "Tehlikeli atık kabul edilmez",
+    "hazardDescription": "Kimyasal, tıbbi atık, atık yağ, akü ve benzeri tehlikeli atıklar için ilan verilemez. İlan verirken malzemenin tehlikeli atık olmadığını beyan edersiniz."
   }
 }
