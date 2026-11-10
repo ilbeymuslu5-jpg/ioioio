@@ -1,0 +1,60 @@
+@import "tailwindcss";
+
+/* Tasarım token'ları (CLAUDE.md Bölüm 9). Kodda hex yazmayın; aşağıdaki
+   Tailwind renklerini kullanın: brand-dark, brand-dark-hover, brand-light,
+   brand-soft, ink, ink-muted, line, danger, warning. */
+:root {
+  --white: #ffffff;
+  --green-dark: #1f5c3f;
+  --green-dark-hover: #174a32;
+  --green-light: #9fd8b2;
+  --green-light-soft: #eaf6ee;
+
+  --text: #16281f;
+  --text-muted: #5b6f64;
+  --border: #dce8e0;
+
+  --danger: #c2410c;
+  --warning: #b45309;
+}
+
+@theme inline {
+  --color-brand-dark: var(--green-dark);
+  --color-brand-dark-hover: var(--green-dark-hover);
+  --color-brand-light: var(--green-light);
+  --color-brand-soft: var(--green-light-soft);
+
+  --color-ink: var(--text);
+  --color-ink-muted: var(--text-muted);
+  --color-line: var(--border);
+
+  --color-danger: var(--danger);
+  --color-warning: var(--warning);
+
+  --font-sans: var(--font-inter), ui-sans-serif, system-ui, sans-serif;
+
+  --shadow-soft: 0 1px 2px 0 rgb(22 40 31 / 0.05);
+}
+
+@layer base {
+  * {
+    border-color: var(--border);
+  }
+
+  body {
+    background: var(--white);
+    color: var(--text);
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    text-wrap: balance;
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--green-dark);
+    outline-offset: 2px;
+  }
+}
