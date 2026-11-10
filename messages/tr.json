@@ -14,7 +14,11 @@
     "howItWorks": "Nasıl çalışır",
     "login": "Giriş yap",
     "postListing": "İlan ver",
-    "homeAriaLabel": "DöngüPazar ana sayfa"
+    "homeAriaLabel": "DöngüPazar ana sayfa",
+    "register": "Kayıt ol",
+    "openMenu": "Menüyü aç",
+    "closeMenu": "Menüyü kapat",
+    "mobileAriaLabel": "Mobil menü"
   },
   "footer": {
     "tagline": "Bir firmanın atığı, başka bir firmanın hammaddesidir.",
@@ -37,7 +41,8 @@
       "title": "Paletiniz ve üretim atığınız başka bir firmanın ihtiyacı",
       "subtitle": "Kullanılmış paletleri ve sanayi yan ürünlerini ihtiyacı olan firmalarla buluşturan B2B pazaryeri. İlan vermek ücretsiz.",
       "primaryCta": "İlan ver",
-      "secondaryCta": "İlanlara göz at"
+      "secondaryCta": "İlanlara göz at",
+      "popular": "Sık arananlar:"
     },
     "entry": {
       "heading": "Ne arıyorsunuz?",
@@ -56,7 +61,52 @@
       "step2Title": "Teklif alın",
       "step2Description": "Yakınınızdaki firmalar teklif verir veya mesaj gönderir. Karşı teklifle pazarlık edin.",
       "step3Title": "Teslim edin",
-      "step3Description": "Teslimatı kararlaştırın, işlemi tamamlayın ve karşı firmayı puanlayın."
+      "step3Description": "Teslimatı kararlaştırın, işlemi tamamlayın ve karşı firmayı puanlayın.",
+      "more": "Ayrıntılı anlatım"
+    },
+    "preview": {
+      "offer": "Veriyorum",
+      "ispm15": "ISPM-15",
+      "palletTitle": "500 adet B sınıfı euro palet",
+      "palletLocation": "Kemalpaşa, İzmir",
+      "wasteTitle": "Ayda 3 ton PP kırma arıyoruz",
+      "wasteMeta": "Aylık · Manisa",
+      "newOffer": "Yeni teklif geldi"
+    },
+    "categories": {
+      "heading": "Kategoriye göre göz atın"
+    },
+    "samples": {
+      "heading": "İlanlar böyle görünecek",
+      "description": "Aşağıdakiler örnek ilanlardır. Gerçek ilanlar, ilan verme özelliği açıldığında burada yer alacak.",
+      "cta": "Tüm örnekleri gör"
+    },
+    "benefits": {
+      "heading": "Neden DöngüPazar?",
+      "description": "Atık bertarafına para ödemek yerine, ihtiyacı olan firmaya ulaştırın.",
+      "costTitle": "Bertaraf maliyetini düşürün",
+      "costDescription": "Atığınızı satın ya da ücretsiz verin. İlan vermek ve teklif almak ücretsiz.",
+      "nearTitle": "Yakınınızdaki firmalar",
+      "nearDescription": "İl, ilçe ve mesafeye göre arayın; nakliye maliyetini düşük tutun.",
+      "regularTitle": "Düzenli tedarik",
+      "regularDescription": "Haftalık veya aylık çıkan atıklar için sürekli alıcı, sürekli hammadde kaynağı bulun.",
+      "verifiedTitle": "Doğrulanmış firmalar",
+      "verifiedDescription": "Firmalar platform ekibince doğrulanır; işlem sonrası karşılıklı puan verilir."
+    },
+    "audience": {
+      "heading": "Kimler için?",
+      "sellerTitle": "Fabrikalar ve depolar",
+      "sellerDescription": "Depoda yer kaplayan paletleri ve üretim atıklarını elden çıkarın.",
+      "buyerTitle": "Üreticiler ve geri dönüşümcüler",
+      "buyerDescription": "Uygun fiyatlı ikincil hammaddeye ve kullanılmış palete ulaşın.",
+      "palletTitle": "Palet firmaları",
+      "palletDescription": "Kırık palet toplayın, tamirli ve yeni palet satın."
+    },
+    "cta": {
+      "heading": "Elinizde palet veya atık mı var?",
+      "description": "İlanınızı birkaç dakikada oluşturun, yakınınızdaki firmalardan teklif alın.",
+      "primary": "İlan ver",
+      "secondary": "Ücretsiz kayıt ol"
     }
   },
   "notFound": {
@@ -71,10 +121,6 @@
     "howItWorks": "Nasıl çalışır?"
   },
   "pages": {
-    "listings": {
-      "title": "İlanlar",
-      "description": "Palet ve sanayi atığı ilanlarını burada arayıp filtreleyebilecek, haritada görebileceksiniz."
-    },
     "newListing": {
       "title": "İlan ver",
       "description": "Elinizdeki paleti veya atığı, ya da aradığınız malzemeyi birkaç adımda ilan edebileceksiniz."
@@ -126,5 +172,69 @@
     "priceFreeDescription": "Gelip alana verirsiniz; bertaraf maliyetinden kurtulursunuz.",
     "hazardHeading": "Tehlikeli atık kabul edilmez",
     "hazardDescription": "Kimyasal, tıbbi atık, atık yağ, akü ve benzeri tehlikeli atıklar için ilan verilemez. İlan verirken malzemenin tehlikeli atık olmadığını beyan edersiniz."
+  },
+  "categories": {
+    "palet": "Palet",
+    "ahsap": "Ahşap",
+    "plastik": "Plastik",
+    "kagit-karton": "Kâğıt / Karton",
+    "tekstil": "Tekstil",
+    "metal": "Metal",
+    "cam": "Cam",
+    "organik": "Organik / Gıda yan ürünü"
+  },
+  "search": {
+    "label": "İlanlarda ara",
+    "placeholder": "Örn. euro palet, PP kırma, talaş",
+    "submit": "Ara"
+  },
+  "listing": {
+    "sample": "Örnek",
+    "verified": "Doğrulanmış firma",
+    "ispm15": "ISPM-15",
+    "perUnit": "/ {unit}",
+    "type": {
+      "offer": "Veriyorum",
+      "request": "Arıyorum"
+    },
+    "units": {
+      "adet": "adet",
+      "kg": "kg",
+      "ton": "ton",
+      "m3": "m³",
+      "torba": "torba",
+      "bigbag": "big bag"
+    },
+    "frequency": {
+      "once": "Tek seferlik",
+      "weekly": "Haftalık",
+      "monthly": "Aylık"
+    },
+    "price": {
+      "fixed": "Sabit fiyat",
+      "negotiable": "Teklife açık",
+      "free": "Ücretsiz"
+    }
+  },
+  "listingsPage": {
+    "title": "İlanlar",
+    "description": "Palet ve sanayi atığı ilanlarını arayın, kategoriye ve ilan türüne göre süzün.",
+    "sampleNotice": "Bu sayfadaki ilanlar örnektir ve arayüzü göstermek için eklenmiştir. Gerçek ilanlar, ilan verme özelliği açıldığında burada listelenecek.",
+    "resultCount": "{count, plural, =0 {Sonuç bulunamadı} other {# örnek ilan}}",
+    "filters": {
+      "categoryLabel": "Kategori",
+      "typeLabel": "İlan türü",
+      "all": "Tümü",
+      "pallet": "Palet",
+      "waste": "Atık ve yan ürün",
+      "allTypes": "Tümü",
+      "offer": "Veriyorum",
+      "request": "Arıyorum"
+    },
+    "empty": {
+      "title": "Aramanıza uyan ilan yok",
+      "description": "Farklı bir kelime deneyin veya filtreleri temizleyin.",
+      "reset": "Filtreleri temizle"
+    }
   }
 }
