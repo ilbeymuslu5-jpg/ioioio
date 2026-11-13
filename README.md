@@ -16,6 +16,9 @@ Türk temalı, **birinci şahıs (POV)** bakışlı, tamamen **el çizimi** gör
 
 Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi ortaktır.
 
+## Tavla Turnuvası
+- Tavla masasındaki **TURNUVA** düğmesi: 300 akçe giriş, art arda Çırak Tekir, Reis ve Paşa'yı yen; üçünü de yenersen 2.500 akçe. Bir kez kaybeden elenir.
+
 ## Batak
 - **İhaleli tekli Batak:** sen ve üç kedi (Paşa, Sultan, Zeytin). En az 5 el ihale, kozu ihaleyi alan seçer; renk takibi, yükseltme ve koz zorunluluğu, koz kırılmadan kozla açılmaz. İhaleyi tutturursan bahsin 2 katı + 5'in üstündeki her el için ek ödül; tutturamazsan **battın**.
 - Çok oyunculu da oynanır: 2-4 kişi, boş koltuklara kediler oturur.
@@ -56,6 +59,8 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - **Haftalık lig:** Sıralama › Haftalık lig sekmesinde bu hafta kazanılan XP ile yarışılır; hafta bitince ilk 3'e 20.000 / 10.000 / 5.000, ilk 10'a 2.000 akçe ödül.
 - Akçe, çanta ve karakter claude.ai'de bulut kaydına yazılır (başka cihazdan devam edilir); **Sıralama** sekmesi en zengin oyuncuları gösterir.
 - Her oyunda **?** düğmesi kuralları, hoparlör düğmesi sesi açıp kapatır.
+
+Sahneler arası geçişte eski sahnelerin çizim önbelleği boşaltılır (telefonda bellek tasarrufu).
 
 Telefon **dikey ve yatay** tutulabilir: her sahnenin yatay düzeni ayrıdır (yatayda tavla tahtası standart yatay dizilime döner), oyun ortasında çevirince kaldığı yerden devam eder. Çentikli ekranlarda güvenli alan dikkate alınır.
 

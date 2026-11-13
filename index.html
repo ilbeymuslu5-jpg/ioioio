@@ -539,7 +539,7 @@ function applyLayout() {
     Object.assign(LY.tv, { T: true, k: 1, bx: 900, by: 740, top: 250, catFront: true, cat: { x: 1760, y: 560, s: .8 }, status: { x: 50, y: 740, w: 340 } });
     Object.assign(LOBBTN.kar, { x: 230, y: 300, w: 330, h: 100 }); Object.assign(LOBBTN.canta, { x: 1770, y: 232, w: 300, h: 74 }); Object.assign(LOBBTN.gorev, { x: 1770, y: 316, w: 300, h: 74 }); Object.assign(LOBBTN.cok, { x: 1770, y: 400, w: 300, h: 74 });
     P(PSB.psMinus, 1690, 1010); P(PSB.psPlus, 1830, 1010); P(PSB.psGo, 1760, 830); P(RLB.rlMinus, 1000, 1010); P(RLB.rlPlus, 1120, 1010); P(RLB.rlClear, 1300, 1010); P(RLB.rlSpin, 1600, 1010);
-    P(TVB.tvGo, 1760, 850); P(TVB.tvRoll, 1760, 850); P(TVB.tvUndo, 1760, 1060); P(TVB.tvMinus, 1690, 1050); P(TVB.tvPlus, 1830, 1050);
+    P(TVB.tvGo, 1760, 850); P(TVB.tvTour, 1570, 1050, 58); P(TVB.tvRoll, 1760, 850); P(TVB.tvUndo, 1760, 1060); P(TVB.tvMinus, 1690, 1050); P(TVB.tvPlus, 1830, 1050);
     Object.assign(OKL, { floor: 900, table: [250, 230, 1300, 700], rack: [430, 940, 940, 262], ledges: [1055, 1167], sx0: 472, rowY: [1002, 1114], cats: [[900, 165, .85, 0], [1650, 560, .82, -.2], [150, 560, .82, .2]], think: { 1: [-110, -200], 2: [300, -20], 3: [110, -200] }, rev: [900, 470], status: [900, 770, 400] });
     OK_D = [{ x: 1380, y: 800 }, { x: 1380, y: 360 }, { x: 420, y: 360 }, { x: 420, y: 800 }];
     OK_RACK = [null, { x: 1500, y: 580 }, { x: 900, y: 300 }, { x: 300, y: 580 }]; P(OK_PILE, 840, 580); P(OK_IND, 965, 580);
@@ -549,7 +549,7 @@ function applyLayout() {
     P(BJB.bjMinus, 210, 1540); P(BJB.bjPlus, 360, 1540); P(BJB.bjDeal, 700, 1540); P(BJB.bjHit, 150, 1540, 76); P(BJB.bjStand, 383, 1540, 76); P(BJB.bjDouble, 617, 1540, 76); P(BJB.bjSplit, 850, 1540, 76);
     Object.assign(LY.tv, { T: true, k: .72, bx: 500, by: 830, top: 460, catFront: false, cat: { x: 500, y: 330, s: .9 }, status: { x: 490, y: 1480, w: 560 } });
     Object.assign(LOBBTN.kar, { x: 127, y: 1700, w: 236, h: 90 }); Object.assign(LOBBTN.canta, { x: 375, y: 1700, w: 236, h: 90 }); Object.assign(LOBBTN.gorev, { x: 625, y: 1700, w: 236, h: 90 }); Object.assign(LOBBTN.cok, { x: 873, y: 1700, w: 236, h: 90 });
-    P(TVB.tvGo, 730, 1330); P(TVB.tvRoll, 730, 1330); P(TVB.tvUndo, 250, 1330); P(TVB.tvMinus, 190, 1330); P(TVB.tvPlus, 330, 1330);
+    P(TVB.tvGo, 730, 1330); P(TVB.tvTour, 500, 1330, 62); P(TVB.tvRoll, 730, 1330); P(TVB.tvUndo, 250, 1330); P(TVB.tvMinus, 190, 1330); P(TVB.tvPlus, 330, 1330);
     P(PSB.psMinus, 190, 1610); P(PSB.psPlus, 330, 1610); P(PSB.psGo, 730, 1610); P(RLB.rlMinus, 150, 1330); P(RLB.rlPlus, 270, 1330); P(RLB.rlClear, 440, 1330); P(RLB.rlSpin, 735, 1330);
     Object.assign(OKL, { floor: 1380, table: [100, 290, 800, 1170], rack: [30, 1438, 940, 262], ledges: [1553, 1665], sx0: 82, rowY: [1500, 1612], cats: [[500, 175, .9, 0], [970, 760, .82, -.3], [30, 760, .82, .3]], think: { 1: [-130, -280], 2: [260, -60], 3: [130, -280] }, rev: [500, 760], status: [500, 1345, 400] });
     OK_D = [{ x: 830, y: 1215 }, { x: 830, y: 560 }, { x: 170, y: 560 }, { x: 170, y: 1215 }];
@@ -1164,6 +1164,7 @@ function updateTrans(t) {
   const u = (t - trans.t0) / 900;
   if (u >= .5 && !trans.switched) {
     trans.switched = true; scene = trans.to; banners = []; coins = []; sparks = [];
+    for (const k in layerCache) if (k !== 'bg') delete layerCache[k];
     if (trans.after) { trans.after(); trans.after = null; }
     if (setView(scene)) { buildSprites(); buildPayTable(); }
     if (scene !== 'slot') { auto = false; cat.until = 0; cat.show = 0; }
@@ -1199,6 +1200,7 @@ async function leaveGame(x, y) {
     if (!(await ask(msg, 'Salona dön', 'Vazgeç'))) return;
   } else if (MP.code && MP.t && MP.t.status === 'play' && !(await ask('Masadan kalkılsın mı?', 'Kalk', 'Vazgeç'))) return;
   if (MP.code) mpLeave();
+  if (scene === 'tavla' && tv.tour && tv.state !== 'bet' && tv.state !== 'over') { tv.tour = null; banner('Turnuvadan çekildin', null, { dur: 1500, top: true }); }
   if (scene === 'tavla' && tv.mode !== 'online' && tv.state !== 'bet' && tv.state !== 'over') { tv.state = 'bet'; tv.st = tvInit(); tv.dice = []; tv.made = []; }
   if (scene === 'okey' && ok.mode !== 'online' && ok.state === 'play') { ok.state = 'bet'; ok.slots = new Array(24).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.fly = []; }
   if (scene === 'pisti' && ps.mode !== 'online' && ps.state === 'play') { ps.state = 'bet'; ps.hands = [[], []]; ps.pile = []; ps.cap = [[], []]; }
@@ -1239,7 +1241,7 @@ function drawLobby(t) {
     inkText(ctx, s.title, -s.w / 2 + 34, 58, 48, s.id === 'carsi' ? '#2a7a5a' : '#cf4b32', { ow: 6, align: 'left' });
     const sub2 = multi && s.id !== 'carsi' ? (online ? 'Rastgele rakip bul' : 'Tek kişilik') : s.sub;
     inkText(ctx, sub2, -s.w / 2 + 36, 100, 25, multi && online ? '#1f4e9c' : INK, { outline: false, font: '"Caveat"', weight: 700, align: 'left' });
-    if (s.id === featGame()) { ctx.save(); ctx.translate(s.w / 2 - 110, 4); ctx.rotate(.1); ctx.scale(1.55, 1.55); seed(1990); const rb = sub([[-70, 0], [70, 0], [60, 20], [70, 40], [-70, 40], [-60, 20]], 6, true); wash(ctx, rb, '#8e44ad', 1); ink(ctx, rb, true, 2.5); inkText(ctx, 'GÜNÜN OYUNU · 2× XP', 0, 21, 19, '#fbf1da', { outline: false, font: '"Caveat"', weight: 700 }); ctx.restore(); }
+    if (s.id === featGame()) { ctx.save(); ctx.translate(s.w / 2 - 150, 2); ctx.rotate(.08); ctx.scale(1.5, 1.5); seed(1990); const rb = sub([[-70, 0], [70, 0], [60, 20], [70, 40], [-70, 40], [-60, 20]], 6, true); wash(ctx, rb, '#8e44ad', 1); ink(ctx, rb, true, 2.5); inkText(ctx, 'GÜNÜN OYUNU · 2× XP', 0, 21, 19, '#fbf1da', { outline: false, font: '"Caveat"', weight: 700 }); ctx.restore(); }
     if (s.id === 'carsi' && dwheelReady()) { ctx.fillStyle = '#cf4b32'; ctx.beginPath(); ctx.arc(s.w / 2 - 34, 34, 14, 0, 7); ctx.fill(); }
     ctx.save(); ctx.translate(s.w / 2 - 118, s.h / 2 + 8); ctx.scale(.52, .52); ctx.translate(0, -235); drawSignArt(s.id, t, i); ctx.restore();
     const k = .5 + .5 * Math.sin(t * .005 + i * 2), pb = rr(-s.w / 2 + 30, s.h - 82, 150, 52, 26, 16); wash(ctx, pb, s.id === 'carsi' ? '#2a7a5a' : multi && online ? '#1f4e9c' : '#cf4b32', 1.5); ink(ctx, pb, true, 3);
@@ -1796,14 +1798,15 @@ function payBet() { const bet = BETS[betIdx]; if (balance < bet) { if (!dailyGif
 // =============================================================
 //  TAVLA  (mod: 'ai' Reis'e karşı · 'local2' aynı cihazda · 'online')
 // =============================================================
-const TVB = { tvMinus: { x: 190, y: 1330, r: 50 }, tvPlus: { x: 330, y: 1330, r: 50 }, tvGo: { x: 730, y: 1330, r: 90 }, tvRoll: { x: 730, y: 1330, r: 90 }, tvUndo: { x: 250, y: 1330, r: 62 } };
+const TOUR = [{ name: 'Çırak Tekir', noise: 8 }, { name: 'Reis', noise: .3 }, { name: 'Paşa', noise: 0 }], TOUR_FEE = 300, TOUR_PRIZE = 2500;
+const TVB = { tvTour: { x: 500, y: 1330, r: 62 }, tvMinus: { x: 190, y: 1330, r: 50 }, tvPlus: { x: 330, y: 1330, r: 50 }, tvGo: { x: 730, y: 1330, r: 90 }, tvRoll: { x: 730, y: 1330, r: 90 }, tvUndo: { x: 250, y: 1330, r: 62 } };
 const TVPH = 89.17;
 const tv = { mode: 'ai', state: 'bet', st: tvInit(), dice: [], rollT: 0, diceSide: 0, all: [], made: [], startSt: null, sel: 0, bet: 0, anim: null, mood: 0, turn: 0, view: 0, winner: -1, mars: false };
 let checkerSpr = [], dieSpr = {};
 const vA = a => tv.view === 0 ? a : 25 - a;            // mutlak nokta → ekran noktası (ve tersi)
 const vS = s => tv.view === 0 ? s : 1 - s;              // taraf → ekran tarafı (0 = alt/benim)
 function tvMine(s) { return tv.mode === 'ai' ? s === 0 : tv.mode === 'local2' ? true : s === MP.seat; }
-function tvName(s) { if (tv.mode === 'ai') return s === 0 ? 'Sen' : 'Reis'; if (tv.mode === 'local2') return s === 0 ? 'Beyaz' : 'Kırmızı'; const st = MP.t && MP.t.seats[s]; return st ? mpName(st.uid) : 'Boş'; }
+function tvName(s) { if (tv.mode === 'ai') return s === 0 ? 'Sen' : tv.tour ? TOUR[tv.tour.r].name : 'Reis'; if (tv.mode === 'local2') return s === 0 ? 'Beyaz' : 'Kırmızı'; const st = MP.t && MP.t.seats[s]; return st ? mpName(st.uid) : 'Boş'; }
 function ptY(a) { if (a <= 6) return 1460 - (a - .5) * TVPH; if (a <= 12) return 875 - (a - 6.5) * TVPH; if (a <= 18) return 340 + (a - 12.5) * TVPH; return 925 + (a - 18.5) * TVPH; }
 function ptBase(a) { return a <= 12 ? { bx: 920, dir: -1 } : { bx: 80, dir: 1 }; }
 function checkerPos(a, k, n) { const { bx, dir } = ptBase(a), step = n > 5 ? Math.min(74, 300 / (n - 1)) : 74; return { x: bx + dir * (42 + k * step), y: ptY(a) }; }
@@ -1867,13 +1870,13 @@ function tvPush() { if (tv.mode !== 'online') return; mpWrite(t => { t.g = { st:
 async function tvStart() {
   if (tv.mode === 'online') return mpTvStart();
   if (tv.state !== 'bet' && tv.state !== 'over') return;
-  let bet = 0; if (tv.mode === 'ai') { bet = payBet(); if (!bet) return; }
+  let bet = 0; if (tv.mode === 'ai' && !tv.tour) { bet = payBet(); if (!bet) return; }
   tv.bet = bet; tv.st = tvInit(); tv.state = 'opening'; tv.mood = 0; tv.made = []; tv.winner = -1; tv.mars = false; banners = [];
   let a, b; do { a = 1 + Math.floor(Math.random() * 6); b = 1 + Math.floor(Math.random() * 6); } while (a === b);
   tv.dice = [a, b]; tv.diceSide = -1; tv.rollT = performance.now(); diceSound();
   await wait(1100);
   tv.turn = a > b ? 0 : 1; tv.diceSide = tv.turn; tv.dice = tv.turn === 0 ? [a, b] : [b, a];
-  banner(tvName(tv.turn) + (tv.mode === 'ai' && tv.turn === 0 ? ' başlıyorsun' : ' başlıyor'), (tv.mode === 'ai' ? 'Senin zarın ' + a + ', Reis\'inki ' + b : 'Beyaz ' + a + ' · Kırmızı ' + b), { dur: 1800, col: '#1f4e9c', y: .5 });
+  banner(tvName(tv.turn) + (tv.mode === 'ai' && tv.turn === 0 ? ' başlıyorsun' : ' başlıyor'), (tv.mode === 'ai' ? 'Senin zarın ' + a + ', ' + tvName(1) + ' ' + b : 'Beyaz ' + a + ' · Kırmızı ' + b), { dur: 1800, col: '#1f4e9c', y: .5 });
   if (tv.mode === 'ai' && tv.turn === 1) { await wait(900); tvAITurn(tv.dice); } else tvBeginMoves();
 }
 function tvRoll() {
@@ -1916,7 +1919,7 @@ async function tvAITurn(dice) {
   tv.state = 'ai'; tv.sel = 0; tv.turn = 1;
   if (!dice) { await wait(450); dice = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]; tv.dice = dice; tv.diceSide = 1; tv.rollT = performance.now(); diceSound(); await wait(900); }
   tv.made = [];
-  const best = tvBest(tv.st, 1, dice, easy() ? 9 : .3);
+  const best = tvBest(tv.st, 1, dice, tv.tour ? TOUR[tv.tour.r].noise : easy() ? 9 : .3);
   if (!best) { banner('Reis oynayamadı', 'Sıra sende', { dur: 1300, col: '#1f4e9c', y: .5 }); await wait(1300); tv.turn = 0; tv.state = 'roll'; return; }
   for (const mv of best.path) {
     await wait(480); if (scene !== 'tavla' || tv.mode !== 'ai') return;
@@ -1931,6 +1934,14 @@ function tvEnd(w, remote) {
   if (!remote) tvPush();
   const meWon = tv.mode === 'ai' ? w === 0 : tv.mode === 'online' ? w === MP.seat : false;
   if (tv.mode === 'local2') { banner(tvName(w) + ' kazandı!' + (mars ? ' MARS' : ''), 'Rövanş için BAŞLA', { big: true, dur: 3000, y: .45, col: w ? '#7a1e28' : '#1f4e9c' }); spawnCoins(30, 500, 1000); melody([0, 2, 4, 7], .12); return; }
+  if (tv.tour && tv.mode === 'ai') {
+    const T = tv.tour; gameEvent('tavla', 'play'); rollDrop();
+    if (meWon) { gameEvent('tavla', 'win'); if (mars) extEvent('mars'); T.r++;
+      if (T.r >= TOUR.length) { tv.tour = null; setBalance(balance + TOUR_PRIZE); lastWin = TOUR_PRIZE; extEvent('tour'); banner('TURNUVA ŞAMPİYONU!', '+' + TOUR_PRIZE.toLocaleString('tr-TR') + ' akçe · Paşa bile dayanamadı', { big: true, dur: 3600, y: .45 }); spawnCoins(100, 500, 1000); melody([0, 1, 2, 3, 4, 5, 6, 7, 6, 4, 7], .11); shake = 12; }
+      else { banner('Tur ' + T.r + ' geçildi!', 'Sıradaki rakip: ' + TOUR[T.r].name + ' · SONRAKİ\'ne bas', { big: true, dur: 3000, y: .45 }); spawnCoins(30, 500, 1000); melody([0, 2, 4, 7], .12); } }
+    else { tv.mood = 1; tv.tour = null; banner('Elendin', tvName(1) + ' turnuvayı bitirdi · tekrar dene', { dur: 3000, col: '#1f4e9c', y: .45 }); tone('sine', 220, .5, .05, 0, 140); }
+    return;
+  }
   if (meWon) {
     if (tv.mode === 'online' && !mpPayOnce('win')) return;
     const pay = tv.bet * (mars ? 3 : 2); setBalance(balance + pay); lastWin = pay; if (mars) extEvent('mars');
@@ -1952,7 +1963,8 @@ function tvAt(L) {
 function tvCanStart() { return tv.mode !== 'online' || (MP.t && MP.t.host === MP.uid && MP.t.seats.filter(Boolean).length === 2); }
 function tvDown(w) {
   if (tv.state === 'bet' || tv.state === 'over') {
-    const k = hitSet(TVB, w, tv.mode === 'ai' ? ['tvMinus', 'tvPlus', 'tvGo'] : ['tvGo']);
+    const k = hitSet(TVB, w, tv.mode === 'ai' ? (tv.tour ? ['tvGo'] : ['tvMinus', 'tvPlus', 'tvTour', 'tvGo']) : ['tvGo']);
+    if (k === 'tvTour') { ask('Tavla turnuvası: ' + TOUR_FEE + ' akçe giriş. Çırak Tekir, Reis ve Paşa\'yı art arda yenersen ' + TOUR_PRIZE.toLocaleString('tr-TR') + ' akçe kazanırsın. Bir kez kaybedersen elenirsin.', 'Katıl', 'Vazgeç').then(y => { if (!y) return; if (balance < TOUR_FEE) { note('Turnuva için ' + TOUR_FEE + ' akçe gerekiyor.'); return; } setBalance(balance - TOUR_FEE); tv.tour = { r: 0 }; tv.state = 'bet'; banner('Turnuva başladı', 'İlk rakip: ' + TOUR[0].name, { dur: 2200, col: '#8e44ad', y: .45 }); }); return; }
     if (k && !betKey(k) && tvCanStart()) tvStart(); return;
   }
   if (!tvMine(tv.turn)) return;
@@ -2028,7 +2040,8 @@ function drawTavla(t) {
   // arayüz
   const S_ = LY.tv.status;
   if (tv.state === 'bet' || tv.state === 'over') {
-    if (tv.mode === 'ai') betRow(TVB, ['tvMinus', 'tvPlus', 'tvGo'], t, tv.state === 'over' ? 'YENİ OYUN' : 'BAŞLA');
+    if (tv.mode === 'ai' && tv.tour) { const g = TVB.tvGo, dy = btnDraw('tvGo', '#8e44ad', null, t, 40, TVB); inkText(ctx, tv.tour.r ? 'SONRAKİ' : 'BAŞLA', g.x, g.y + dy, 40, '#fbf1da', { ow: 7 }); statusTag(S_.x, S_.y, 'Turnuva · Tur ' + (tv.tour.r + 1) + '/3 · rakip: ' + TOUR[tv.tour.r].name, S_.w); }
+    else if (tv.mode === 'ai') { betRow(TVB, ['tvMinus', 'tvPlus', 'tvGo'], t, tv.state === 'over' ? 'YENİ OYUN' : 'BAŞLA'); const tb2 = TVB.tvTour, dy = btnDraw('tvTour', '#8e44ad', null, t, 40, TVB); inkText(ctx, 'TURNUVA', tb2.x, tb2.y + dy - 6, 22, '#fbf1da', { ow: 4 }); inkText(ctx, TOUR_FEE + ' akçe', tb2.x, tb2.y + dy + 18, 18, '#fbf1da', { ow: 3 }); }
     else if (tvCanStart()) { const g = TVB.tvGo, dy = btnDraw('tvGo', '#cf4b32', null, t, 40, TVB); inkText(ctx, tv.state === 'over' ? 'RÖVANŞ' : 'BAŞLA', g.x, g.y + dy, 46, '#fbf1da', { ow: 7 }); }
     else statusTag(S_.x, S_.y, MP.t && MP.t.seats.filter(Boolean).length < 2 ? 'Rakip bekleniyor · masa kodu ' + MP.code : 'Ev sahibinin başlatması bekleniyor', S_.w);
     if (tv.mode === 'online' && tvCanStart() && tv.state === 'bet') statusTag(S_.x, S_.y, 'Masa kodu: ' + MP.code, S_.w);
@@ -3391,6 +3404,7 @@ const ACH = [
   { id: 'bigbid', t: 'İhale Ustası', d: 'Batakta 8+ ihale alıp tuttur', r: 1500, item: 'unvan_ihale', ok: () => (EXT.bigBid || 0) >= 1 },
   { id: 'kazi50', t: 'Talih Kuşu', d: 'Kazı Kazan\'da ×50 ya da üstünü yakala', r: 2500, ok: () => (EXT.kazi50 || 0) >= 1 },
   { id: 'tombala1', t: 'Tombala!', d: 'Tombalada üç sırayı ilk sen doldur', r: 1200, ok: () => (EXT.tombala || 0) >= 1 },
+  { id: 'tour1', t: 'Kahvehane Şampiyonu', d: 'Tavla turnuvasını kazan', r: 2000, ok: () => (EXT.tour || 0) >= 1 },
   { id: 'rich', t: 'Sultan Hazinesi', d: '100.000 akçeye ulaş', r: 5000, ok: () => balance >= 100000 },
 ];
 let ACHS = store.get('achs', {});   // id → 'open' | 'claimed'
@@ -4537,7 +4551,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__nazar = { tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__nazar = { tvEndT: w => tvEnd(w), tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>
