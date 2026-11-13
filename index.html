@@ -1013,7 +1013,7 @@ function finish() {
   if (auto) setTimeout(() => { if (auto && state === 'idle') pullLever(); }, total > 0 ? 1800 : 700);
 }
 function bigWin(total) {
-  bigUntil = performance.now() + 3500; shake = 16; zoomKick = .06;
+  bigUntil = performance.now() + 3500; shake = 16; zoomKick = .06; extEvent('slotBig');
   banner('MAŞALLAH!', '+' + Math.round(total).toLocaleString('tr-TR') + ' akçe', { big: true, dur: 3200 });
   spawnCoins(80); melody([0, 1, 2, 3, 4, 5, 6, 7, 6, 4, 7], .11);
   for (let i = 0; i < 12; i++) coinPing(i * .09);
@@ -1040,7 +1040,7 @@ function spinWheel() {
     if (p < 1) return requestAnimationFrame(step);
     wheel.spinning = false;
     const m = WHEEL[idx].m, win = BETS[betIdx] * m;
-    setBalance(balance + win); lastWin += win;
+    setBalance(balance + win); lastWin += win; if (m >= 50) extEvent('wheel50');
     banner('×' + m + '!', '+' + win.toLocaleString('tr-TR') + ' akçe', { big: true, top: true, dur: 2600 });
     spawnCoins(m >= 15 ? 70 : 35, 500, 420); melody([0, 1, 2, 3, 4, 7, 9], .1); shake = 10;
     if (m >= 15) { bigUntil = performance.now() + 3000; cat.until = performance.now() + 4000; }
@@ -1059,6 +1059,7 @@ cv.addEventListener('pointerdown', e => {
   const w = toWorld(e.clientX, e.clientY);
   if (!trans.done) return;
   if (emoHit(e.clientX, e.clientY) || hudHit(e.clientX, e.clientY)) return;
+  if (spect() && scene !== 'lobby' && !(e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h)) return;
   if (e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h) { if (scene !== 'lobby') leaveGame(e.clientX, e.clientY); else if (LOBBYMODE) { LOBBYMODE = null; tone('sine', 520, .1, .05); } return; }
   if (scene === 'lobby' && !LOBBYMODE) { const m = modeAt(w); if (m) pickMode(m, e.clientX, e.clientY); return; }
   if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : lb === 'gorev' ? 'gorev' : 'cok'); return; } const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); if (SIGNS[i].id === 'carsi') { openSheet('carsi'); return; } if (LOBBYMODE === 'multi' && ONLINE_GAMES.includes(SIGNS[i].id)) { mpQuick(SIGNS[i].id); return; } ps.mode = 'ai'; bb.mode = 'ai'; tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY); } return; }
@@ -1280,7 +1281,7 @@ function drawLobbyButtons(t) {
   plaque(K, 'Karakter', 'Seviye ' + lv); drawAvatarMini(K.x - K.w / 2 + 40, K.y - 4, K.h * 1.0, AV);
   const xb = (XP - xpFor(lv)) / (xpFor(lv + 1) - xpFor(lv)); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(K.x - K.w / 2 + 84, K.y + K.h / 2 - 14, K.w - 104, 7); ctx.fillStyle = '#8e44ad'; ctx.fillRect(K.x - K.w / 2 + 84, K.y + K.h / 2 - 14, (K.w - 104) * xb, 7);
   plaque(C, 'Çanta', INV.length + ' eşya · ' + FOUND.length + '/' + ITEMS.length); seed(71); const cx0 = C.x - C.w / 2 + 14; const sk = sub([[cx0 + 6, C.y + 26], [cx0 + 12, C.y - 14], [cx0 + 30, C.y - 24], [cx0 + 48, C.y - 14], [cx0 + 54, C.y + 26]], 8, true); wash(ctx, sk, '#7a4a22', 1); ink(ctx, sk, true, 2.5); ink(ctx, [[cx0 + 18, C.y - 18], [cx0 + 42, C.y - 18]], false, 3, '#d9a441');
-  const L0 = loginGift(), rd = questReady() + (L0.date === today() ? 0 : 1);
+  const L0 = loginGift(), rd = questReady() + achReady() + (L0.date === today() ? 0 : 1);
   plaque(G, 'Görevler', rd ? rd + ' ödül hazır' : questsToday().q.filter(q => q.claimed).length + '/3 tamam'); seed(72); const gx = G.x - G.w / 2 + 34; const sc2 = rr(gx - 18, G.y - 24, 36, 48, 6, 10); wash(ctx, sc2, '#f4e8cc', 1); ink(ctx, sc2, true, 2); for (let k = 0; k < 3; k++) ink(ctx, [[gx - 10, G.y - 12 + k * 12], [gx + 10, G.y - 12 + k * 12]], false, 2);
   if (rd) { ctx.fillStyle = '#cf4b32'; ctx.beginPath(); ctx.arc(G.x + G.w / 2 - 16, G.y - G.h / 2 + 14, 13, 0, 7); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke(); inkText(ctx, String(rd), G.x + G.w / 2 - 16, G.y - G.h / 2 + 15, 22, '#fff', { outline: false }); }
   const on = Math.max(0, MP.peers.length - 1);
@@ -1441,7 +1442,7 @@ function bjResolve() {
   const net = total - staked, h0 = bj.hands[0], R = h0.res, p0 = h0.val;
   let title, subt, col = net > 0 ? '#cf4b32' : net === 0 ? '#2a7a5a' : '#1f4e9c', big = single && R === 'bj';
   if (single) {
-    ({ bust: () => { title = 'Battın!'; subt = p0 + ' oldu, 21\'i geçti'; }, bj: () => { title = 'BLACKJACK!'; subt = 'Maşallah, 3:2 ödendi'; },
+    ({ bust: () => { title = 'Battın!'; subt = p0 + ' oldu, 21\'i geçti'; }, bj: () => { title = 'BLACKJACK!'; subt = 'Maşallah, 3:2 ödendi'; extEvent('blackjack'); },
       lose: () => { title = db ? 'Krupiye Blackjack' : 'Kaybettin'; subt = db ? 'Kedi bu eli aldı' : p0 + ' – ' + d + ' · Kısmet değilmiş'; },
       push: () => { title = 'Berabere'; subt = p0 + ' – ' + d + ', bahis iade'; },
       win: () => { title = 'Kazandın!'; subt = d > 21 ? 'Krupiye battı (' + d + ')' : p0 + ' – ' + d; } })[R]();
@@ -1655,10 +1656,10 @@ function tvEval(st, s) {
   if (st.off[s] === 15) sc += 1000;
   return sc;
 }
-function tvBest(st, s, dice) {
+function tvBest(st, s, dice, noise = .3) {
   const seqs = genSeqs(st, s, diceList(dice)); if (!seqs.length) return null;
   let best = null, bs = -1e9; const cache = new Map();
-  for (const q of seqs) { const key = q.st.b.join() + q.st.bar + q.st.off; let v = cache.get(key); if (v === undefined) { v = tvEval(q.st, s); cache.set(key, v); } v += Math.random() * .3; if (v > bs) { bs = v; best = q; } }
+  for (const q of seqs) { const key = q.st.b.join() + q.st.bar + q.st.off; let v = cache.get(key); if (v === undefined) { v = tvEval(q.st, s); cache.set(key, v); } v += Math.random() * noise; if (v > bs) { bs = v; best = q; } }
   return best;
 }
 
@@ -1754,7 +1755,7 @@ function drawCornerBal() {
   const w = 150, x = W - w - 12 - SAFE.r, y = BACK.y, p = rr(x, y, w, 48, 10, 14); wash(ctx, p, '#b8862b', 1); ink(ctx, p, true, 2.5, INK, 1);
   inkText(ctx, Math.round(dispBal).toLocaleString('tr-TR') + ' akçe', x + w / 2, y + 25, 26, INK, { outline: false });
 }
-function statusTag(x, y, txt, w = 360) { seed(68); const p = rr(x - w / 2, y - 30, w, 60, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5); let fs = 34; ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(txt).width; if (mw > w - 30) fs *= (w - 30) / mw; inkText(ctx, txt, x, y + 2, fs, INK, { outline: false, font: '"Caveat"', weight: 700 }); }
+function statusTag(x, y, txt, w = 360) { if (spect() && /^(Sıra sende|Sıran|Sen )/.test(String(txt))) txt = 'İzliyorsun · sıra: ' + (mpTurnUid() ? mpName(mpTurnUid()) : '…'); seed(68); const p = rr(x - w / 2, y - 30, w, 60, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5); let fs = 34; ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(txt).width; if (mw > w - 30) fs *= (w - 30) / mw; inkText(ctx, txt, x, y + 2, fs, INK, { outline: false, font: '"Caveat"', weight: 700 }); }
 function betRow(set, ids, t, label) {
   btnDraw(ids[0], '#2aa3a0', '−', t, 62, set); btnDraw(ids[1], '#2aa3a0', '+', t, 58, set);
   const a = set[ids[0]], b = set[ids[1]];
@@ -1890,7 +1891,7 @@ async function tvAITurn(dice) {
   tv.state = 'ai'; tv.sel = 0; tv.turn = 1;
   if (!dice) { await wait(450); dice = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]; tv.dice = dice; tv.diceSide = 1; tv.rollT = performance.now(); diceSound(); await wait(900); }
   tv.made = [];
-  const best = tvBest(tv.st, 1, dice);
+  const best = tvBest(tv.st, 1, dice, easy() ? 9 : .3);
   if (!best) { banner('Reis oynayamadı', 'Sıra sende', { dur: 1300, col: '#1f4e9c', y: .5 }); await wait(1300); tv.turn = 0; tv.state = 'roll'; return; }
   for (const mv of best.path) {
     await wait(480); if (scene !== 'tavla' || tv.mode !== 'ai') return;
@@ -1907,7 +1908,7 @@ function tvEnd(w, remote) {
   if (tv.mode === 'local2') { banner(tvName(w) + ' kazandı!' + (mars ? ' MARS' : ''), 'Rövanş için BAŞLA', { big: true, dur: 3000, y: .45, col: w ? '#7a1e28' : '#1f4e9c' }); spawnCoins(30, 500, 1000); melody([0, 2, 4, 7], .12); return; }
   if (meWon) {
     if (tv.mode === 'online' && !mpPayOnce('win')) return;
-    const pay = tv.bet * (mars ? 3 : 2); setBalance(balance + pay); lastWin = pay;
+    const pay = tv.bet * (mars ? 3 : 2); setBalance(balance + pay); lastWin = pay; if (mars) extEvent('mars');
     banner(mars ? 'MARS!' : 'Kazandın!', '+' + (pay - tv.bet).toLocaleString('tr-TR') + ' akçe' + (mars ? ' (çifte)' : ''), { big: true, dur: 3000, y: .45 });
     spawnCoins(mars ? 80 : 40, 500, 1100); melody([0, 1, 2, 3, 4, 5, 6, 7, 6, 4, 7], .11); shake = 10;
   } else {
@@ -1952,7 +1953,7 @@ function drawTavla(t) {
   const bl = Math.floor(t / 280) % 2; drawLayer(getLayers('tv')[bl], 1);
   if (LY.tv.catFront) person();
   setWorld(1);
-  if (tv.mode === 'online' || tv.mode === 'local2') { const nm = tv.mode === 'online' ? (oppSeat ? tvName(opp) : 'Rakip bekleniyor…') : 'Aynı cihazda 2 kişi'; inkText(ctx, nm, C.x, C.y + (LY.tv.catFront ? 175 : -95), 40, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 }); }
+  if (tv.mode === 'online' || tv.mode === 'local2') { const nm = tv.mode === 'online' ? (oppSeat ? tvName(opp) : 'Rakip bekleniyor…') : 'Aynı cihazda 2 kişi'; drawSeatLabel(C.x, C.y + (LY.tv.catFront ? 175 : -95), nm, tv.mode === 'online' && oppSeat, tv.mode === 'online' && tv.turn === opp); }
   ctx.save(); tvT(ctx);
   const b2 = BOIL % 2, cs = 80, an = tv.anim && t - tv.anim.t0 < 380 ? tv.anim : null;
   const put = (s, p) => { ctx.fillStyle = 'rgba(20,8,2,.35)'; ctx.beginPath(); ctx.ellipse(p.x + 5, p.y + 6, cs / 2, cs / 2, 0, 0, 7); ctx.fill(); ctx.drawImage(checkerSpr[s][b2], p.x - cs / 2, p.y - cs / 2, cs, cs); };
@@ -2175,7 +2176,7 @@ async function okAI(p, onDraw) {
     else { if (!ok.pile.length) { okEnd(-1); return false; } t = ok.pile.pop(); okFly(t, false, OK_PILE, OK_RACK[dp], 380, 0, 1, .6); }
     hand.push(t); ok.phase = 'discard'; thud(.05, 2600); if (onDraw) onDraw(); await wait(520);
   }
-  const d = okChooseDiscard(hand); hand.splice(hand.indexOf(d), 1);
+  let d = okChooseDiscard(hand); if (easy() && ok.mode !== 'online' && Math.random() < .3) { const nj = hand.filter(x => !isJ(x)); if (nj.length) d = nj[Math.floor(Math.random() * nj.length)]; } hand.splice(hand.indexOf(d), 1);
   okFly(d, true, OK_RACK[dp], OK_D[dp], 380, 0, .6, 1); ok.disc[p].push(d); thud(.07, 2200);
   if (okIsWin(hand)) { ok.winner = p; await wait(420); okEnd(p); return false; }
   ok.turn = (p + 1) % 4; ok.phase = 'draw';
@@ -2240,7 +2241,7 @@ function drawOkey(t) {
       if (dp === 2) drawT(null, false, R.x + (k - (n - 1) / 2) * 34, R.y, .55);
       else drawT(null, false, R.x, R.y + (k - (n - 1) / 2) * 30, .55, Math.PI / 2);
     }
-    if (ok.mode === 'online' && (ok.state !== 'bet' || MP.t.seats[seat])) { const lx = R.x + (dp === 2 ? 0 : dp === 1 ? -30 : 30), ly = R.y + (dp === 2 ? -62 : 240); inkText(ctx, okName(seat), lx, ly, 30, ok.turn === seat && ok.state === 'play' ? '#f2cf74' : '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 }); }
+    if (ok.mode === 'online' && (ok.state !== 'bet' || MP.t.seats[seat])) { const lx = R.x + (dp === 2 ? 0 : dp === 1 ? -30 : 30), ly = R.y + (dp === 2 ? -62 : 240); inkText(ctx, okName(seat), lx, ly, 30, ok.turn === seat && ok.state === 'play' ? '#f2cf74' : '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 }); if (!ok.bots[seat] && MP.t.seats[seat]) { const s2 = seatSub(MP.t.seats[seat]); if (s2) inkText(ctx, s2, lx, ly + 28, 22, '#e9c2f2', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 }); } }
     if (think === seat || (ok.mode === 'online' && ok.state === 'play' && ok.turn === seat && !ok.bots[seat])) { const bx = R.x + OKL.think[dp][0], by = R.y + OKL.think[dp][1]; seed(69); const b = rr(bx - 50, by - 28, 100, 56, 22, 12); wash(ctx, b, '#fbf4e2', 1); ink(ctx, b, true, 2.5); inkText(ctx, '•••'.slice(0, 1 + Math.floor(t / 300) % 3), bx, by, 40, INK, { outline: false }); }
   }
   if (ok.state !== 'bet') {
@@ -2670,7 +2671,7 @@ async function mpEnter(code, t) {
   MP.unsub = mpRef(code).onSnapshot(s => mpOnData(s.exists ? s.data() : null), () => { });
   clearInterval(MP.hb); MP.hb = setInterval(() => { if (MP.t && MP.t.status === 'open' && MP.t.host === MP.uid) mpWrite(() => { }); }, 30000);
   clearInterval(MP.poll); MP.poll = setInterval(() => { if (!MP.code || document.hidden) return; mpRef(MP.code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { }); }, 4000);
-  if (MP.room) MP.room.join('t-' + code.toLowerCase()).then(r => { MP.nr = r; r.on('emote', m => { const i = m.data && m.data.i; if (!m.isMe && typeof i === 'number') emoShow(m.by, -1, i); }); r.on('poke', () => mpRef(code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { })); }).catch(() => { });
+  if (MP.room) MP.room.join('t-' + code.toLowerCase()).then(r => { MP.nr = r; r.on('emote', m => { const i = m.data && m.data.i; if (!m.isMe && typeof i === 'number') emoShow(m.by, -1, i); }); r.on('gift', teaRecv); r.on('poke', () => mpRef(code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { })); }).catch(() => { });
   closeSheet();
   if (t.game === 'tavla') { tv.mode = 'online'; tvRemote(t, null); } else if (t.game === 'okey') { ok.mode = 'online'; okRemote(t, null); } else if (t.game === 'pisti') { ps.mode = 'online'; psRemote(t, null); } else if (t.game === 'barbut') { bb.mode = 'online'; bbRemote(t, null); } else { bj.mode = 'online'; bjRemote(t, null); }
   go(GSCENE[t.game]); mpPresence();
@@ -2683,7 +2684,8 @@ function mpReset(keepScene) {
 }
 async function mpLeave() {
   const code = MP.code, t = MP.t, seat = MP.seat; if (!code) return;
-  mpReset();
+  mpReset(); MP.watching = false;
+  if (seat < 0) return;
   if (!t || !MP.db) return;
   try {
     const others = t.seats.filter(x => x && x.uid !== MP.uid);
@@ -2747,6 +2749,14 @@ function renderCok() {
       MP.tables = snap.docs.map(d => d.data()).filter(x => x && x.seats && Date.now() - (x.updatedAt || 0) < 20 * 60000).sort((a, b) => b.updatedAt - a.updatedAt);
       fill(); mpNames(MP.tables.map(x => x.host)).then(fill);
     }, () => { clearTimeout(timer); list.textContent = 'Masalar okunamadı.'; });
+    box.appendChild(el('h3', { text: 'Süren oyunları izle' }));
+    const wl = el('div', { class: 'tables' }, [el('p', { class: 'hint', text: 'Yükleniyor…' })]); box.appendChild(wl);
+    MP.db.collection('tables').where('status', '==', 'play').limit(20).get().then(snap => {
+      const xs = snap.docs.map(d => d.data()).filter(x => x && x.seats && x.g && Date.now() - (x.updatedAt || 0) < 10 * 60000).sort((a, b) => b.updatedAt - a.updatedAt);
+      const draw = () => { wl.textContent = ''; if (!xs.length) { wl.appendChild(el('p', { class: 'hint', text: 'Şu an süren oyun yok.' })); return; }
+        xs.forEach(x => wl.appendChild(el('div', { class: 'trow' }, [el('b', { text: GNAME[x.game] || x.game }), el('span', { text: x.seats.filter(Boolean).map(q => mpName(q.uid) + (q.lv ? ' (Sv ' + q.lv + ')' : '')).join(' · ') + ' · ' + x.bet + ' akçe' }), el('button', { text: 'İzle', on: () => mpWatch(x.code) })]))); };
+      draw(); mpNames(xs.flatMap(x => x.seats.filter(Boolean).map(q => q.uid))).then(draw);
+    }).catch(() => { wl.textContent = 'Okunamadı.'; });
   }
   box.appendChild(el('h3', { text: 'Aynı cihazda' }));
   box.appendChild(el('button', { class: 'big', text: 'İki kişilik Tavla (sırayla oynanır)', on: () => { closeSheet(); if (MP.code) mpLeave(); tv.mode = 'local2'; tv.view = 0; tv.state = 'bet'; go('tavla'); } }));
@@ -2838,7 +2848,7 @@ function drawBJOnline(t) {
       const m = h.cards.length, gp = Math.min(86, 400 / Math.max(1, m - 1)) * sc;
       h.cards.forEach((c, i) => bjDrawCard(bjoCard(s + ':' + i, c, cx + (i - (m - 1) / 2) * gp, cy, sc), t));
       const v = handVal(h.cards).v, isMe = s === MP.seat;
-      if (!isMe) { drawAvatarMini(cx, cy - 175 * sc - 30, 110, d.seats[s] && d.seats[s].av); inkText(ctx, d.seats[s] ? mpName(d.seats[s].uid) : 'Kalktı', cx, cy - 175 * sc + 40, 32, g.turn === s ? '#f2cf74' : '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 }); }
+      if (!isMe) { drawAvatarMini(cx, cy - 175 * sc - 30, 110, d.seats[s] && d.seats[s].av); inkText(ctx, d.seats[s] ? mpName(d.seats[s].uid) : 'Kalktı', cx, cy - 175 * sc + 40, 32, g.turn === s ? '#f2cf74' : '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 }); { const s2 = seatSub(d.seats[s]); if (s2) inkText(ctx, s2, cx, cy - 175 * sc + 68, 22, '#e9c2f2', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 }); } }
       tag(cx + (m - 1) / 2 * gp + (isMe ? 120 : 80), cy, String(v), v === 21, isMe ? 40 : 32);
       if (h.res) { const R = { bj: 'BLACKJACK', win: 'KAZANDI', push: 'BERABERE', lose: 'KAYBETTİ', bust: 'BATTI' }[h.res]; tag(cx, cy + 105 * sc + 20, isMe ? R.replace('KAZANDI', 'KAZANDIN').replace('KAYBETTİ', 'KAYBETTİN').replace('BATTI', 'BATTIN') : R, h.res === 'win' || h.res === 'bj', 30); }
       else if (g.turn === s && g.phase === 'play') { ctx.strokeStyle = '#f2cf74'; ctx.lineWidth = 5; ctx.globalAlpha = .5 + .5 * Math.sin(t / 160); ctx.beginPath(); ctx.ellipse(cx, cy, (m * 45 + 80) * sc, 130 * sc, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
@@ -2929,7 +2939,7 @@ function emoSend(i) {
 }
 function emoHit(x, y) {
   if (!MP.code || scene === 'lobby') return false;
-  if (emoOpen) { for (let i = 0; i < EMOTES.length; i++) if (inR(emoItem(i), x, y)) { emoSend(i); return true; } }
+  if (emoOpen) { for (let i = 0; i < EMOTES.length; i++) if (inR(emoItem(i), x, y)) { emoSend(i); return true; } if (!spect() && inR(emoItem(EMOTES.length), x, y)) { teaSend(); return true; } }
   if (inR(emoBtn(), x, y)) { emoOpen = !emoOpen; tone('triangle', 700, .05, .04); return true; }
   if (emoOpen) { emoOpen = false; return true; }
   return false;
@@ -2937,9 +2947,10 @@ function emoHit(x, y) {
 function drawEmotes(t) {
   if (!MP.code || scene === 'lobby') return;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(73);
+  if (spect()) inkText(ctx, '👁 İzleyici modu · çıkmak için Salon', W / 2, H - 28, 28, '#e9c2f2', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
   const b = emoBtn(), p = rr(b.x, b.y, b.w, b.h, 12, 12); wash(ctx, p, emoOpen ? '#f2cf74' : '#f4e8cc', 1); ink(ctx, p, true, 2.5, INK, 1);
   const bub = sub([[b.x + 14, b.y + 10], [b.x + 50, b.y + 10], [b.x + 50, b.y + 28], [b.x + 30, b.y + 28], [b.x + 20, b.y + 36], [b.x + 22, b.y + 28], [b.x + 14, b.y + 28]], 5, true); wash(ctx, bub, '#2aa3a0', .5); ink(ctx, bub, true, 2, INK, .6);
-  if (emoOpen) EMOTES.forEach((e, i) => { const r = emoItem(i), q = rr(r.x, r.y, r.w, r.h, 12, 12); wash(ctx, q, '#fbf4e2', 1); ink(ctx, q, true, 2.2, INK, 1); inkText(ctx, e, r.x + r.w / 2, r.y + r.h / 2 + 1, 26, INK, { outline: false, font: '"Caveat"', weight: 700 }); });
+  if (emoOpen) (spect() ? EMOTES : [...EMOTES, '☕ Çay ısmarla']).forEach((e, i) => { const r = emoItem(i), q = rr(r.x, r.y, r.w, r.h, 12, 12); wash(ctx, q, '#fbf4e2', 1); ink(ctx, q, true, 2.2, INK, 1); inkText(ctx, e, r.x + r.w / 2, r.y + r.h / 2 + 1, 26, INK, { outline: false, font: '"Caveat"', weight: 700 }); });
   const now = performance.now(); emoToasts = emoToasts.filter(x => now - x.t0 < 3200);
   emoToasts.forEach((x, i) => {
     const a = clamp((3200 - (now - x.t0)) / 400, 0, 1), s = easeOutBack(clamp((now - x.t0) / 300, 0, 1)), txt = x.who + ': ' + x.text, y = BACK.y + 112 + i * 52;
@@ -2990,6 +3001,7 @@ const RULES = {
   tavla: ['Tavla', ['Amaç: 15 pulunu kendi evine (sağ alt çeyrek) getirip hepsini toplamak.', 'İki zar at; her zar ayrı bir hamledir. Çift gelirse dört hamle yaparsın.', 'Tek pul duran (açık) noktaya gelirsen kırarsın; kırılan pul bara çıkar ve önce rakibin evinden içeri girmelidir.', 'İki ya da daha fazla rakip pulu olan nokta kapalıdır.', 'Oynanabilen zarı oynamak zorundasın; zarlardan yalnız biri oynanabiliyorsa büyüğü oynanır.', 'Bütün pulların evdeyken toplamaya başlarsın. Rakip hiç pul toplayamadan bitirirsen MARS olur ve kazanç iki katına çıkar.']],
 };
 function renderKurallar() {
+  renderDiff();
   sheetBody.appendChild(el('div', { class: 'bets' }, Object.keys(RULES).map(k => el('button', { class: k === rulesGame ? 'on' : '', text: RULES[k][0].split(' (')[0], on: () => { rulesGame = k; renderSheet(); } }))));
   const [title, items] = RULES[rulesGame] || RULES.tavla;
   sheetBody.appendChild(el('h3', { text: title }));
@@ -3114,7 +3126,8 @@ const XPPLAY = { slot: 1, bj: 3, tavla: 20, okey: 15, pisti: 12, barbut: 4, rule
 function gameEvent(g, e) {
   let xp = e === 'play' ? XPPLAY[g] || 1 : e === 'win' ? XPWIN[g] || 1 : e === 'pisti' ? 3 : 0;
   if (g !== '*' && (e === 'play' || e === 'win')) { const st = STATS[g] = STATS[g] || { play: 0, win: 0 }; st[e]++; store.set('stats', STATS); }
-  questTick(g, e); if (e === 'play' && MP.code) { questTick('*', 'mp'); xp += 5; }
+  questTick(g, e); if (e === 'play' && MP.code) { questTick('*', 'mp'); xp += 5; extEvent('mp'); }
+  if (e === 'pisti') extEvent('pisti'); if (e === 'win' && !MP.code && !easy() && ['tavla', 'okey', 'pisti'].includes(g)) xp += 2; if (e === 'win') achCheck();
   if (xp) addXP(xp);
 }
 function addXP(n) {
@@ -3206,11 +3219,91 @@ function renderGorev() {
     sheetBody.appendChild(el('div', { class: 'trow', style: done && !q.claimed ? 'background:#f6dfa0' : '' }, [el('b', { text: Math.min(q.p, d.n) + '/' + d.n }), el('span', { text: d.t + ' · ' + d.r + ' akçe' }),
       q.claimed ? el('small', { text: 'alındı' }) : el('button', { text: done ? 'Ödül' : '…', on: () => { if (!done || q.claimed) return; q.claimed = true; store.set('quest', Q); setBalance(balance + d.r); lastWin = d.r; addXP(10); banner('Ödül alındı', '+' + d.r + ' akçe', { dur: 1800, top: true, col: '#2a7a5a' }); coinPing(); renderSheet(); } })]));
   });
+  renderAchs();
   sheetBody.appendChild(el('h3', { text: 'İstatistiklerin' }));
   const names = { slot: 'Slot', bj: 'Yirmi Bir', okey: 'Okey', tavla: 'Tavla', pisti: 'Pişti', barbut: 'Barbut', rulet: 'Rulet' };
   sheetBody.appendChild(el('div', { class: 'tables' }, Object.keys(names).map(k => { const s = STATS[k] || { play: 0, win: 0 }; return el('div', { class: 'trow' }, [el('b', { text: names[k] }), el('span', { text: s.play + ' oyun · ' + s.win + ' kazanç' }), el('small', { text: s.play ? Math.round(s.win / s.play * 100) + '%' : '–' })]); })));
 }
 
+// =============================================================
+//  BAŞARIMLAR, ZORLUK, İZLEYİCİ, ÇAY ISMARLA, KOLTUK ETİKETLERİ
+// =============================================================
+let EXT = store.get('ext', {});
+function extEvent(k, n = 1) { EXT[k] = (EXT[k] || 0) + n; store.set('ext', EXT); achCheck(); }
+const ACH = [
+  { id: 'pisti1', t: 'Pişti!', d: 'İlk piştini yap', r: 200, ok: () => (EXT.pisti || 0) >= 1 },
+  { id: 'pisti25', t: 'Pişti Ustası', d: '25 pişti yap', r: 2000, ok: () => (EXT.pisti || 0) >= 25 },
+  { id: 'mars1', t: 'Mars Ettin', d: 'Tavlada rakibini mars et', r: 500, ok: () => (EXT.mars || 0) >= 1 },
+  { id: 'okey5', t: 'Okey Kralı', d: '5 okey eli kazan', r: 1500, ok: () => ((STATS.okey || {}).win || 0) >= 5 },
+  { id: 'bjbj', t: 'Blackjack!', d: 'İlk iki kartla 21 yap', r: 200, ok: () => (EXT.blackjack || 0) >= 1 },
+  { id: 'slotbig', t: 'Maşallah!', d: 'Slotta büyük kazanç yakala', r: 300, ok: () => (EXT.slotBig || 0) >= 1 },
+  { id: 'wheel50', t: 'Çarkın Efendisi', d: 'Çarkıfelekte ×50 tuttur', r: 1000, ok: () => (EXT.wheel50 || 0) >= 1 },
+  { id: 'rlnum', t: 'Tam İsabet', d: 'Rulette tek sayıdan kazan', r: 800, ok: () => (EXT.rlNumber || 0) >= 1 },
+  { id: 'barbut5', t: 'Zar Ustası', d: 'Barbutta 5 kez kazan', r: 600, ok: () => ((STATS.barbut || {}).win || 0) >= 5 },
+  { id: 'col10', t: 'Koleksiyoncu', d: '10 farklı eşya keşfet', r: 1500, ok: () => FOUND.length >= 10 },
+  { id: 'mp10', t: 'Kahvehane Gediklisi', d: '10 çevrimiçi oyun oyna', r: 1000, ok: () => (EXT.mp || 0) >= 10 },
+  { id: 'lv10', t: 'Saray Müdavimi', d: '10. seviyeye ulaş', r: 3000, ok: () => levelOf(XP) >= 10 },
+  { id: 'rich', t: 'Sultan Hazinesi', d: '100.000 akçeye ulaş', r: 5000, ok: () => balance >= 100000 },
+];
+let ACHS = store.get('achs', {});   // id → 'open' | 'claimed'
+function achCheck() {
+  for (const a of ACH) if (!ACHS[a.id] && a.ok()) {
+    ACHS[a.id] = 'open'; store.set('achs', ACHS);
+    setTimeout(() => { banner('★ Başarım: ' + a.t, a.d + ' · ödülü Görevler\'den al', { dur: 2800, top: true, col: '#8e44ad' }); tone('triangle', 660, .12, .05); tone('triangle', 990, .2, .05, .1); spawnSparkleBurst(16); }, 1600);
+  }
+}
+const achReady = () => ACH.filter(a => ACHS[a.id] === 'open').length;
+function renderAchs() {
+  sheetBody.appendChild(el('h3', { text: 'Başarımlar · ' + ACH.filter(a => ACHS[a.id]).length + '/' + ACH.length }));
+  sheetBody.appendChild(el('div', { class: 'tables' }, ACH.map(a => {
+    const st = ACHS[a.id];
+    return el('div', { class: 'trow', style: st === 'open' ? 'background:#e8d5f2' : st ? '' : 'opacity:.6' }, [el('b', { text: st ? '★' : '☆', style: 'color:#8e44ad;font-size:24px' }), el('span', { text: a.t + ' — ' + a.d + ' · ' + a.r + ' akçe' }),
+      st === 'open' ? el('button', { text: 'Ödül', on: () => { ACHS[a.id] = 'claimed'; store.set('achs', ACHS); setBalance(balance + a.r); lastWin = a.r; addXP(20); banner('Ödül alındı', a.t + ' · +' + a.r + ' akçe', { dur: 1800, top: true, col: '#8e44ad' }); coinPing(); renderSheet(); } }) : el('small', { text: st ? 'alındı' : '' })]);
+  })));
+}
+// ---------- zorluk ----------
+let DIFF = store.get('diff', 'usta');
+const easy = () => DIFF === 'kolay';
+function renderDiff() {
+  sheetBody.appendChild(el('h3', { text: 'Kedilerin ustalığı' }));
+  sheetBody.appendChild(el('div', { class: 'bets' }, [['kolay', 'Kolay'], ['usta', 'Usta']].map(([k, n]) => el('button', { class: DIFF === k ? 'on' : '', text: n, on: () => { DIFF = k; store.set('diff', k); renderSheet(); } }))));
+  sheetBody.appendChild(el('p', { class: 'hint', text: 'Kolay modda Reis, Minnoş ve okey kedileri ara sıra dalgın oynar. Usta modda kazanırsan biraz daha fazla XP alırsın.' }));
+}
+// ---------- izleyici ----------
+const spect = () => !!MP.code && MP.seat < 0;
+async function mpWatch(code) {
+  try {
+    const s = await mpRef(code).get(); if (!s.exists) { note('Masa artık yok.'); return; }
+    const t = s.data(); mpReset(true);
+    MP.code = code; MP.t = t; MP.rev = t.rev || 0; MP.seat = -1; MP.watching = true; emoToasts = []; emoOpen = false;
+    MP.unsub = mpRef(code).onSnapshot(q => mpOnData(q.exists ? q.data() : null), () => { });
+    clearInterval(MP.poll); MP.poll = setInterval(() => { if (!MP.code || document.hidden) return; mpRef(MP.code).get().then(q => mpOnData(q.exists ? q.data() : null)).catch(() => { }); }, 4000);
+    if (MP.room) MP.room.join('t-' + code.toLowerCase()).then(r => { MP.nr = r; r.on('emote', m => { const i = m.data && m.data.i; if (!m.isMe && typeof i === 'number') emoShow(m.by, -1, i); }); r.on('gift', teaRecv); r.on('poke', () => mpRef(code).get().then(q => mpOnData(q.exists ? q.data() : null)).catch(() => { })); }).catch(() => { });
+    closeSheet();
+    const G = t.game; ({ tavla: () => { tv.mode = 'online'; tvRemote(t, null); }, okey: () => { ok.mode = 'online'; okRemote(t, null); }, pisti: () => { ps.mode = 'online'; psRemote(t, null); }, barbut: () => { bb.mode = 'online'; bbRemote(t, null); }, bj: () => { bj.mode = 'online'; bjRemote(t, null); } })[G]();
+    go(GSCENE[G]); banner('İzleyici modu', GNAME[G] + ' masası ' + code, { dur: 2200, top: true, col: '#2a7a5a' });
+  } catch { note('Masa izlenemedi.'); }
+}
+// ---------- çay ısmarla (oda olayı) ----------
+function teaSend() {
+  emoOpen = false; if (spect()) return;
+  const others = (MP.t ? MP.t.seats : []).filter(x => x && x.uid !== MP.uid), cost = 20 * others.length;
+  if (!others.length) { banner('Masada kimse yok', null, { dur: 1200, top: true }); return; }
+  if (balance < cost) { banner('Akçe yetmedi', 'Çay ' + cost + ' akçe', { dur: 1400, top: true }); return; }
+  const now = Date.now(); if (now - (MP.lastTea || 0) < 8000) { banner('Biraz bekle', 'Çaylar demleniyor', { dur: 1200, top: true }); return; } MP.lastTea = now;
+  setBalance(balance - cost); emoToasts.push({ who: 'Sen', text: 'herkese çay ısmarladın ☕', t0: performance.now() });
+  if (MP.nr) MP.nr.emit('gift', { kind: 'tea', amt: 20 }).catch(() => { });
+}
+function teaRecv(m) {
+  if (m.isMe || spect() || !MP.t) return; const from = m.by; if (!MP.t.seats.some(x => x && x.uid === from)) return;
+  const amt = 20; setBalance(balance + amt); emoToasts.push({ who: mpName(from), text: 'sana çay ısmarladı ☕ +' + amt, t0: performance.now() }); emoToasts = emoToasts.slice(-3); coinPing(); tone('sine', 880, .1, .04);
+}
+// ---------- koltuk etiketi ----------
+function seatSub(seatObj) { if (!seatObj) return ''; const t = titleOf(seatObj.av); return [seatObj.lv ? 'Sv ' + seatObj.lv : '', t].filter(Boolean).join(' · '); }
+function drawSeatLabel(x, y, name, seatObj, hot) {
+  inkText(ctx, name, x, y, 40, hot ? '#f2cf74' : '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  const s2 = seatSub(seatObj); if (s2) inkText(ctx, s2, x, y - 34, 26, '#e9c2f2', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
+}
 // =============================================================
 //  BARBUT  (iki zar · kazandıran / kaybettiren / geçer)
 // =============================================================
@@ -3279,7 +3372,7 @@ function drawBarbut(t) {
   drawLayer(getLayers('bb')[Math.floor(t / 280) % 2], 1);
   if (LY.tv.catFront) person();
   setWorld(1);
-  if (bb.mode === 'online') inkText(ctx, oppSeat ? bbName(opp) : 'Rakip bekleniyor…', C.x, C.y + (LY.tv.catFront ? 175 : -95), 40, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  if (bb.mode === 'online') drawSeatLabel(C.x, C.y + (LY.tv.catFront ? 175 : -95), oppSeat ? bbName(opp) : 'Rakip bekleniyor…', oppSeat, bb.turn === opp);
   const Z = bbCenter(), rolling = t - bb.rollT < 900;
   [0, 1].forEach(i => {
     let v = bb.dice[i], x = Z.x + (i ? 80 : -80), y = Z.y, rot = i ? .25 : -.2;
@@ -3408,6 +3501,7 @@ function psEnd(w) {
 }
 function psAIChoice(s) {
   const hand = ps.hands[s], top = ps.pile[ps.pile.length - 1];
+  if (easy() && ps.mode === 'ai' && Math.random() < .35) return Math.floor(Math.random() * hand.length);
   const seen = {}; [...ps.cap[0], ...ps.cap[1], ...ps.pile, ...hand].forEach(c => seen[c.r] = (seen[c.r] || 0) + 1);
   if (top) {
     let i = hand.findIndex(c => c.r === top.r); if (i >= 0) return i;
@@ -3442,7 +3536,7 @@ function drawPisti(t) {
   if (LAND) person();
   setWorld(1);
   const card = (c, x, y, sc = 1, rot = 0, face = true, a = 1) => { const spr = face ? cardSprite(c.r + c.s, k => drawCardFace(k, c.r, c.s)) : cardSprite('back' + AV.back, drawCardBack); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-60 * sc + 7, -85 * sc + 8, 120 * sc, 170 * sc); ctx.drawImage(spr, -60 * sc, -85 * sc, 120 * sc, 170 * sc); ctx.restore(); ctx.globalAlpha = 1; };
-  if (ps.mode === 'online') inkText(ctx, oppSeat ? psName(opp) : 'Rakip bekleniyor…', C.x, C.y + (LAND ? 175 : -95), 40, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  if (ps.mode === 'online') drawSeatLabel(C.x, C.y + (LAND ? 175 : -95), oppSeat ? psName(opp) : 'Rakip bekleniyor…', oppSeat, ps.turn === opp);
   if (ps.state !== 'bet') {
     // deste
     const dn = ps.deck.length; for (let k = Math.min(5, Math.ceil(dn / 8)); k >= 0 && dn; k--) card({ r: 'A', s: 'maca' }, L.deck.x - k * 2, L.deck.y - k * 3, .8, -.05, false);
@@ -3590,7 +3684,7 @@ function rlUpdate(t) {
   if (u >= 1) {
     rl.state = 'result'; rl.ballA = rl.ballEnd; rl.ballR = .68; const n = rl.result, { pay, won } = rlPayout(n), staked = rlTotal();
     rl.hist.unshift(n); rl.hist = rl.hist.slice(0, 12); rl.won = won;
-    if (pay) { setBalance(balance + pay); lastWin = pay; }
+    if (pay) { setBalance(balance + pay); lastWin = pay; if (won.some(k => k.startsWith('n:'))) extEvent('rlNumber'); }
     const net = pay - staked, label = n + ' ' + (n === 0 ? 'yeşil' : RL_RED.has(n) ? 'kırmızı' : 'siyah');
     if (net > 0) { banner(label + '!', '+' + net.toLocaleString('tr-TR') + ' akçe', { big: pay >= staked * 10, dur: 2600, top: true }); spawnCoins(Math.min(80, 15 + net / staked * 5), RLL().wc.x, RLL().wc.y); melody([4, 5, 7], .12); gameEvent('rulet', 'win'); }
     else banner(label, net === 0 ? 'Bahis kurtuldu' : 'Bu sefer olmadı', { dur: 2000, top: true, col: '#1f4e9c' });
@@ -3714,7 +3808,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__nazar = { ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__nazar = { ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>

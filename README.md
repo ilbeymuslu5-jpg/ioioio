@@ -20,6 +20,8 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - Oynadıkça XP ve **seviye** (her seviyede akçe + Bakır Sandık), oyun istatistikleri.
 - **Günlük görevler** (3 görev) ve seri büyüyen **günlük hediye**.
 - **Çarşı:** Bakır / Gümüş / Altın sandık ve her gün yenilenen tezgâh.
+- **Başarımlar:** 13 kalıcı hedef (ilk pişti, mars, blackjack, Çarkıfelek ×50, rulette tek sayı, 10. seviye, 100.000 akçe…), her biri akçe ödüllü; Görevler sekmesinde.
+- **Zorluk:** Kurallar sekmesinden kedileri **Kolay** ya da **Usta** yap; Usta modda kazanınca daha fazla XP.
 
 ## Karakter, çanta ve koleksiyon
 - Yeni kozmetik türleri: **kart arkası**, **masa çuhası**, çok oyunculuda adının yanında görünen **unvan**; yeni şapka, aksesuar ve kürkler.
@@ -32,6 +34,9 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - Salondaki **Arkadaşlarla** düğmesi: masa kur (Tavla 2 kişi, Okey 2-4 kişi + kediler, Yirmi Bir 1-3 kişi), kodu paylaş, açık masalara katıl.
 - Masalar claude.ai Artifact paylaşımlı veritabanında tutulur; anlık bildirim için Artifact odaları kullanılır. Oyun claude.ai'de paylaşılmalı ve arkadaşların **Katkıda bulunabilir (Contributor)** yetkisine sahip olmalı.
 - Aynı cihazda iki kişilik Tavla da var.
+- Masalarda rakibin adının yanında **seviyesi ve unvanı** görünür.
+- **İzleyici modu:** Arkadaşlarla › *Süren oyunları izle* listesinden oynanan bir masayı canlı izle.
+- **Çay ısmarla:** masadaki baloncuk menüsünden herkese 20'şer akçelik çay ısmarla.
 - Sıra süresi 45 saniye; süre dolarsa hamle otomatik oynanır. Masada hazır mesajlar (Selam!, Bravo!, Rövanş?…) gönderilebilir. Sayfa yenilenirse oturulan masaya geri dönülür.
 - Akçe, çanta ve karakter claude.ai'de bulut kaydına yazılır (başka cihazdan devam edilir); **Sıralama** sekmesi en zengin oyuncuları gösterir.
 - Her oyunda **?** düğmesi kuralları, hoparlör düğmesi sesi açıp kapatır.
