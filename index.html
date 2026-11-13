@@ -509,7 +509,7 @@ function getLayers(name) {
   const key = `${W}x${H}|${DPR}|${S.toFixed(5)}|${CAM0.x},${CAM0.y}|${LAND}|${paintingOK}|${AV.felt}`;
   let e = layerCache[name];
   if (!e || e.key !== key) {
-    const fn = { bg: drawBackground, fg: drawTable, bj: drawBJTable, tv: drawTavlaTable, ok: drawOkeyTable, bb: drawBarbutTable, ps: drawPistiTable, bt: drawBatakTable, rl: drawRuletTable }[name], o = BOIL;
+    const fn = { bg: drawBackground, fg: drawTable, bj: drawBJTable, tv: drawTavlaTable, ok: drawOkeyTable, bb: drawBarbutTable, ps: drawPistiTable, bt: drawBatakTable, tb: drawTombalaTable, rl: drawRuletTable }[name], o = BOIL;
     e = { key, l: [0, 1].map(b => { BOIL = b; return renderLayer(fn, name === 'bg' ? 1.1 : 0, name === 'bg'); }) }; BOIL = o; layerCache[name] = e;
   }
   return e.l;
@@ -522,7 +522,7 @@ function readSafe() {
 }
 function sceneView(sc) {
   if (!LAND) return { cx: 500, cy: 900, w: 1000, h: 1800 };
-  return ({ lobby: { cx: 1000, cy: 500, w: 2000, h: 900 }, pisti: { cx: 960, cy: 640, w: 1920, h: 980 }, batak: { cx: 960, cy: 640, w: 1920, h: 980 }, barbut: { cx: 880, cy: 712, w: 2020, h: 1030 }, rulet: { cx: 1000, cy: 640, w: 2000, h: 1040 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 712, w: 2020, h: 1030 }, okey: { cx: 900, cy: 655, w: 1580, h: 1100 } })[sc];
+  return ({ lobby: { cx: 1000, cy: 500, w: 2000, h: 900 }, pisti: { cx: 960, cy: 640, w: 1920, h: 980 }, batak: { cx: 960, cy: 640, w: 1920, h: 980 }, tombala: { cx: 960, cy: 640, w: 1920, h: 980 }, barbut: { cx: 880, cy: 712, w: 2020, h: 1030 }, rulet: { cx: 1000, cy: 640, w: 2000, h: 1040 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 712, w: 2020, h: 1030 }, okey: { cx: 900, cy: 655, w: 1580, h: 1100 } })[sc];
 }
 function setView(sc) {
   const v = sceneView(sc), nS = Math.min(W / v.w, H / v.h), changed = Math.abs(nS - S) > 1e-6;
@@ -1078,6 +1078,7 @@ cv.addEventListener('pointerdown', e => {
   if (scene === 'lobby' && !LOBBYMODE) { const m = modeAt(w); if (m) pickMode(m, e.clientX, e.clientY); return; }
   if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : lb === 'gorev' ? 'gorev' : 'cok'); return; } const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); if (SIGNS[i].id === 'carsi' || SIGNS[i].id === 'kazi') { openSheet(SIGNS[i].id); return; } if (LOBBYMODE === 'multi' && ONLINE_GAMES.includes(SIGNS[i].id)) { mpQuick(SIGNS[i].id); return; } ps.mode = 'ai'; bb.mode = 'ai'; tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; bt.mode = 'ai'; bt.me = 0; bt.state = 'bet'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY); } return; }
   if (scene === 'batak') { btDown(w); return; }
+  if (scene === 'tombala') { tbDown(w); return; }
   if (scene === 'bj') { bjDown(w); return; }
   if (scene === 'tavla') { tvDown(w); return; }
   if (scene === 'okey') { okDown(w, e); return; }
@@ -1147,7 +1148,7 @@ const SIGNS = [
   { id: 'slot', title: 'Padişah Slot', sub: 'Kolu çek, şansını dene' }, { id: 'bj', title: 'Yirmi Bir', sub: 'Kedi krupiyeye karşı' },
   { id: 'okey', title: 'Okey', sub: 'Üç kediye karşı' }, { id: 'tavla', title: 'Tavla', sub: 'Kahveci Reis\'e karşı' },
   { id: 'pisti', title: 'Pişti', sub: 'Minnoş\'a karşı kart' }, { id: 'barbut', title: 'Barbut', sub: 'Zarlar konuşsun' },
-  { id: 'rulet', title: 'Rulet', sub: 'Top nerede duracak?' }, { id: 'batak', title: 'Batak', sub: 'Üç kediyle ihale' }, { id: 'kazi', title: 'Kazı Kazan', sub: 'Kazı, üç aynısını bul' }, { id: 'carsi', title: 'Çarşı', sub: 'Sandık aç, eşya al' },
+  { id: 'rulet', title: 'Rulet', sub: 'Top nerede duracak?' }, { id: 'batak', title: 'Batak', sub: 'Üç kediyle ihale' }, { id: 'tombala', title: 'Tombala', sub: 'Torbadan ne çıkacak?' }, { id: 'kazi', title: 'Kazı Kazan', sub: 'Kazı, üç aynısını bul' }, { id: 'carsi', title: 'Çarşı', sub: 'Sandık aç, eşya al' },
 ].map((s, i) => Object.assign(s, { x: 0, y: 0, w: 456, h: 220, k: 1, rope: i * .7, row: 0, col: 0 }));
 const ONLINE_GAMES = ['bj', 'okey', 'tavla', 'pisti', 'barbut', 'batak'];
 const trans = { t0: 0, to: null, done: true, x: 0, y: 0 };
@@ -1172,6 +1173,7 @@ function updateTrans(t) {
     if (scene === 'pisti' && ps.mode !== 'online' && ps.state !== 'play') { ps.state = 'bet'; ps.scores = null; banner('Pişti', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'barbut' && bb.mode !== 'online' && (bb.state === 'bet' || bb.state === 'over')) { bb.state = 'bet'; bb.call = ''; bb.hist = []; banner('Barbut', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'batak' && bt.mode !== 'online' && !['bid', 'trump', 'play'].includes(bt.state)) { bt.state = 'bet'; bt.pts = null; banner('Batak', 'Bahsini seç, DAĞIT\'a bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
+    if (scene === 'tombala' && tb.state !== 'play') { tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; banner('Tombala', 'Kart sayını ve bahsini seç', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'rulet') banner('Rulet', 'Tahtaya fiş koy, ÇEVİR\'e bas', { dur: 2200, col: '#1f4e9c', top: true });
     if (scene === 'slot') banner('Bol şans!', 'Kolu aşağı çek ya da ÇEVİR\'e bas', { dur: 2400, col: '#1f4e9c' });
     trans.x = W / 2; trans.y = H / 2; mpPresence();
@@ -1200,11 +1202,12 @@ async function leaveGame(x, y) {
   if (scene === 'okey' && ok.mode !== 'online' && ok.state === 'play') { ok.state = 'bet'; ok.slots = new Array(24).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.fly = []; }
   if (scene === 'pisti' && ps.mode !== 'online' && ps.state === 'play') { ps.state = 'bet'; ps.hands = [[], []]; ps.pile = []; ps.cap = [[], []]; }
   if (scene === 'barbut' && bb.mode !== 'online' && bb.state !== 'bet' && bb.state !== 'over') { bb.state = 'bet'; bb.hist = []; bb.call = ''; }
+  if (scene === 'tombala' && tb.state === 'play') { clearTimeout(tb.timer); tb.state = 'bet'; tb.cards = []; }
   if (scene === 'batak' && bt.mode !== 'online' && bt.state !== 'bet' && bt.state !== 'over') { bt.state = 'bet'; bt.hands = [[], [], [], []]; bt.trick = []; }
   if (scene === 'bj' && bj.mode !== 'online' && bj.state !== 'bet' && bj.state !== 'result') { if (bj.state === 'play') { bj.state = 'bet'; bjResetHands(); } else bj.abandon = true; }
   go('lobby', x, y);
 }
-function canLeave() { if (MP.code) return true; return scene === 'slot' ? state === 'idle' : scene === 'bj' ? (bj.state === 'bet' || bj.state === 'result') : scene === 'tavla' ? (tv.state === 'bet' || tv.state === 'over') : scene === 'okey' ? (ok.state === 'bet' || ok.state === 'over') : scene === 'pisti' ? (ps.state === 'bet' || ps.state === 'over') : scene === 'barbut' ? (bb.state === 'bet' || bb.state === 'over') : scene === 'rulet' ? rl.state !== 'spin' && !rlTotal() || rl.state === 'result' : scene === 'batak' ? bt.state === 'bet' || bt.state === 'over' : false; }
+function canLeave() { if (MP.code) return true; return scene === 'slot' ? state === 'idle' : scene === 'bj' ? (bj.state === 'bet' || bj.state === 'result') : scene === 'tavla' ? (tv.state === 'bet' || tv.state === 'over') : scene === 'okey' ? (ok.state === 'bet' || ok.state === 'over') : scene === 'pisti' ? (ps.state === 'bet' || ps.state === 'over') : scene === 'barbut' ? (bb.state === 'bet' || bb.state === 'over') : scene === 'rulet' ? rl.state !== 'spin' && !rlTotal() || rl.state === 'result' : scene === 'batak' ? bt.state === 'bet' || bt.state === 'over' : scene === 'tombala' ? tb.state !== 'play' : false; }
 function drawBack(t) {
   if (scene === 'lobby' && !LOBBYMODE) return;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -1252,6 +1255,7 @@ function drawSignArt(id, t, i) {   // eski çizim çerçevesi: x -190..190, y 16
   else if (id === 'barbut') { [[6, -70, .3], [5, 70, -.25]].forEach(([v, x, r], k) => { if (!dieSpr[v]) return; ctx.save(); ctx.translate(x, 235 + bob(k)); ctx.rotate(r + Math.sin(t * .003 + k) * .1); ctx.drawImage(dieSpr[v][BOIL % 2], -60, -60, 120, 120); ctx.restore(); }); }
   else if (id === 'rulet') { const sp = rlWheelSpr[BOIL % 2]; if (sp) { ctx.save(); ctx.translate(0, 235); ctx.rotate(t * .0006); ctx.drawImage(sp, -95, -95, 190, 190); ctx.restore(); } }
   else if (id === 'batak') { [['A', 'maca', -.36], ['K', 'maca', -.12], ['Q', 'maca', .12], ['J', 'maca', .36]].forEach(([r, su, rot], k) => { ctx.save(); ctx.translate(-75 + k * 50, 250 + Math.abs(k - 1.5) * 8 + (k === 0 ? bob(0) * .6 : 0)); ctx.rotate(rot); ctx.drawImage(cardSprite(r + su, c => drawCardFace(c, r, su)), -50, -70, 100, 140); ctx.restore(); }); }
+  else if (id === 'tombala') { [[23, -110, 250], [7, 0, 225], [61, 110, 250]].forEach(([n, x, y], k) => { seed(1950 + k); const yy = y + bob(k); const b = ell(x, yy, 52, 50, 20); wash(ctx, b, '#c0392b', 1); ink(ctx, b, true, 3); const inr = ell(x, yy, 34, 33, 16); wash(ctx, inr, '#fbf1da', .6); inkText(ctx, String(n), x, yy + 3, 40, INK, { outline: false }); }); }
   else if (id === 'kazi') { ctx.save(); ctx.translate(0, 235); ctx.rotate(-.08 + Math.sin(t * .002) * .03); seed(998); const tk = rr(-150, -70, 300, 140, 12, 16); wash(ctx, tk, '#f4e8cc', 1); ink(ctx, tk, true, 3); const fo = rr(-130, -50, 260, 100, 8, 16); wash(ctx, fo, '#d9a441', 1); hatch(ctx, fo, .6, 8, '#8a5a12', .3); ink(ctx, fo, true, 2); const cl = rr(-120, -40, 110, 80, 8, 12); wash(ctx, cl, '#fbf4e2', 1); const sp = symSprites[2] && symSprites[2][BOIL]; if (sp) ctx.drawImage(sp, -105, -38, 76, 76); ctx.restore(); }
   else if (id === 'carsi') { drawChest(ctx, 0, 240 + bob(0) * .5, 1.25, '#e2b04e'); }
 }
@@ -3023,7 +3027,7 @@ function drawTurnTimer() {
 
 // ---------- ses ve kurallar düğmeleri ----------
 function hudBtns() {
-  const hasBal = ['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak'].includes(scene) || (scene === 'bj' && bj.mode === 'online'), y = BACK.y + 24, base = W - 12 - SAFE.r - (hasBal ? 150 : 0);
+  const hasBal = ['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak', 'tombala'].includes(scene) || (scene === 'bj' && bj.mode === 'online'), y = BACK.y + 24, base = W - 12 - SAFE.r - (hasBal ? 150 : 0);
   return { sound: { x: base - 26, y, r: 20 }, rules: { x: base - 72, y, r: 20 } };
 }
 function hudHit(x, y) {
@@ -3043,6 +3047,7 @@ function drawHud() {
 }
 let rulesGame = 'tavla';
 const RULES = {
+  tombala: ['Tombala', ['1\'den 90\'a kadar pullar torbadan tek tek çekilir. Her kartta 3 sıra, sırada 5 sayı vardır.', 'Çekilen sayı kartında varsa üstüne kırmızı pul kendiliğinden konur.', 'Bir sırayı ilk dolduran ÇİNKO yapar (kart bahsi kadar), iki sırayı dolduran İKİNCİ ÇİNKO (2 katı), üç sırayı dolduran TOMBALA (4 katı).', 'Bir ya da iki kart alabilirsin; her kart bahis kadar tutar. Kediler Fındık, Tarçın ve Pamuk toplam 7 kartla oynar.', 'Aynı çekilişte birden çok kişi ödülü yakalarsa herkes ödülünü alır. HIZLI düğmesi çekilişi hızlandırır.']],
   kazi: ['Kazı Kazan', ['Çarşı yanındaki Kazı Kazan tabelasından 50, 250 ya da 1000 akçelik bilet al.', 'Altın yaldızı parmağınla kazı ya da Hepsini kazı\'ya bas.', 'Dokuz kutudan üçü aynı resimse çarpanı kadar kazanırsın: Simit ×1, Lokum ×2, Çay ×5, Kahve ×10, Van Kedisi ×50, Padişah Kavuğu ×100.']],
   batak: ['Batak (ihaleli)', ['Dört kişi oynanır, herkese 13 kart dağıtılır. Sen ve üç kedi: Paşa, Sultan, Zeytin.', 'İhale: sırayla en az 5 el söylenir ya da pas geçilir. En yüksek söyleyen kozu seçer ve ilk kartı atar. Herkes pas geçerse dağıtan 5 ile zorunlu alır.', 'Yerdeki rengi takip etmek zorunludur; elinde daha büyüğü varsa yükseltmek zorunludur.', 'Rengin yoksa koz atmak zorunludur (yerde koz varsa yükseltmek gerekir). Kozun da yoksa istediğini atarsın.', 'Koz kırılmadan (biri koz atmadan) kozla el açılamaz.', 'Puan: ihaleyi alan tutturursa aldığı el kadar, tutturamazsa eksi ihale kadar puan alır (BATTI). Diğerleri aldıkları el kadar.', 'En yüksek puan kazanır: bahsin 2 katı. İhaleyi sen alıp tutturursan 5\'in üstündeki her el için bahsin yarısı kadar ek ödül. Rakibin battığı elde 3+ el aldıysan bahsin iade.']],
   pisti: ['Pişti', ['52 kartla iki kişi oynanır. Yere dört kart açılır, üstteki görünür; her oyuncuya dörder kart dağıtılır.', 'Sırayla bir kart atarsın. Yerdeki en üst kartla aynı sayıyı ya da bir Vale (J) atarsan yerdeki bütün kartları toplarsın.', 'Yerde tek kart varken aynı sayıyla toplarsan PİŞTİ: 10 puan. Vale üstüne Vale ile pişti 20 puandır.', 'Eller bitince desteden yeniden dörder kart gelir. Deste bitince yerde kalanlar son toplayana gider.', 'Puanlar: her As ve Vale 1, sinek ikilisi 2, karo onlusu 3, en çok kart toplayan 3, piştiler 10/20. Çok puan alan kazanır.']],
@@ -3246,7 +3251,7 @@ function drawItemIcon2(c, it) {
 // ---------- seviye ve istatistik ----------
 let XP = store.get('xp', 0), STATS = store.get('stats', {});
 const levelOf = x => Math.floor(Math.sqrt(Math.max(0, x) / 40)) + 1, xpFor = l => 40 * (l - 1) * (l - 1);
-const XPPLAY = { kazi: 1, batak: 12, slot: 1, bj: 3, tavla: 20, okey: 15, pisti: 12, barbut: 4, rulet: 2 }, XPWIN = { kazi: 2, batak: 18, slot: 1, bj: 3, tavla: 25, okey: 30, pisti: 15, barbut: 5, rulet: 2 };
+const XPPLAY = { tombala: 6, kazi: 1, batak: 12, slot: 1, bj: 3, tavla: 20, okey: 15, pisti: 12, barbut: 4, rulet: 2 }, XPWIN = { tombala: 6, kazi: 2, batak: 18, slot: 1, bj: 3, tavla: 25, okey: 30, pisti: 15, barbut: 5, rulet: 2 };
 function gameEvent(g, e) {
   let xp = e === 'play' ? XPPLAY[g] || 1 : e === 'win' ? XPWIN[g] || 1 : e === 'pisti' ? 3 : 0;
   if (g !== '*' && (e === 'play' || e === 'win')) { const st = STATS[g] = STATS[g] || { play: 0, win: 0 }; st[e]++; store.set('stats', STATS); }
@@ -3266,7 +3271,7 @@ const QPOOL = [
   { id: 'tv1', t: 'Bir tavla oyunu bitir', g: 'tavla', e: 'play', n: 1, r: 300 }, { id: 'tvw1', t: 'Tavlada bir kez kazan', g: 'tavla', e: 'win', n: 1, r: 500 },
   { id: 'ok1', t: 'Bir okey eli bitir', g: 'okey', e: 'play', n: 1, r: 300 }, { id: 'psp2', t: 'Piştide 2 pişti yap', g: 'pisti', e: 'pisti', n: 2, r: 400 },
   { id: 'ps1', t: 'Bir pişti oyunu kazan', g: 'pisti', e: 'win', n: 1, r: 400 }, { id: 'bb3', t: 'Barbutta 3 kez kazan', g: 'barbut', e: 'win', n: 3, r: 350 },
-  { id: 'bt1', t: 'Bir Batak eli kazan', g: 'batak', e: 'win', n: 1, r: 450 }, { id: 'bt2', t: '2 el Batak oyna', g: 'batak', e: 'play', n: 2, r: 250 },
+  { id: 'tb1', t: 'Tombalada bir ödül kap', g: 'tombala', e: 'win', n: 1, r: 300 }, { id: 'bt1', t: 'Bir Batak eli kazan', g: 'batak', e: 'win', n: 1, r: 450 }, { id: 'bt2', t: '2 el Batak oyna', g: 'batak', e: 'play', n: 2, r: 250 },
   { id: 'rl5', t: 'Rulette 5 kez çevir', g: 'rulet', e: 'play', n: 5, r: 200 }, { id: 'rlw2', t: 'Rulette 2 kez kazan', g: 'rulet', e: 'win', n: 2, r: 300 },
   { id: 'mp2', t: 'Çevrimiçi 2 oyun oyna', g: '*', e: 'mp', n: 2, r: 600, mp: true }, { id: 'item1', t: 'Bir eşya bul', g: '*', e: 'item', n: 1, r: 300 },
 ];
@@ -3347,7 +3352,7 @@ function renderGorev() {
   });
   renderAchs();
   sheetBody.appendChild(el('h3', { text: 'İstatistiklerin' }));
-  const names = { kazi: 'Kazı Kazan', batak: 'Batak', slot: 'Slot', bj: 'Yirmi Bir', okey: 'Okey', tavla: 'Tavla', pisti: 'Pişti', barbut: 'Barbut', rulet: 'Rulet' };
+  const names = { tombala: 'Tombala', kazi: 'Kazı Kazan', batak: 'Batak', slot: 'Slot', bj: 'Yirmi Bir', okey: 'Okey', tavla: 'Tavla', pisti: 'Pişti', barbut: 'Barbut', rulet: 'Rulet' };
   sheetBody.appendChild(el('div', { class: 'tables' }, Object.keys(names).map(k => { const s = STATS[k] || { play: 0, win: 0 }; return el('div', { class: 'trow' }, [el('b', { text: names[k] }), el('span', { text: s.play + ' oyun · ' + s.win + ' kazanç' }), el('small', { text: s.play ? Math.round(s.win / s.play * 100) + '%' : '–' })]); })));
 }
 
@@ -3371,6 +3376,7 @@ const ACH = [
   { id: 'lv10', t: 'Saray Müdavimi', d: '10. seviyeye ulaş', r: 3000, ok: () => levelOf(XP) >= 10 },
   { id: 'bigbid', t: 'İhale Ustası', d: 'Batakta 8+ ihale alıp tuttur', r: 1500, item: 'unvan_ihale', ok: () => (EXT.bigBid || 0) >= 1 },
   { id: 'kazi50', t: 'Talih Kuşu', d: 'Kazı Kazan\'da ×50 ya da üstünü yakala', r: 2500, ok: () => (EXT.kazi50 || 0) >= 1 },
+  { id: 'tombala1', t: 'Tombala!', d: 'Tombalada üç sırayı ilk sen doldur', r: 1200, ok: () => (EXT.tombala || 0) >= 1 },
   { id: 'rich', t: 'Sultan Hazinesi', d: '100.000 akçeye ulaş', r: 5000, ok: () => balance >= 100000 },
 ];
 let ACHS = store.get('achs', {});   // id → 'open' | 'claimed'
@@ -4127,6 +4133,138 @@ function drawBatak(t) {
   } else statusTag(S_.x, S_.y, btShowing() ? btName(bt.show.w) + ' aldı' : btMine(bt.turn) ? 'Sıra sende: bir kart at' : btName(bt.turn) + ' düşünüyor…', S_.w);
 }
 // =============================================================
+//  TOMBALA  (1-90 · 3 sıra × 9 sütun kart · çinko, ikinci çinko, tombala)
+// =============================================================
+const TB_CATS = [{ name: 'Fındık', v: 1, hat: 'kasket', body: '#5a4632', n: 2 }, { name: 'Tarçın', v: 3, hat: 'fez', body: '#7a1e28', n: 3 }, { name: 'Pamuk', v: 2, hat: 'mavifes', body: '#24405a', n: 2 }];
+const TB_PRIZE = [1, 2, 4], TB_PNAME = ['Çinko', 'İkinci Çinko', 'TOMBALA'];
+const tb = { state: 'bet', bet: 0, ncard: 1, cards: [], cats: [], bag: [], drawn: [], cur: null, curT: 0, stage: 0, timer: 0, fast: false, wins: [], drops: [], won: 0 };
+const TBB = { tbMinus: { x: 190, y: 1560, r: 50 }, tbPlus: { x: 330, y: 1560, r: 50 }, tbCards: { x: 520, y: 1560, r: 62 }, tbGo: { x: 770, y: 1560, r: 90 }, tbFast: { x: 770, y: 1560, r: 70 } };
+function TBLay() {
+  if (LAND) { P(TBB.tbMinus, 1690, 1050); P(TBB.tbPlus, 1830, 1050); P(TBB.tbCards, 1500, 1050, 58); P(TBB.tbGo, 1760, 850, 90); P(TBB.tbFast, 1760, 850, 70);
+    return { cardX: 70, cardY: [340, 650], cw: 100, ch: 84, bag: { x: 1230, y: 390 }, ball: { x: 1500, y: 390 }, recent: { x: 1440, y: 540, gap: 74 }, cats: [[1150, 790], [1380, 790], [1610, 790]], prize: { x: 1440, y: 640 }, status: { x: 540, y: 1060, w: 700 } }; }
+  P(TBB.tbMinus, 190, 1560); P(TBB.tbPlus, 330, 1560); P(TBB.tbCards, 520, 1560, 62); P(TBB.tbGo, 770, 1560, 90); P(TBB.tbFast, 770, 1560, 70);
+  return { cardX: 40, cardY: [560, 860], cw: 102, ch: 84, bag: { x: 250, y: 320 }, ball: { x: 560, y: 320 }, recent: { x: 500, y: 470, gap: 100 }, cats: [[190, 1230], [500, 1230], [810, 1230]], prize: { x: 500, y: 1390 }, status: { x: 500, y: 1450, w: 700 } };
+}
+function tbCard() {
+  let rows;
+  do { rows = [0, 1, 2].map(() => { const c = [0, 1, 2, 3, 4, 5, 6, 7, 8]; for (let i = 8; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [c[i], c[j]] = [c[j], c[i]]; } return c.slice(0, 5).sort((a, b) => a - b); }); }
+  while (new Set(rows.flat()).size < 9);
+  const g = [[], [], []].map(() => new Array(9).fill(0));
+  for (let col = 0; col < 9; col++) {
+    const rs = [0, 1, 2].filter(r => rows[r].includes(col)), lo = col === 0 ? 1 : col * 10, hi = col === 8 ? 90 : col * 10 + 9, pool = [];
+    for (let n = lo; n <= hi; n++) pool.push(n);
+    const pick = []; while (pick.length < rs.length) { const n = pool.splice(Math.floor(Math.random() * pool.length), 1)[0]; pick.push(n); } pick.sort((a, b) => a - b);
+    rs.forEach((r, k) => g[r][col] = pick[k]);
+  }
+  return { g, m: g.map(r => r.map(() => false)) };
+}
+const tbRows = c => c.g.filter((r, i) => r.every((n, j) => !n || c.m[i][j])).length;
+const tbLeft = (c, stage) => { const per = c.g.map((r, i) => r.filter((n, j) => n && !c.m[i][j]).length).sort((a, b) => a - b); return per.slice(0, stage + 1).reduce((a, b) => a + b, 0); };
+function tbStart() {
+  if (tb.state === 'play') return;
+  const total = BETS[betIdx] * tb.ncard; if (balance < total) { if (!dailyGift()) banner('Akçe yetmedi', tb.ncard + ' kart ' + total + ' akçe', { y: .45 }); return; }
+  setBalance(balance - total); lastWin = 0; tb.bet = BETS[betIdx];
+  tb.cards = Array.from({ length: tb.ncard }, tbCard); tb.cats = TB_CATS.map(k => Array.from({ length: k.n }, tbCard));
+  tb.bag = Array.from({ length: 90 }, (_, i) => i + 1); for (let i = 89; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [tb.bag[i], tb.bag[j]] = [tb.bag[j], tb.bag[i]]; }
+  tb.drawn = []; tb.cur = null; tb.stage = 0; tb.wins = []; tb.drops = []; tb.won = 0; tb.state = 'play'; banners = [];
+  banner('Tombala', 'Torba karışıyor…', { dur: 1500, col: '#1f4e9c', y: .3 }); thud(.2, 300);
+  clearTimeout(tb.timer); tb.timer = setTimeout(tbDraw, 1600);
+}
+function tbDraw() {
+  if (scene !== 'tombala' || tb.state !== 'play') return;
+  const n = tb.bag.pop(); if (!n) return tbOver();
+  tb.cur = n; tb.curT = performance.now(); tb.drawn.push(n); tone('triangle', 500 + n * 6, .1, .05); thud(.06, 900);
+  const mark = c => c.g.forEach((r, i) => r.forEach((x, j) => { if (x === n) { c.m[i][j] = true; if (tb.cards.includes(c)) tb.drops.push({ c, i, j, t0: performance.now() + 250 }); } }));
+  tb.cards.forEach(mark); tb.cats.forEach(cs => cs.forEach(mark));
+  // ödül kontrolü
+  const need = tb.stage + 1, mine = tb.cards.filter(c => tbRows(c) >= need).length, cats = tb.cats.map((cs, k) => cs.some(c => tbRows(c) >= need) ? k : -1).filter(k => k >= 0);
+  if (mine || cats.length) {
+    const st = tb.stage, pay = Math.round(tb.bet * TB_PRIZE[st] * mine);
+    tb.wins.push({ st, me: mine > 0, cats: cats.map(k => TB_CATS[k].name) });
+    if (mine) { setBalance(balance + pay); tb.won += pay; lastWin = tb.won; banner(TB_PNAME[st] + '!', '+' + pay.toLocaleString('tr-TR') + ' akçe' + (cats.length ? ' · ' + cats.map(k => TB_CATS[k].name).join(', ') + ' de' : ''), { big: true, dur: 2400, y: .3 }); spawnCoins(st === 2 ? 70 : 30, 500, 700); melody(st === 2 ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 2, 4, 7], .1); if (st === 2) { shake = 10; extEvent('tombala'); } }
+    else { banner(TB_PNAME[st] + ': ' + cats.map(k => TB_CATS[k].name).join(', '), st < 2 ? 'Sıradaki ödül: ' + TB_PNAME[st + 1] : 'Oyun bitti', { dur: 2000, col: '#1f4e9c', y: .3 }); tone('sine', 300, .3, .05, 0, 200); }
+    tb.stage++;
+    if (tb.stage >= 3) return setTimeout(tbOver, 1500);
+    clearTimeout(tb.timer); tb.timer = setTimeout(tbDraw, 2400); return;
+  }
+  clearTimeout(tb.timer); tb.timer = setTimeout(tbDraw, tb.fast ? 650 : 1300);
+}
+function tbOver() {
+  tb.state = 'over'; clearTimeout(tb.timer);
+  gameEvent('tombala', 'play'); if (tb.won > 0) gameEvent('tombala', 'win'); rollDrop();
+  setTimeout(() => banner(tb.won ? 'Toplam +' + tb.won.toLocaleString('tr-TR') + ' akçe' : 'Bu sefer olmadı', 'YENİ OYUN için bas', { dur: 2600, col: tb.won ? '#cf4b32' : '#1f4e9c', y: .3 }), 900);
+}
+function tbDown(w) {
+  TBLay();
+  if (tb.state === 'play') { const k = hitSet(TBB, w, ['tbFast']); if (k) tb.fast = !tb.fast; return; }
+  const k = hitSet(TBB, w, ['tbMinus', 'tbPlus', 'tbCards', 'tbGo']); if (!k) return;
+  if (k === 'tbCards') { tb.ncard = tb.ncard === 1 ? 2 : 1; return; }
+  if (!betKey(k)) tbStart();
+}
+function drawTombalaTable(c) {
+  const v = visRect(300); seed(1700);
+  wash(c, sub([[v.x0 - 200, 200], [v.x1 + 200, 200], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#3c2414', 3);
+  for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 60, 202], [500 + i * 170, v.y1 + 300]], false, 2, '#1e1008', 3);
+  const L = TBLay(), w = L.cw * 9 + 40;
+}
+function tbDrawCard(card, x, y, cw, ch, t, dim) {
+  seed(1710 + y); const w = cw * 9, h = ch * 3, p = rr(x - 14, y - 14, w + 28, h + 28, 14, 20); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x - 6, y - 4, w + 28, h + 28);
+  wash(ctx, p, dim ? '#d8ccb0' : '#f6ecd2', 1); ink(ctx, p, true, 3);
+  ctx.strokeStyle = '#b8462a'; ctx.lineWidth = 2; ctx.globalAlpha = .7; for (let i = 1; i < 9; i++) { ctx.beginPath(); ctx.moveTo(x + i * cw, y); ctx.lineTo(x + i * cw, y + h); ctx.stroke(); } for (let r = 1; r < 3; r++) { ctx.beginPath(); ctx.moveTo(x, y + r * ch); ctx.lineTo(x + w, y + r * ch); ctx.stroke(); } ctx.globalAlpha = 1;
+  ink(ctx, rr(x, y, w, h, 6, 20), true, 2.5, '#b8462a', 1);
+  const fullRows = card.g.map((r, i) => r.every((n, j) => !n || card.m[i][j]));
+  card.g.forEach((r, i) => {
+    if (fullRows[i]) { ctx.fillStyle = 'rgba(242,207,116,.35)'; ctx.fillRect(x + 2, y + i * ch + 2, w - 4, ch - 4); }
+    r.forEach((n, j) => {
+      const cx = x + j * cw + cw / 2, cy = y + i * ch + ch / 2;
+      if (!n) { ctx.fillStyle = 'rgba(184,70,42,.12)'; ctx.fillRect(x + j * cw + 4, y + i * ch + 4, cw - 8, ch - 8); return; }
+      inkText(ctx, String(n), cx, cy + 2, 44, INK, { outline: false });
+      if (card.m[i][j]) {
+        const d = tb.drops.find(q => q.c === card && q.i === i && q.j === j), u = d ? clamp((t - d.t0) / 260, 0, 1) : 1; if (u <= 0) return;
+        ctx.save(); ctx.translate(cx, cy - (1 - u) * 60); ctx.scale(.6 + .4 * u, .6 + .4 * u); seed(1800 + n);
+        const pul = ell(0, 0, 32, 30, 16); wash(ctx, pul, '#c0392b', .4); ink(ctx, pul, true, 2.2, INK, .6); ctx.globalAlpha = .9; inkText(ctx, String(n), 0, 2, 30, '#fbf1da', { outline: false }); ctx.globalAlpha = 1; ctx.restore();
+      }
+    });
+  });
+}
+function tbBall(x, y, r, n, big) {
+  seed(1900 + n); const b = ell(x, y, r, r * .96, 24); wash(ctx, b, '#c0392b', 1); ink(ctx, b, true, big ? 4 : 2.4);
+  const inr = ell(x, y, r * .66, r * .64, 20); wash(ctx, inr, '#fbf1da', .6); inkText(ctx, String(n), x, y + 3, r * .78, INK, { outline: false });
+}
+function drawTombala(t) {
+  const L = TBLay();
+  drawLayer(getLayers('tb')[Math.floor(t / 280) % 2], 1); setWorld(1);
+  // torba
+  seed(1750); const B = L.bag, bag = sub([[B.x - 90, B.y - 40], [B.x - 40, B.y - 100], [B.x + 40, B.y - 100], [B.x + 90, B.y - 40], [B.x + 110, B.y + 70], [B.x, B.y + 110], [B.x - 110, B.y + 70]], 12, true);
+  ctx.save(); if (tb.state === 'play' && t - tb.curT < 400) { ctx.translate(B.x, B.y); ctx.rotate(Math.sin(t / 30) * .05); ctx.translate(-B.x, -B.y); }
+  wash(ctx, bag, '#7a1e28', 2); hatch(ctx, bag, .5, 9, INK, .2); ink(ctx, bag, true, 3.5); ink(ctx, [[B.x - 50, B.y - 92], [B.x, B.y - 70], [B.x + 50, B.y - 92]], false, 4, '#d9a441', 1);
+  inkText(ctx, 'TORBA', B.x, B.y + 20, 34, '#f2cf74', { ow: 4 }); ctx.restore();
+  if (tb.cur) { const u = clamp((t - tb.curT) / 350, 0, 1), e = easeOutBack(u); tbBall(lerp(B.x, L.ball.x, e), lerp(B.y - 60, L.ball.y, e), 70 + 20 * e, tb.cur, true); }
+  else inkText(ctx, tb.state === 'bet' ? 'Kartını al' : '…', L.ball.x, L.ball.y, 48, '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 });
+  const rec = tb.drawn.slice(-8, -1).reverse(); rec.forEach((n, i) => tbBall(L.recent.x - (rec.length - 1) * L.recent.gap / 2 + i * L.recent.gap, L.recent.y, 34, n, false));
+  inkText(ctx, tb.drawn.length + '/90', L.ball.x + 140, L.ball.y + 60, 30, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
+  // kartlar
+  if (tb.cards.length) tb.cards.forEach((c, k) => tbDrawCard(c, L.cardX, L.cardY[k], L.cw, L.ch, t, tb.state === 'over'));
+  else for (let k = 0; k < tb.ncard; k++) { seed(1760 + k); const p = rr(L.cardX - 14, L.cardY[k] - 14, L.cw * 9 + 28, L.ch * 3 + 28, 14, 20); wash(ctx, p, '#f6ecd2', 1); ink(ctx, p, true, 3); inkText(ctx, 'TOMBALA KARTI', L.cardX + L.cw * 4.5, L.cardY[k] + L.ch * 1.5, 56, '#b8462a', { outline: false }); }
+  // kediler
+  TB_CATS.forEach((K, k) => {
+    const [x, y] = L.cats[k]; drawCatAt(x, y - 40, .38, 0, K.v, K.hat, t, tb.wins.some(w => w.cats.includes(K.name)), K.body); setWorld(1);
+    const cs = tb.cats[k], left = cs && tb.state !== 'bet' && tb.stage < 3 ? Math.min(...cs.map(c => tbLeft(c, tb.stage))) : null;
+    inkText(ctx, K.name + ' · ' + K.n + ' kart', x, y + 80, 30, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
+    if (left !== null) inkText(ctx, left + ' kaldı', x, y + 112, 28, left <= 2 ? '#f2cf74' : '#e9dcc0', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
+  });
+  // ödül merdiveni
+  const Pz = L.prize; TB_PNAME.forEach((nm, k) => { const done = tb.wins.find(w => w.st === k), x = Pz.x + (k - 1) * 260; seed(1770 + k); const q = rr(x - 120, Pz.y - 30, 240, 60, 14, 14); wash(ctx, q, done ? (done.me ? '#f2cf74' : '#8a7a5a') : tb.stage === k && tb.state === 'play' ? '#fbf4e2' : '#d8ccb0', 1); ink(ctx, q, true, 2.5); inkText(ctx, nm + ' ×' + String(TB_PRIZE[k]).replace('.', ','), x, Pz.y + 2, 28, INK, { outline: false, font: '"Caveat"', weight: 700 }); });
+  // düğmeler
+  const S_ = L.status;
+  if (tb.state === 'play') { const dy = btnDraw('tbFast', tb.fast ? '#cf4b32' : '#2aa3a0', null, t, 40, TBB); inkText(ctx, tb.fast ? 'HIZLI' : 'NORMAL', TBB.tbFast.x, TBB.tbFast.y + dy, 30, '#fbf1da', { ow: 5 }); statusTag(S_.x - (LAND ? 0 : 120), S_.y + (LAND ? 0 : 110), 'Numaralar kendiliğinden kapanır · kart başı ' + tb.bet + ' akçe', LAND ? S_.w : 520); }
+  else {
+    betRow(TBB, ['tbMinus', 'tbPlus', 'tbGo'], t, tb.state === 'over' ? 'YENİ' : 'BAŞLA');
+    const dy = btnDraw('tbCards', '#8e44ad', null, t, 40, TBB); inkText(ctx, tb.ncard + ' kart', TBB.tbCards.x, TBB.tbCards.y + dy, 32, '#fbf1da', { ow: 5 });
+    inkText(ctx, 'toplam ' + (BETS[betIdx] * tb.ncard).toLocaleString('tr-TR'), TBB.tbCards.x, TBB.tbCards.y + 82, 30, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
+  }
+}
+// =============================================================
 //  RULET  (Avrupa çarkı 0-36 · sayı 35:1 · renk/tek-çift/yarı 1:1 · düzine 2:1)
 // =============================================================
 const RL_ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
@@ -4307,6 +4445,7 @@ function frame(t) {
   else if (scene === 'okey') drawOkey(t);
   else if (scene === 'pisti') drawPisti(t);
   else if (scene === 'batak') drawBatak(t);
+  else if (scene === 'tombala') drawTombala(t);
   else if (scene === 'barbut') drawBarbut(t);
   else if (scene === 'rulet') drawRulet(t);
   else {
@@ -4317,7 +4456,7 @@ function frame(t) {
   drawParticles(dt);
   drawBanners(t);
   drawItemFlash(t);
-  if (['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak'].includes(scene) || (scene === 'bj' && bj.mode === 'online')) drawCornerBal();
+  if (['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak', 'tombala'].includes(scene) || (scene === 'bj' && bj.mode === 'online')) drawCornerBal();
   if (MP.code && scene !== 'lobby') { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(72); const w = 150, x = W / 2 - w / 2, y = BACK.y + 56, p = rr(x, y, w, 40, 10, 14); wash(ctx, p, '#2a7a5a', 1); ink(ctx, p, true, 2.5, INK, 1); inkText(ctx, 'Masa ' + MP.code, W / 2, y + 21, 24, '#fbf1da', { outline: false }); }
   drawBack(t);
   drawHud(); drawTurnTimer(); drawEmotes(t);
@@ -4337,7 +4476,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__nazar = { get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__nazar = { tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>

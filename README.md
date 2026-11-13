@@ -20,6 +20,10 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - **İhaleli tekli Batak:** sen ve üç kedi (Paşa, Sultan, Zeytin). En az 5 el ihale, kozu ihaleyi alan seçer; renk takibi, yükseltme ve koz zorunluluğu, koz kırılmadan kozla açılmaz. İhaleyi tutturursan bahsin 2 katı + 5'in üstündeki her el için ek ödül; tutturamazsan **battın**.
 - Çok oyunculu da oynanır: 2-4 kişi, boş koltuklara kediler oturur.
 
+## Tombala ve Kazı Kazan
+- **Tombala:** 1-90 pullar torbadan çekilir; 1 ya da 2 kart al. Çinko (bahis kadar), İkinci Çinko (2 katı), Tombala (4 katı). Kediler Fındık, Tarçın ve Pamuk toplam 7 kartla oynar; HIZLI düğmesi çekilişi hızlandırır.
+- **Kazı Kazan:** 50 / 250 / 1000 akçelik bilet, parmakla kazı; üç aynı resim ×1'den ×100'e kadar.
+
 ## İlerleme ve Çarşı
 - Oynadıkça XP ve **seviye** (her seviyede akçe + Bakır Sandık), oyun istatistikleri.
 - **Günlük görevler** (3 görev) ve seri büyüyen **günlük hediye**.
