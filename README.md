@@ -18,6 +18,7 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 
 ## Batak
 - **İhaleli tekli Batak:** sen ve üç kedi (Paşa, Sultan, Zeytin). En az 5 el ihale, kozu ihaleyi alan seçer; renk takibi, yükseltme ve koz zorunluluğu, koz kırılmadan kozla açılmaz. İhaleyi tutturursan bahsin 2 katı + 5'in üstündeki her el için ek ödül; tutturamazsan **battın**.
+- Çok oyunculu da oynanır: 2-4 kişi, boş koltuklara kediler oturur.
 
 ## İlerleme ve Çarşı
 - Oynadıkça XP ve **seviye** (her seviyede akçe + Bakır Sandık), oyun istatistikleri.
@@ -41,9 +42,11 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - Aynı cihazda iki kişilik Tavla da var.
 - Masalarda rakibin adının yanında **seviyesi ve unvanı** görünür.
 - **İzleyici modu:** Arkadaşlarla › *Süren oyunları izle* listesinden oynanan bir masayı canlı izle.
+- **Davet:** masadayken Arkadaşlarla sekmesindeki *Salondakiler* listesinden oyunculara davet gönder; salondaysan bir arkadaşının masasına *Yanına otur* ile katıl.
 - **Masa sohbeti:** baloncuk menüsündeki *Yaz…* ile masaya kısa mesaj yaz.
 - **Çay ısmarla:** masadaki baloncuk menüsünden herkese 20'şer akçelik çay ısmarla.
 - Sıra süresi 45 saniye; süre dolarsa hamle otomatik oynanır. Masada hazır mesajlar (Selam!, Bravo!, Rövanş?…) gönderilebilir. Sayfa yenilenirse oturulan masaya geri dönülür.
+- **Haftalık lig:** Sıralama › Haftalık lig sekmesinde bu hafta kazanılan XP ile yarışılır; hafta bitince ilk 3'e 20.000 / 10.000 / 5.000, ilk 10'a 2.000 akçe ödül.
 - Akçe, çanta ve karakter claude.ai'de bulut kaydına yazılır (başka cihazdan devam edilir); **Sıralama** sekmesi en zengin oyuncuları gösterir.
 - Her oyunda **?** düğmesi kuralları, hoparlör düğmesi sesi açıp kapatır.
 
