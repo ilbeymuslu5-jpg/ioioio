@@ -1174,6 +1174,7 @@ function updateTrans(t) {
     if (scene === 'barbut' && bb.mode !== 'online' && (bb.state === 'bet' || bb.state === 'over')) { bb.state = 'bet'; bb.call = ''; bb.hist = []; banner('Barbut', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'batak' && bt.mode !== 'online' && !['bid', 'trump', 'play'].includes(bt.state)) { bt.state = 'bet'; bt.pts = null; banner('Batak', 'Bahsini seç, DAĞIT\'a bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'tombala' && tb.mode !== 'online' && tb.state !== 'play') { tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; banner('Tombala', 'Kart sayını ve bahsini seç', { dur: 2200, col: '#1f4e9c', y: .3 }); }
+    { const seen = store.get('seenScenes', {}); if (scene !== 'lobby' && !seen[scene] && RULES[scene]) { seen[scene] = 1; store.set('seenScenes', seen); setTimeout(() => { if (scene === trans.to) banner('İlk kez mi?', 'Kurallar için üstteki ? düğmesine dokun', { dur: 3200, col: '#2a7a5a', top: true }); }, 2600); } }
     if (scene === 'rulet') banner('Rulet', 'Tahtaya fiş koy, ÇEVİR\'e bas', { dur: 2200, col: '#1f4e9c', top: true });
     if (scene === 'slot') banner('Bol şans!', 'Kolu aşağı çek ya da ÇEVİR\'e bas', { dur: 2400, col: '#1f4e9c' });
     trans.x = W / 2; trans.y = H / 2; mpPresence();
@@ -1238,6 +1239,7 @@ function drawLobby(t) {
     inkText(ctx, s.title, -s.w / 2 + 34, 58, 48, s.id === 'carsi' ? '#2a7a5a' : '#cf4b32', { ow: 6, align: 'left' });
     const sub2 = multi && s.id !== 'carsi' ? (online ? 'Rastgele rakip bul' : 'Tek kişilik') : s.sub;
     inkText(ctx, sub2, -s.w / 2 + 36, 100, 25, multi && online ? '#1f4e9c' : INK, { outline: false, font: '"Caveat"', weight: 700, align: 'left' });
+    if (s.id === featGame()) { ctx.save(); ctx.translate(s.w / 2 - 110, 4); ctx.rotate(.1); ctx.scale(1.55, 1.55); seed(1990); const rb = sub([[-70, 0], [70, 0], [60, 20], [70, 40], [-70, 40], [-60, 20]], 6, true); wash(ctx, rb, '#8e44ad', 1); ink(ctx, rb, true, 2.5); inkText(ctx, 'GÜNÜN OYUNU · 2× XP', 0, 21, 19, '#fbf1da', { outline: false, font: '"Caveat"', weight: 700 }); ctx.restore(); }
     if (s.id === 'carsi' && dwheelReady()) { ctx.fillStyle = '#cf4b32'; ctx.beginPath(); ctx.arc(s.w / 2 - 34, 34, 14, 0, 7); ctx.fill(); }
     ctx.save(); ctx.translate(s.w / 2 - 118, s.h / 2 + 8); ctx.scale(.52, .52); ctx.translate(0, -235); drawSignArt(s.id, t, i); ctx.restore();
     const k = .5 + .5 * Math.sin(t * .005 + i * 2), pb = rr(-s.w / 2 + 30, s.h - 82, 150, 52, 26, 16); wash(ctx, pb, s.id === 'carsi' ? '#2a7a5a' : multi && online ? '#1f4e9c' : '#cf4b32', 1.5); ink(ctx, pb, true, 3);
@@ -3164,11 +3166,15 @@ NEW_ITEMS.forEach(i => { ITEMS.push(i); ITEM[i.id] = i; });
 FURS.push({ name: 'Tekir Çizgili', p: null, b: '#d9c3a0', stripes: '#8a6a45', item: 'kurk_tekir' }, { name: 'Üç Renkli', p: '#e07b39', p2: '#2b2b2b', b: '#fbf8f2', item: 'kurk_calico' });
 const AV_DEF = { fur: 0, eye: 0, hat: 'fez', acc: 'nazar', robe: 0, back: 'nazar', felt: 'none', title: 'none' };
 for (const k in AV_DEF) if (AV[k] === undefined) AV[k] = AV_DEF[k];
-const FELTS = { cuha_bordo: '#6a1b24', cuha_lacivert: '#1f3a6b', cuha_mor: '#4a2a6b' };
+const FELTS = { cuha_bordo: '#6a1b24', cuha_lacivert: '#1f3a6b', cuha_mor: '#4a2a6b', cuha_kahve: '#5a3a1e', cuha_zumrut: '#0f6a4a' };
 function feltColor(def) { return FELTS[AV.felt] || def; }
 const titleOf = av => av && ITEM[av.title] ? ITEM[av.title].label : '';
 // ---------- kozmetik 2: okey taşları, zarlar, sarık, tesbih, başarım unvanları ----------
 const NEW_ITEMS2 = [
+  { id: 'cuha_kahve', name: 'Kahve Çuha', tier: 0, slot: 'felt', price: 150 },
+  { id: 'cuha_zumrut', name: 'Zümrüt Çuha', tier: 1, slot: 'felt', price: 1800 },
+  { id: 'arka_kilim', name: 'Kilim Kart Arkası', tier: 0, slot: 'back', price: 160 },
+  { id: 'arka_ebru', name: 'Ebru Kart Arkası', tier: 1, slot: 'back', price: 2000 },
   { id: 'tas_yesim', name: 'Yeşim Okey Taşları', tier: 0, slot: 'tas', price: 180 },
   { id: 'zar_kirmizi', name: 'Kırmızı Zar', tier: 0, slot: 'zar', price: 160 },
   { id: 'tesbih', name: 'Kehribar Tesbih', tier: 0, slot: 'acc', price: 150 },
@@ -3236,6 +3242,8 @@ function drawCardBackStyle(c, st) {
   const card = rr(3, 3, 114, 164, 12, 18);
   if (st === 'arka_lale') { wash(c, card, '#9c1f1a', 1.2); ink(c, rr(12, 12, 96, 146, 8, 14), true, 2.5, '#f2cf74', 1); c.save(); c.translate(20, 40); c.scale(.4, .45); drawLale(c); c.restore(); ink(c, card, true, 3, INK, 1); return; }
   if (st === 'arka_cini') { wash(c, card, '#efe3c6', 1.2); c.save(); trace(c, card, true, 0); c.clip(); for (let y = 0; y < 3; y++) for (let x = 0; x < 2; x++) { c.save(); c.translate(5 + x * 55, 3 + y * 55); c.scale(.5, .5); drawWallTile(c, 0, 0, 110); c.restore(); } c.restore(); ink(c, card, true, 3, INK, 1); return; }
+  if (st === 'arka_kilim') { wash(c, card, '#9c2a1a', 1.2); c.save(); trace(c, card, true, 0); c.clip(); for (let y = 0; y < 170; y += 28) { c.fillStyle = (y / 28) % 2 ? '#e2b04e' : '#1f3a6b'; for (let x = -14 + (y / 28 % 2) * 14; x < 130; x += 28) { c.beginPath(); c.moveTo(x, y + 14); c.lineTo(x + 14, y); c.lineTo(x + 28, y + 14); c.lineTo(x + 14, y + 28); c.closePath(); c.fill(); } } c.restore(); ink(c, rr(12, 12, 96, 146, 8, 14), true, 3, '#f4e8cc', 1); ink(c, card, true, 3, INK, 1); return; }
+  if (st === 'arka_ebru') { wash(c, card, '#e9e0cc', 1.2); c.save(); trace(c, card, true, 0); c.clip(); const cols = ['#1f4e9c', '#c0392b', '#2a7a5a', '#d9a441']; for (let k = 0; k < 14; k++) { c.strokeStyle = cols[k % 4]; c.globalAlpha = .55; c.lineWidth = 5; c.beginPath(); for (let x = -10; x <= 130; x += 6) { const y = 8 + k * 12 + Math.sin(x / 14 + k) * 7 + Math.sin(x / 5 + k * 2) * 2; x === -10 ? c.moveTo(x, y) : c.lineTo(x, y); } c.stroke(); } c.restore(); c.globalAlpha = 1; ink(c, rr(12, 12, 96, 146, 8, 14), true, 2.5, '#2b1a12', 1); ink(c, card, true, 3, INK, 1); return; }
   if (st === 'arka_altin') { wash(c, card, '#d9a441', 1.2); hatch(c, card, .6, 6, '#8a5a12', .25); ink(c, rr(12, 12, 96, 146, 8, 14), true, 2.5, '#fff1b0', 1); c.save(); c.translate(10, 50); c.scale(.5, .5); drawHat(c, 'tac'); c.restore(); ink(c, card, true, 3, INK, 1); return; }
   wash(c, card, '#1f4e9c', 1.2);
   c.save(); trace(c, card, true, 0); c.clip(); c.strokeStyle = '#5c8fd6'; c.globalAlpha = .5; c.lineWidth = 1.5;
@@ -3255,11 +3263,14 @@ function drawItemIcon2(c, it) {
 let XP = store.get('xp', 0), STATS = store.get('stats', {});
 const levelOf = x => Math.floor(Math.sqrt(Math.max(0, x) / 40)) + 1, xpFor = l => 40 * (l - 1) * (l - 1);
 const XPPLAY = { tombala: 6, kazi: 1, batak: 12, slot: 1, bj: 3, tavla: 20, okey: 15, pisti: 12, barbut: 4, rulet: 2 }, XPWIN = { tombala: 6, kazi: 2, batak: 18, slot: 1, bj: 3, tavla: 25, okey: 30, pisti: 15, barbut: 5, rulet: 2 };
+const FEAT_GAMES = ['bj', 'okey', 'tavla', 'pisti', 'barbut', 'rulet', 'batak', 'tombala', 'slot'];
+const featGame = () => FEAT_GAMES[hashStr('feat' + new Date().toDateString()) % FEAT_GAMES.length];
 function gameEvent(g, e) {
   let xp = e === 'play' ? XPPLAY[g] || 1 : e === 'win' ? XPWIN[g] || 1 : e === 'pisti' ? 3 : 0;
   if (g !== '*' && (e === 'play' || e === 'win')) { const st = STATS[g] = STATS[g] || { play: 0, win: 0 }; st[e]++; store.set('stats', STATS); }
   questTick(g, e); if (e === 'play' && MP.code) { questTick('*', 'mp'); xp += 5; extEvent('mp'); }
   if (e === 'pisti') extEvent('pisti'); if (e === 'win' && !MP.code && !easy() && ['tavla', 'okey', 'pisti'].includes(g)) xp += 2; if (e === 'win') achCheck();
+  if (xp && g === featGame()) xp *= 2;
   if (xp) addXP(xp);
 }
 function addXP(n) {

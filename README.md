@@ -29,6 +29,7 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - **Günlük görevler** (3 görev) ve seri büyüyen **günlük hediye**.
 - **VIP bahisler:** 1.000 / 2.500 / 5.000 akçelik bahisler Seviye 5 / 10 / 15'te açılır.
 - **Müzik:** Hicaz makamında arka plan ezgisi; Kurallar sekmesinden müzik ve efektler ayrı ayrı açılıp kapatılır.
+- **Günün oyunu:** her gün bir oyun seçilir, o oyunda kazanılan XP iki katına çıkar (tabelasında mor kurdele).
 - **Günlük şans çarkı** (Çarşı'da, günde bir ücretsiz çevirme: akçe ya da sandık).
 - **Çarşı:** Bakır / Gümüş / Altın sandık ve her gün yenilenen tezgâh.
 - **Başarımlar:** 13 kalıcı hedef (ilk pişti, mars, blackjack, Çarkıfelek ×50, rulette tek sayı, 10. seviye, 100.000 akçe…), her biri akçe ödüllü; Görevler sekmesinde.
