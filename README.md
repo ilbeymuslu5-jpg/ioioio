@@ -9,11 +9,20 @@ Türk temalı, **birinci şahıs (POV)** bakışlı, tamamen **el çizimi** gör
 - **Padişah Slot** – kolu parmağınla aşağı çek ya da **ÇEVİR**'e bas.
 - **Yirmi Bir (Blackjack)** – fesli Van kedisi krupiye. **ÇEK**, **DUR**, **KATLA**, **BÖL** (aynı değerdeki iki kartı ikiye ayır). Blackjack 3:2 öder, krupiye 17'de durur, 4 desteli ayakkabı.
 - **Okey** – 106 taş, gösterge/okey, sahte okey; seri, per ve çift ile bitirme (12-13-1 dahil). Taşları ıstakada sürükle, **DİZ** ile otomatik diz. Rakipler: Tarçın, Pamuk, Duman. Bitiren 4 katını alır; okey atarak bitiren çifte alır. Taşlar biterse berabere.
+- **Pişti** – Minnoş'a karşı ya da çevrimiçi 2 kişi; pişti 10, vale piştisi 20 puan, klasik sayım.
+- **Barbut** – iki zar; 66·55·44·33·65 kazandırır, 11·22·12 kaybettirir. Kabadayı'ya karşı ya da çevrimiçi.
+- **Rulet** – Avrupa çarkı, sayı/renk/tek-çift/yarı/düzine bahisleri.
 - **Tavla** – Kahveci Reis'e karşı; kırma, bar, toplama, zar kullanma zorunluluğu, çift zar, **GERİ** ile hamleyi geri alma. Mars çifte öder.
 
 Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi ortaktır.
 
+## İlerleme ve Çarşı
+- Oynadıkça XP ve **seviye** (her seviyede akçe + Bakır Sandık), oyun istatistikleri.
+- **Günlük görevler** (3 görev) ve seri büyüyen **günlük hediye**.
+- **Çarşı:** Bakır / Gümüş / Altın sandık ve her gün yenilenen tezgâh.
+
 ## Karakter, çanta ve koleksiyon
+- Yeni kozmetik türleri: **kart arkası**, **masa çuhası**, çok oyunculuda adının yanında görünen **unvan**; yeni şapka, aksesuar ve kürkler.
 - **Karakter:** sen de bir kedisin: kürk, göz, şapka, aksesuar ve kaftan rengini seç. Çok oyunculu masalarda diğerleri seni böyle görür.
 - **Eşya düşmesi:** her çevirme, el ve oyun sonunda şans: Yaygın 1/25, Nadir 1/200, **Destansı 1/1.000**, **Efsanevi 1/1.000.000** (Kaşıkçı Elması, Topkapı Hançeri, Altın Sultan Tacı, Altın Tüy Kürkü).
 - **Çanta:** eşyayı giy, akçeye **sat** ya da **koleksiyona koy** (satılamaz, Hazine Odası'nda sergilenir; bulunmayanlar gölge).
