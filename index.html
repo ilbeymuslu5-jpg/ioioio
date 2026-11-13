@@ -380,7 +380,8 @@ const SYM = [
 const WILD = 0, SCAT = 1;
 const LINES = [[1,1,1,1,1],[0,0,0,0,0],[2,2,2,2,2],[0,1,2,1,0],[2,1,0,1,2],[0,0,1,2,2],[2,2,1,0,0],[1,0,0,0,1],[1,2,2,2,1],[0,1,0,1,0]];
 const LINE_COL = ['#f2cf74','#5cc4ea','#ff7a5c','#9ad16b','#f29ac0','#ffd27a','#7fd6d0','#ff9f43','#c7a4ff','#ffe9a8'];
-const BETS = [10, 20, 50, 100, 200, 500];
+const BETS = [10, 20, 50, 100, 200, 500, 1000, 2500, 5000], BET_LV = [1, 1, 1, 1, 1, 1, 5, 10, 15];
+function betUp() { const n = betIdx + 1; if (n >= BETS.length) return betIdx; if (typeof XP === 'number' && levelOf(XP) < BET_LV[n]) { banner('VIP bahis kilitli', BETS[n].toLocaleString('tr-TR') + ' akçe için Seviye ' + BET_LV[n] + ' gerekir', { dur: 1600, top: true, col: '#8e44ad' }); return betIdx; } return n; }
 const WHEEL = [{m:5,c:'#1f4e9c'},{m:10,c:'#cf4b32'},{m:3,c:'#2aa3a0'},{m:25,c:'#7a1e28'},{m:5,c:'#1f4e9c'},{m:15,c:'#cf4b32'},{m:2,c:'#2aa3a0'},{m:50,c:'#d9a441'}];
 const bag = []; SYM.forEach((s, i) => { for (let k = 0; k < s.w; k++) bag.push(i); });
 const pick = () => bag[Math.floor(Math.random() * bag.length)];
@@ -445,6 +446,19 @@ function pluck(freq, delay = 0, vol = .1) {
 }
 const HICAZ = [293.7, 311.1, 370, 392, 440, 466.2, 523.3, 587.3, 622.3, 740];
 function melody(seq, step = .13) { seq.forEach((n, i) => pluck(HICAZ[n], i * step)); }
+// ---------- arka plan müziği (hicaz, prosedürel) ----------
+let MUSIC = store.get('music', true), musBar = 0;
+const MUS_PHR = [[0, 2, 3, 4, 3, 2, 1, 0], [4, 5, 4, 3, 2, 3, 2, 1], [7, 6, 5, 4, 5, 4, 3, 2], [2, 3, 4, 2, 1, 0, 1, 0], [4, 4, 5, 7, 6, 5, 4, 3], [3, 2, 1, 2, 3, 2, 1, 0]];
+function musicTick() {
+  if (!MUSIC || muted || document.hidden || !AC || AC.state !== 'running') return;
+  const beat = .42, a = AC, t = a.currentTime + .05;
+  try { const o = a.createOscillator(), g = a.createGain(); o.type = 'sine'; o.frequency.value = HICAZ[0] / 2; g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.018, t + .6); g.gain.exponentialRampToValueAtTime(.0001, t + beat * 8); o.connect(g).connect(master); o.start(t); o.stop(t + beat * 8 + .1); } catch { }
+  const ph = MUS_PHR[(musBar * 5 + (musBar >> 2)) % MUS_PHR.length];
+  ph.forEach((n, i) => { if (i % 2 && Math.random() < .2) return; pluck(HICAZ[n] / (musBar % 8 < 4 ? 1 : 2), .05 + i * beat + (i % 2 ? .05 : 0), .03); });
+  [0, 3, 4, 6].forEach((b, k) => thud(k ? .025 : .045, k ? 200 : 120, .05 + b * beat));
+  musBar++;
+}
+setInterval(musicTick, 420 * 8);
 const coinPing = (d = 0) => tone('triangle', 1800 + Math.random() * 900, .18, .05, d);
 
 // =============================================================
@@ -1079,7 +1093,7 @@ cv.addEventListener('pointerdown', e => {
   press[b] = performance.now(); tone('triangle', 520, .05, .05);
   if (b === 'spin') pullLever();
   else if (b === 'minus' && state === 'idle') { betIdx = Math.max(0, betIdx - 1); store.set('bet', betIdx); }
-  else if (b === 'plus' && state === 'idle') { betIdx = Math.min(BETS.length - 1, betIdx + 1); store.set('bet', betIdx); }
+  else if (b === 'plus' && state === 'idle') { betIdx = betUp(); store.set('bet', betIdx); }
   else if (b === 'auto') { auto = !auto; if (auto) pullLever(); }
   else if (b === 'info') document.getElementById('pay').classList.add('show');
   else if (b === 'sound') { muted = !muted; store.set('mute', muted); }
@@ -1591,7 +1605,7 @@ function bjDown(w) {
     if (betting !== ['bjMinus', 'bjPlus', 'bjDeal'].includes(k)) continue;
     press[k] = performance.now(); tone('triangle', 520, .05, .05);
     if (k === 'bjMinus') { betIdx = Math.max(0, betIdx - 1); store.set('bet', betIdx); }
-    else if (k === 'bjPlus') { betIdx = Math.min(BETS.length - 1, betIdx + 1); store.set('bet', betIdx); }
+    else if (k === 'bjPlus') { betIdx = betUp(); store.set('bet', betIdx); }
     else if (k === 'bjDeal') bjDeal();
     else if (k === 'bjHit') bjHit();
     else if (k === 'bjStand') bjStand();
@@ -1770,7 +1784,7 @@ function betRow(set, ids, t, label) {
   ink(ctx, ell(g.x, g.y + dy, g.r + 8, (g.r + 8) * .92, 30), true, 4, '#f2cf74', 1.5);
 }
 function hitSet(set, w, ids) { for (const k of ids) { const b = set[k]; if (Math.hypot(w.x - b.x, w.y - b.y) < b.r + 14) { press[k] = performance.now(); tone('triangle', 520, .05, .05); return k; } } return null; }
-function betKey(k) { if (/Minus$/.test(k)) { betIdx = Math.max(0, betIdx - 1); store.set('bet', betIdx); return true; } if (/Plus$/.test(k)) { betIdx = Math.min(BETS.length - 1, betIdx + 1); store.set('bet', betIdx); return true; } return false; }
+function betKey(k) { if (/Minus$/.test(k)) { betIdx = Math.max(0, betIdx - 1); store.set('bet', betIdx); return true; } if (/Plus$/.test(k)) { betIdx = betUp(); store.set('bet', betIdx); return true; } return false; }
 function payBet() { const bet = BETS[betIdx]; if (balance < bet) { if (!dailyGift()) banner('Akçe yetmedi', 'Bahsi düşür, yarın hediye var', { y: .45 }); return 0; } setBalance(balance - bet); lastWin = 0; return bet; }
 
 // =============================================================
@@ -2730,7 +2744,7 @@ function renderCok() {
   else {
     renderPeers(box);
     box.appendChild(el('h3', { text: 'Masa kur' }));
-    box.appendChild(el('div', { class: 'bets' }, BETS.map((b, i) => el('button', { class: i === MP.cBet ? 'on' : '', text: b + ' akçe', on: () => { MP.cBet = i; renderSheet(); } }))));
+    box.appendChild(el('div', { class: 'bets' }, BETS.map((b, i) => levelOf(XP) < BET_LV[i] ? null : el('button', { class: i === MP.cBet ? 'on' : '', text: b + ' akçe', on: () => { MP.cBet = i; renderSheet(); } })).filter(Boolean)));
     box.appendChild(el('div', { class: 'mk' }, [
       el('button', { class: 'big', text: 'Tavla · 2 kişi', on: () => mpCreate('tavla') }),
       el('button', { class: 'big', text: 'Okey · 2-4 kişi', on: () => mpCreate('okey') }),
@@ -2967,7 +2981,7 @@ setInterval(mpTurnWatch, 1000);
 const EMOTES = ['Selam!', 'Bravo!', 'Hadi bakalım!', 'Eyvah!', 'Şanslısın', 'Rövanş?'];
 let emoOpen = false, emoToasts = [];
 function emoBtn() { return { x: W - 12 - SAFE.r - 64, y: BACK.y + 56, w: 64, h: 44 }; }
-function emoItem(i) { return { x: W - 12 - SAFE.r - 170, y: BACK.y + 108 + i * 48, w: 170, h: 42 }; }
+function emoItem(i) { const n = emoMenu().length, two = BACK.y + 108 + n * 48 > H - 8, half = Math.ceil(n / 2), col = two ? (i < half ? 1 : 0) : 0, row = two ? i % half : i; return { x: W - 12 - SAFE.r - 170 - col * 178, y: BACK.y + 108 + row * 48, w: 170, h: 42 }; }
 const inR = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
 function emoShow(uid, seat, i) { if (!(i >= 0 && i < EMOTES.length)) return; emoToasts.push({ who: uid === MP.uid ? 'Sen' : uid ? mpName(uid) : 'Oyuncu', text: EMOTES[i], t0: performance.now() }); emoToasts = emoToasts.slice(-3); tone('sine', 990, .08, .04); }
 function emoSend(i) {
@@ -3243,7 +3257,7 @@ function gameEvent(g, e) {
 function addXP(n) {
   const l0 = levelOf(XP); XP += n; store.set('xp', XP); weekRoll(); WEEK.xp += n; store.set('week', WEEK); cloudDirty();
   const l1 = levelOf(XP);
-  if (l1 > l0) { const rew = 100 * l1; setBalance(balance + rew); setTimeout(() => { banner('SEVİYE ' + l1 + '!', '+' + rew + ' akçe ve Bakır Sandık', { big: true, dur: 3000, top: true, col: '#8e44ad' }); melody([0, 4, 7, 9, 7, 9], .1); spawnSparkleBurst(40); }, 900); setTimeout(() => openChest('bakir', true), 3800); }
+  if (l1 > l0) { const rew = 100 * l1; setBalance(balance + rew); setTimeout(() => { banner('SEVİYE ' + l1 + '!', '+' + rew + ' akçe ve Bakır Sandık', { big: true, dur: 3000, top: true, col: '#8e44ad' }); melody([0, 4, 7, 9, 7, 9], .1); spawnSparkleBurst(40); }, 900); setTimeout(() => openChest('bakir', true), 3800); const vi = BET_LV.indexOf(l1); if (vi >= 0 && l1 > 1) setTimeout(() => banner('VIP bahis açıldı!', BETS[vi].toLocaleString('tr-TR') + ' akçelik masalar artık seninle', { dur: 2600, top: true, col: '#8e44ad' }), 7200); }
 }
 // ---------- günlük görevler ----------
 const QPOOL = [
@@ -3379,6 +3393,8 @@ function renderAchs() {
 let DIFF = store.get('diff', 'usta');
 const easy = () => DIFF === 'kolay';
 function renderDiff() {
+  sheetBody.appendChild(el('h3', { text: 'Ses' }));
+  sheetBody.appendChild(el('div', { class: 'bets' }, [el('button', { class: MUSIC ? 'on' : '', text: 'Müzik ' + (MUSIC ? 'açık' : 'kapalı'), on: () => { MUSIC = !MUSIC; store.set('music', MUSIC); renderSheet(); } }), el('button', { class: !muted ? 'on' : '', text: 'Efektler ' + (muted ? 'kapalı' : 'açık'), on: () => { muted = !muted; store.set('mute', muted); renderSheet(); } })]));
   sheetBody.appendChild(el('h3', { text: 'Kedilerin ustalığı' }));
   sheetBody.appendChild(el('div', { class: 'bets' }, [['kolay', 'Kolay'], ['usta', 'Usta']].map(([k, n]) => el('button', { class: DIFF === k ? 'on' : '', text: n, on: () => { DIFF = k; store.set('diff', k); renderSheet(); } }))));
   sheetBody.appendChild(el('p', { class: 'hint', text: 'Kolay modda Reis, Minnoş ve okey kedileri ara sıra dalgın oynar. Usta modda kazanırsan biraz daha fazla XP alırsın.' }));
@@ -4321,7 +4337,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__nazar = { inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__nazar = { get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>
