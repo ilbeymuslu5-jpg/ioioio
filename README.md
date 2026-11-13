@@ -7,8 +7,8 @@ Türk temalı, **birinci şahıs (POV)** bakışlı, tamamen **el çizimi** gör
 `index.html` dosyasını telefonda/tarayıcıda açın. Saray salonunda oyununu seç:
 
 - **Padişah Slot** – kolu parmağınla aşağı çek ya da **ÇEVİR**'e bas.
-- **Yirmi Bir (Blackjack)** – fesli Van kedisi krupiye. **ÇEK**, **DUR**, **KATLA**. Blackjack 3:2 öder, krupiye 17'de durur, 4 desteli ayakkabı.
-- **Okey** – 106 taş, gösterge/okey, sahte okey; seri, per ve çift ile bitirme (12-13-1 dahil). Taşları ıstakada sürükle, **DİZ** ile otomatik diz. Rakipler: Tarçın, Pamuk, Duman. Bitiren 4 katını alır, taşlar biterse berabere.
+- **Yirmi Bir (Blackjack)** – fesli Van kedisi krupiye. **ÇEK**, **DUR**, **KATLA**, **BÖL** (aynı değerdeki iki kartı ikiye ayır). Blackjack 3:2 öder, krupiye 17'de durur, 4 desteli ayakkabı.
+- **Okey** – 106 taş, gösterge/okey, sahte okey; seri, per ve çift ile bitirme (12-13-1 dahil). Taşları ıstakada sürükle, **DİZ** ile otomatik diz. Rakipler: Tarçın, Pamuk, Duman. Bitiren 4 katını alır; okey atarak bitiren çifte alır. Taşlar biterse berabere.
 - **Tavla** – Kahveci Reis'e karşı; kırma, bar, toplama, zar kullanma zorunluluğu, çift zar, **GERİ** ile hamleyi geri alma. Mars çifte öder.
 
 Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi ortaktır.
@@ -23,7 +23,9 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - Salondaki **Arkadaşlarla** düğmesi: masa kur (Tavla 2 kişi, Okey 2-4 kişi + kediler, Yirmi Bir 1-3 kişi), kodu paylaş, açık masalara katıl.
 - Masalar claude.ai Artifact paylaşımlı veritabanında tutulur; anlık bildirim için Artifact odaları kullanılır. Oyun claude.ai'de paylaşılmalı ve arkadaşların **Katkıda bulunabilir (Contributor)** yetkisine sahip olmalı.
 - Aynı cihazda iki kişilik Tavla da var.
-- Akçe, çanta ve karakter her cihazda yerel olarak saklanır.
+- Sıra süresi 45 saniye; süre dolarsa hamle otomatik oynanır. Masada hazır mesajlar (Selam!, Bravo!, Rövanş?…) gönderilebilir. Sayfa yenilenirse oturulan masaya geri dönülür.
+- Akçe, çanta ve karakter claude.ai'de bulut kaydına yazılır (başka cihazdan devam edilir); **Sıralama** sekmesi en zengin oyuncuları gösterir.
+- Her oyunda **?** düğmesi kuralları, hoparlör düğmesi sesi açıp kapatır.
 
 Telefon **dikey ve yatay** tutulabilir: her sahnenin yatay düzeni ayrıdır (yatayda tavla tahtası standart yatay dizilime döner), oyun ortasında çevirince kaldığı yerden devam eder. Çentikli ekranlarda güvenli alan dikkate alınır.
 

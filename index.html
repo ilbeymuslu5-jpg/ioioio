@@ -520,7 +520,7 @@ function applyLayout() {
   readSafe(); BACK.x = 12 + SAFE.l; BACK.y = 12 + SAFE.t;
   if (LAND) {
     LY.lx = 1000; [290, 770, 1250, 1730].forEach((x, i) => { SIGNS[i].x = x; SIGNS[i].y = 640; });
-    P(BJB.bjMinus, -210, 1130); P(BJB.bjPlus, -60, 1130); P(BJB.bjDeal, 1180, 1130); P(BJB.bjHit, 1180, 680); P(BJB.bjStand, 1180, 900); P(BJB.bjDouble, 1180, 1120);
+    P(BJB.bjMinus, -210, 1130); P(BJB.bjPlus, -60, 1130); P(BJB.bjDeal, 1180, 1130); P(BJB.bjHit, 1180, 640, 80); P(BJB.bjStand, 1180, 840, 80); P(BJB.bjDouble, 1180, 1040, 80); P(BJB.bjSplit, 1180, 1240, 80);
     Object.assign(LY.tv, { T: true, k: 1, bx: 900, by: 740, top: 250, catFront: true, cat: { x: 1760, y: 560, s: .8 }, status: { x: 50, y: 740, w: 340 } });
     Object.assign(LOBBTN.kar, { x: 230, y: 210, w: 330, h: 110 }); Object.assign(LOBBTN.canta, { x: 1770, y: 150, w: 300, h: 90 }); Object.assign(LOBBTN.cok, { x: 1770, y: 290, w: 300, h: 90 });
     P(TVB.tvGo, 1760, 850); P(TVB.tvRoll, 1760, 850); P(TVB.tvUndo, 1760, 1060); P(TVB.tvMinus, 1690, 1050); P(TVB.tvPlus, 1830, 1050);
@@ -530,7 +530,7 @@ function applyLayout() {
     P(OKB.okMinus, 220, 1040); P(OKB.okPlus, 350, 1040); P(OKB.okGo, 1560, 1060); P(OKB.okSort, 330, 1070); P(OKB.okDisc, 1470, 1070);
   } else {
     LY.lx = 500; [[268, 650], [732, 650], [268, 1125], [732, 1125]].forEach(([x, y], i) => { SIGNS[i].x = x; SIGNS[i].y = y; });
-    P(BJB.bjMinus, 210, 1540); P(BJB.bjPlus, 360, 1540); P(BJB.bjDeal, 700, 1540); P(BJB.bjHit, 220, 1540); P(BJB.bjStand, 500, 1540); P(BJB.bjDouble, 780, 1540);
+    P(BJB.bjMinus, 210, 1540); P(BJB.bjPlus, 360, 1540); P(BJB.bjDeal, 700, 1540); P(BJB.bjHit, 150, 1540, 76); P(BJB.bjStand, 383, 1540, 76); P(BJB.bjDouble, 617, 1540, 76); P(BJB.bjSplit, 850, 1540, 76);
     Object.assign(LY.tv, { T: true, k: .72, bx: 500, by: 830, top: 460, catFront: false, cat: { x: 500, y: 330, s: .9 }, status: { x: 490, y: 1480, w: 560 } });
     Object.assign(LOBBTN.kar, { x: 180, y: 1425, w: 300, h: 100 }); Object.assign(LOBBTN.canta, { x: 500, y: 1425, w: 300, h: 100 }); Object.assign(LOBBTN.cok, { x: 820, y: 1425, w: 300, h: 100 });
     P(TVB.tvGo, 730, 1330); P(TVB.tvRoll, 730, 1330); P(TVB.tvUndo, 250, 1330); P(TVB.tvMinus, 190, 1330); P(TVB.tvPlus, 330, 1330);
@@ -924,7 +924,7 @@ function drawBanners(t) {
 // =============================================================
 //  OYUN MANTIĞI
 // =============================================================
-function setBalance(v) { balance = Math.max(0, Math.round(v)); store.set('bal', balance); }
+function setBalance(v) { balance = Math.max(0, Math.round(v)); store.set('bal', balance); cloudDirty(); }
 function evaluate(g, bet) {
   const res = [], lb = bet / LINES.length; let total = 0;
   LINES.forEach((ln, li) => {
@@ -1054,6 +1054,7 @@ cv.addEventListener('pointerdown', e => {
   audio(); askGyro();
   const w = toWorld(e.clientX, e.clientY);
   if (!trans.done) return;
+  if (emoHit(e.clientX, e.clientY) || hudHit(e.clientX, e.clientY)) return;
   if (e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h) { if (scene !== 'lobby') leaveGame(e.clientX, e.clientY); else if (LOBBYMODE) { LOBBYMODE = null; tone('sine', 520, .1, .05); } return; }
   if (scene === 'lobby' && !LOBBYMODE) { const m = modeAt(w); if (m) pickMode(m, e.clientX, e.clientY); return; }
   if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : 'cok'); return; } const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); if (LOBBYMODE === 'multi' && SIGNS[i].id !== 'slot') { mpQuick(SIGNS[i].id); return; } tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY); } return; }
@@ -1090,7 +1091,7 @@ addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeSheet(); document.getElementById('pay').classList.remove('show'); return; }
   if (sheetEl.classList.contains('show')) return;
   if (scene === 'slot' && (e.code === 'Space' || e.code === 'Enter')) { e.preventDefault(); if (state === 'bonusReady') spinWheel(); else pullLever(); }
-  if (scene === 'bj') { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); bjDeal(); } if (e.key === 'h' || e.key === 'ç') bjHit(); if (e.key === 's' || e.key === 'd') bjStand(); }
+  if (scene === 'bj') { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); bjDeal(); } if (e.key === 'h' || e.key === 'ç') bjHit(); if (e.key === 's' || e.key === 'd') bjStand(); if (e.key === 'b') bjSplit(); }
 });
 document.getElementById('sheetX').onclick = closeSheet;
 document.getElementById('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
@@ -1167,7 +1168,7 @@ async function leaveGame(x, y) {
   if (MP.code) mpLeave();
   if (scene === 'tavla' && tv.mode !== 'online' && tv.state !== 'bet' && tv.state !== 'over') { tv.state = 'bet'; tv.st = tvInit(); tv.dice = []; tv.made = []; }
   if (scene === 'okey' && ok.mode !== 'online' && ok.state === 'play') { ok.state = 'bet'; ok.slots = new Array(24).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.fly = []; }
-  if (scene === 'bj' && bj.mode !== 'online' && bj.state !== 'bet' && bj.state !== 'result') { if (bj.state === 'play') { bj.state = 'bet'; bj.player = []; bj.dealer = []; } else bj.abandon = true; }
+  if (scene === 'bj' && bj.mode !== 'online' && bj.state !== 'bet' && bj.state !== 'result') { if (bj.state === 'play') { bj.state = 'bet'; bjResetHands(); } else bj.abandon = true; }
   go('lobby', x, y);
 }
 function canLeave() { if (MP.code) return true; return scene === 'slot' ? state === 'idle' : scene === 'bj' ? (bj.state === 'bet' || bj.state === 'result') : scene === 'tavla' ? (tv.state === 'bet' || tv.state === 'over') : scene === 'okey' ? (ok.state === 'bet' || ok.state === 'over') : false; }
@@ -1284,9 +1285,9 @@ const SUITS = ['kupa', 'karo', 'sinek', 'maca'], RANKS = ['A', '2', '3', '4', '5
 const SHOE = { x: 845, y: 640 };
 const BJB = {
   bjMinus: { x: 210, y: 1540, r: 52 }, bjPlus: { x: 360, y: 1540, r: 52 }, bjDeal: { x: 700, y: 1540, r: 100 },
-  bjHit: { x: 220, y: 1540, r: 88 }, bjStand: { x: 500, y: 1540, r: 88 }, bjDouble: { x: 780, y: 1540, r: 88 },
+  bjHit: { x: 150, y: 1540, r: 76 }, bjStand: { x: 383, y: 1540, r: 76 }, bjDouble: { x: 617, y: 1540, r: 76 }, bjSplit: { x: 850, y: 1540, r: 76 },
 };
-const bj = { mode: 'ai', state: 'bet', shoe: [], player: [], dealer: [], discard: [], bet: 0, doubled: false, mood: 0, pawT: 0, result: '' };
+const bj = { mode: 'ai', hands: [], cur: 0, state: 'bet', shoe: [], player: [], dealer: [], discard: [], bet: 0, doubled: false, mood: 0, pawT: 0, result: '' };
 let cardCache = {};
 const wait = ms => new Promise(r => setTimeout(r, ms));
 
@@ -1349,13 +1350,19 @@ function handVal(cards, all = true) {
 const isBJ = cards => cards.length === 2 && handVal(cards).v === 21;
 function bjReset() { if (bj.shoe.length < 60) newShoe(); if (bj.state !== 'bet' && bj.state !== 'result') return; }
 function layoutHands() {
-  const lay = (cards, cy, sc) => { const n = cards.length, gap = Math.min(86, 400 / Math.max(1, n - 1)) * sc; cards.forEach((cd, i) => { cd.tx = 500 + (i - (n - 1) / 2) * gap; cd.ty = cy; cd.tsc = sc; }); };
-  lay(bj.dealer, 720, .9); lay(bj.player, 1150, 1.2);
+  const lay = (cards, cx, cy, sc) => { const n = cards.length, gap = Math.min(86, 400 / Math.max(1, n - 1)) * sc; cards.forEach((cd, i) => { cd.tx = cx + (i - (n - 1) / 2) * gap; cd.ty = cy; cd.tsc = sc; }); };
+  lay(bj.dealer, 500, 720, .9);
+  bj.hands.forEach((h, i) => { const p = bjHandPos(i); lay(h.cards, p.x, 1150, p.s); });
 }
-async function dealTo(who, face) {
+const bjHandPos = i => bj.hands.length < 2 ? { x: 500, s: 1.2 } : { x: i ? 740 : 260, s: .92 };
+const bjCur = () => bj.hands[bj.cur];
+const bjVal = c => c.r === 'A' ? 11 : 'JQK'.includes(c.r) ? 10 : +c.r;
+function bjResetHands() { bj.hands = []; bj.dealer = []; bj.cur = 0; }
+async function dealTo(who, face, hi = bj.cur) {
   if (bj.shoe.length < 20) newShoe();
   const c = bj.shoe.pop(); const cd = { r: c.r, s: c.s, face, t0: performance.now(), x: SHOE.x, y: SHOE.y, rot: (Math.random() - .5) * .12, flipT: 0 };
-  bj[who].push(cd); layoutHands(); bj.pawT = performance.now();
+  if (who === 'dealer') bj.dealer.push(cd); else if (bj.hands[hi]) bj.hands[hi].cards.push(cd);
+  layoutHands(); bj.pawT = performance.now();
   thud(.06, 3200); tone('triangle', 900, .05, .015);
   await wait(400);
 }
@@ -1367,51 +1374,81 @@ async function bjDeal() {
   if (bj.state !== 'bet' && bj.state !== 'result') return;
   const bet = BETS[betIdx];
   if (balance < bet) { if (!dailyGift()) banner('Akçe yetmedi', 'Bahsi düşür, yarın hediye var', { y: .45 }); return; }
-  if (bj.player.length) { const now = performance.now(); bj.discard = [...bj.dealer, ...bj.player].map(c => Object.assign(c, { dt0: now })); bj.player = []; bj.dealer = []; tone('sine', 300, .2, .03, 0, 150); await wait(280); }
-  setBalance(balance - bet); bj.bet = bet; bj.doubled = false; bj.state = 'dealing'; bj.mood = 0; lastWin = 0; banners = [];
+  const old = [...bj.dealer, ...bj.hands.flatMap(h => h.cards)];
+  if (old.length) { const now = performance.now(); bj.discard = old.map(c => Object.assign(c, { dt0: now })); bjResetHands(); tone('sine', 300, .2, .03, 0, 150); await wait(280); }
+  setBalance(balance - bet); bj.bet = bet; bj.hands = [{ cards: [], bet, doubled: false, split: false, res: '' }]; bj.cur = 0;
+  bj.state = 'dealing'; bj.mood = 0; lastWin = 0; banners = [];
   await dealTo('player', true); await dealTo('dealer', true); await dealTo('player', true); await dealTo('dealer', false);
-  if (isBJ(bj.player) || isBJ(bj.dealer)) { await flipHole(); return bjResolve(); }
-  if (bj.abandon) { bj.abandon = false; bj.player = []; bj.dealer = []; bj.state = 'bet'; return; }
+  if (isBJ(bj.hands[0].cards) || isBJ(bj.dealer)) { await flipHole(); return bjResolve(); }
+  if (bj.abandon) { bj.abandon = false; bjResetHands(); bj.state = 'bet'; return; }
   bj.state = 'play';
 }
+function bjCanDouble() { const h = bjCur(); return bj.state === 'play' && h && h.cards.length === 2 && balance >= h.bet; }
+function bjCanSplit() { const h = bjCur(); return bj.state === 'play' && bj.hands.length === 1 && h && h.cards.length === 2 && bjVal(h.cards[0]) === bjVal(h.cards[1]) && balance >= h.bet; }
 async function bjHit() {
   if (bj.state !== 'play') return; bj.state = 'busy';
   await dealTo('player', true);
-  const v = handVal(bj.player).v;
-  if (v > 21) { await flipHole(); return bjResolve(); }
-  if (v === 21) return bjStand(true);
+  if (handVal(bjCur().cards).v >= 21) return bjNext();
   bj.state = 'play';
 }
-async function bjStand(force) {
-  if (bj.state !== 'play' && !force) return; bj.state = 'dealer';
-  await flipHole();
-  while (handVal(bj.dealer).v < 17) { await wait(380); await dealTo('dealer', true); }
+async function bjStand() { if (bj.state !== 'play') return; bj.state = 'busy'; bjNext(); }
+async function bjDouble() {
+  if (!bjCanDouble()) return; const h = bjCur();
+  bj.state = 'busy'; setBalance(balance - h.bet); h.bet *= 2; h.doubled = true; tone('triangle', 660, .1, .04);
+  await dealTo('player', true); bjNext();
+}
+async function bjSplit() {
+  if (!bjCanSplit()) return; const h = bjCur();
+  bj.state = 'busy'; setBalance(balance - h.bet);
+  const c2 = h.cards.pop(); h.split = true; bj.hands.push({ cards: [c2], bet: h.bet, doubled: false, split: true, res: '' });
+  layoutHands(); tone('triangle', 520, .1, .04); tone('triangle', 780, .1, .04, .08); await wait(350);
+  await dealTo('player', true, 0);
+  if (h.cards[0].r === 'A') { await dealTo('player', true, 1); return bjDealer(); }   // bölünen aslara tek kart
+  if (handVal(h.cards).v >= 21) return bjNext();
+  banner('1. el', 'Önce soldaki eli oyna', { dur: 1100, col: '#1f4e9c', y: .45 }); bj.state = 'play';
+}
+async function bjNext() {
+  if (bj.abandon) return bjResolve();
+  if (bj.cur < bj.hands.length - 1) {
+    bj.cur++; const h = bjCur(); layoutHands();
+    if (h.cards.length === 1) await dealTo('player', true);
+    if (handVal(h.cards).v >= 21) return bjNext();
+    banner((bj.cur + 1) + '. el', 'Şimdi sağdaki el', { dur: 1000, col: '#1f4e9c', y: .45 }); bj.state = 'play'; return;
+  }
+  bjDealer();
+}
+async function bjDealer() {
+  bj.state = 'dealer'; await flipHole();
+  if (bj.hands.some(h => handVal(h.cards).v <= 21)) while (handVal(bj.dealer).v < 17) { await wait(380); await dealTo('dealer', true); }
   bjResolve();
 }
-async function bjDouble() {
-  if (bj.state !== 'play' || bj.player.length !== 2 || balance < bj.bet) return;
-  bj.state = 'busy'; setBalance(balance - bj.bet); bj.bet *= 2; bj.doubled = true; tone('triangle', 660, .1, .04);
-  await dealTo('player', true);
-  if (handVal(bj.player).v > 21) { await flipHole(); return bjResolve(); }
-  bjStand(true);
-}
 function bjResolve() {
-  if (bj.abandon) { bj.abandon = false; bj.player = []; bj.dealer = []; bj.state = 'bet'; return; }
-  const p = handVal(bj.player).v, d = handVal(bj.dealer).v, pb = isBJ(bj.player), db = isBJ(bj.dealer);
-  let pay = 0, title, subt, col = '#cf4b32', big = false;
-  if (p > 21) { title = 'Battın!'; subt = p + ' oldu, 21\'i geçti'; bj.mood = 1; col = '#1f4e9c'; }
-  else if (pb && !db) { pay = bj.bet * 2.5; title = 'BLACKJACK!'; subt = 'Maşallah, 3:2 ödendi'; big = true; }
-  else if (db && !pb) { title = 'Krupiye Blackjack'; subt = 'Kedi bu eli aldı'; bj.mood = 1; col = '#1f4e9c'; }
-  else if (pb && db) { pay = bj.bet; title = 'Berabere'; subt = 'İkiniz de 21'; col = '#2a7a5a'; }
-  else if (d > 21) { pay = bj.bet * 2; title = 'Kazandın!'; subt = 'Krupiye battı (' + d + ')'; }
-  else if (p > d) { pay = bj.bet * 2; title = 'Kazandın!'; subt = p + ' – ' + d; }
-  else if (p === d) { pay = bj.bet; title = 'Berabere'; subt = p + ' – ' + d + ', bahis iade'; col = '#2a7a5a'; }
-  else { title = 'Kaybettin'; subt = p + ' – ' + d + ' · Kısmet değilmiş'; bj.mood = 1; col = '#1f4e9c'; }
-  if (pay > 0) { setBalance(balance + pay); lastWin = pay - (pay === bj.bet ? pay : 0); }
-  const net = pay - bj.bet;
-  banner(title, net > 0 ? subt + ' · +' + Math.round(net).toLocaleString('tr-TR') + ' akçe' : subt, { big, col, dur: 2600, y: .45 });
-  if (net > 0) { spawnCoins(big ? 70 : 25, 500, 1340); melody(big ? [0, 1, 2, 3, 4, 5, 6, 7, 6, 4, 7] : [4, 5, 7], big ? .11 : .13); if (big) { shake = 12; zoomKick = .05; } if (navigator.vibrate) navigator.vibrate(big ? [60, 40, 120] : 40); }
-  else if (net < 0) { tone('sine', 220, .4, .05, 0, 150); }
+  if (bj.abandon) { bj.abandon = false; bjResetHands(); bj.state = 'bet'; return; }
+  const d = handVal(bj.dealer).v, db = isBJ(bj.dealer), single = bj.hands.length === 1;
+  let total = 0, staked = 0;
+  for (const h of bj.hands) {
+    const p = handVal(h.cards).v, pb = !h.split && isBJ(h.cards); let pay = 0, r;
+    if (p > 21) r = 'bust'; else if (pb && !db) { r = 'bj'; pay = h.bet * 2.5; } else if (db && !pb) r = 'lose';
+    else if (pb && db) { r = 'push'; pay = h.bet; } else if (d > 21 || p > d) { r = 'win'; pay = h.bet * 2; } else if (p === d) { r = 'push'; pay = h.bet; } else r = 'lose';
+    h.res = r; h.val = p; total += pay; staked += h.bet;
+  }
+  if (total > 0) { setBalance(balance + total); lastWin = total; }
+  const net = total - staked, h0 = bj.hands[0], R = h0.res, p0 = h0.val;
+  let title, subt, col = net > 0 ? '#cf4b32' : net === 0 ? '#2a7a5a' : '#1f4e9c', big = single && R === 'bj';
+  if (single) {
+    ({ bust: () => { title = 'Battın!'; subt = p0 + ' oldu, 21\'i geçti'; }, bj: () => { title = 'BLACKJACK!'; subt = 'Maşallah, 3:2 ödendi'; },
+      lose: () => { title = db ? 'Krupiye Blackjack' : 'Kaybettin'; subt = db ? 'Kedi bu eli aldı' : p0 + ' – ' + d + ' · Kısmet değilmiş'; },
+      push: () => { title = 'Berabere'; subt = p0 + ' – ' + d + ', bahis iade'; },
+      win: () => { title = 'Kazandın!'; subt = d > 21 ? 'Krupiye battı (' + d + ')' : p0 + ' – ' + d; } })[R]();
+  } else {
+    const TR = { bust: 'battı', bj: 'blackjack', lose: 'kaybetti', push: 'berabere', win: 'kazandı' };
+    title = net > 0 ? 'Kazandın!' : net < 0 ? 'Kaybettin' : 'Berabere';
+    subt = bj.hands.map((h, i) => (i + 1) + '. el ' + TR[h.res]).join(' · ');
+  }
+  if (net < 0) bj.mood = 1;
+  banner(title, net > 0 ? subt + ' · +' + Math.round(net).toLocaleString('tr-TR') + ' akçe' : subt, { big, col, dur: 2800, y: .45 });
+  if (net > 0) { spawnCoins(big ? 70 : 25, 500, 1340); melody(big ? [0, 1, 2, 3, 4, 5, 6, 7, 6, 4, 7] : [4, 5, 7], big ? .11 : .13); if (navigator.vibrate) navigator.vibrate(big ? [60, 40, 120] : 40); }
+  else if (net < 0) tone('sine', 220, .4, .05, 0, 150);
   bj.state = 'result'; rollDrop();
 }
 function drawBJTable(c) {
@@ -1456,19 +1493,21 @@ function drawPaws(t) {
   }
 }
 function drawChips(t) {
-  if (!bj.bet || bj.state === 'bet') return;
+  if (bj.state === 'bet' || !bj.hands.length) return;
   const cols = ['#cf4b32', '#1f4e9c', '#2aa3a0', '#d9a441', '#7a1e28', '#f4e8cc'];
-  const stacks = bj.doubled ? [440, 560] : [500];
-  stacks.forEach((sx, si) => {
-    const n = clamp(Math.round(Math.log2(bj.bet / (bj.doubled ? 2 : 1) / 10)) + 2, 2, 8);
-    for (let i = 0; i < n; i++) {
-      seed(400 + i + si * 10); const y = 1350 - i * 12, e = ell(sx, y, 46, 17, 20), col = cols[(i + betIdx) % cols.length];
-      ctx.fillStyle = '#1a0c05'; ctx.beginPath(); ctx.ellipse(sx, y + 6, 46, 17, 0, 0, 7); ctx.fill();
-      wash(ctx, e, col, .8); ink(ctx, ell(sx, y, 32, 11, 16), true, 2, '#fbf1da', .6); ink(ctx, e, true, 2.2, INK, .6);
-    }
+  bj.hands.forEach((h, hi) => {
+    const P = bjHandPos(hi), base = h.doubled ? h.bet / 2 : h.bet, stacks = h.doubled ? [P.x - 55, P.x + 55] : [P.x];
+    stacks.forEach((sx, si) => {
+      const n = clamp(Math.round(Math.log2(base / 10)) + 2, 2, 8);
+      for (let i = 0; i < n; i++) {
+        seed(400 + i + si * 10 + hi * 30); const y = 1350 - i * 12, e = ell(sx, y, 42, 16, 20), col = cols[(i + betIdx) % cols.length];
+        ctx.fillStyle = '#1a0c05'; ctx.beginPath(); ctx.ellipse(sx, y + 6, 42, 16, 0, 0, 7); ctx.fill();
+        wash(ctx, e, col, .8); ink(ctx, ell(sx, y, 29, 10, 16), true, 2, '#fbf1da', .6); ink(ctx, e, true, 2.2, INK, .6);
+      }
+    });
+    const tx = P.x + (h.doubled ? 125 : 95), tg = rr(tx - 55, 1302, 110, 50, 12, 14); wash(ctx, tg, '#f4e8cc', 1); ink(ctx, tg, true, 2.4);
+    inkText(ctx, h.bet.toLocaleString('tr-TR'), tx, 1328, 34, INK, { outline: false });
   });
-  const tg = rr(560 + (bj.doubled ? 50 : 0), 1300, 130, 52, 12, 14); wash(ctx, tg, '#f4e8cc', 1); ink(ctx, tg, true, 2.4);
-  inkText(ctx, bj.bet.toLocaleString('tr-TR'), 625 + (bj.doubled ? 50 : 0), 1327, 36, INK, { outline: false });
 }
 function bjDrawCard(cd, t, alpha = 1) {
   {
@@ -1488,10 +1527,17 @@ function drawCards(t) {
   const draw1 = (cd, alpha) => bjDrawCard(cd, t, alpha);
   bj.discard = bj.discard.filter(cd => t - cd.dt0 < 400);
   bj.discard.forEach(cd => { const u = (t - cd.dt0) / 400; cd.tx = 140; cd.ty = 640; cd.x = lerp(cd.x, 140, .25); cd.y = lerp(cd.y, 640, .25); draw1(cd, 1 - u); });
-  bj.dealer.forEach(cd => draw1(cd)); bj.player.forEach(cd => draw1(cd));
-  const tag = (x, y, txt, hot) => { seed(500 + x); const p = rr(x - 44, y - 28, 88, 56, 14, 14); wash(ctx, p, hot ? '#f2cf74' : '#f4e8cc', 1); ink(ctx, p, true, 2.5); inkText(ctx, txt, x, y + 2, 40, INK, { outline: false }); };
+  bj.dealer.forEach(cd => draw1(cd)); bj.hands.forEach(h => h.cards.forEach(cd => draw1(cd)));
+  const tag = (x, y, txt, hot, sz = 40) => { seed(500 + Math.round(x)); const w = Math.max(88, txt.length * sz * .5 + 30), p = rr(x - w / 2, y - 28, w, 56, 14, 14); wash(ctx, p, hot ? '#f2cf74' : '#f4e8cc', 1); ink(ctx, p, true, 2.5); inkText(ctx, txt, x, y + 2, sz, INK, { outline: false }); };
   if (bj.dealer.length && bj.dealer.every(c => t - c.t0 > 420)) { const hv = handVal(bj.dealer, false); tag(Math.max(...bj.dealer.map(c => c.tx)) + 100, 720, (hv.soft && hv.v < 21 && bj.dealer.every(c => c.face) ? 'y' : '') + hv.v + (bj.dealer.some(c => !c.face) ? '+?' : ''), false); }
-  if (bj.player.length && bj.player.every(c => t - c.t0 > 420)) { const hv = handVal(bj.player); tag(Math.max(...bj.player.map(c => c.tx)) + 120, 1150, String(hv.v), hv.v === 21); }
+  const multi = bj.hands.length > 1;
+  bj.hands.forEach((h, hi) => {
+    if (!h.cards.length || !h.cards.every(c => t - c.t0 > 420)) return;
+    const P = bjHandPos(hi), hv = handVal(h.cards), right = Math.max(...h.cards.map(c => c.tx));
+    if (multi && bj.state === 'play' && hi === bj.cur) { ctx.strokeStyle = '#f2cf74'; ctx.lineWidth = 5; ctx.globalAlpha = .5 + .5 * Math.sin(t / 160); ctx.beginPath(); ctx.ellipse(P.x, 1150, (h.cards.length * 40 + 90) * P.s, 125 * P.s, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
+    tag(multi ? P.x : right + 120, multi ? 990 : 1150, String(hv.v), hv.v === 21, multi ? 34 : 40);
+    if (multi && h.res) { const R = { bust: 'BATTI', bj: 'BLACKJACK', lose: 'KAYBETTİ', push: 'BERABERE', win: 'KAZANDI' }[h.res]; tag(P.x, 1255, R, h.res === 'win' || h.res === 'bj', 28); }
+  });
 }
 function drawBJ(t) {
   drawCatDealer(t);
@@ -1507,9 +1553,10 @@ function drawBJ(t) {
     const dy = btnDraw('bjDeal', '#cf4b32', null, t, 40, BJB); inkText(ctx, bj.state === 'result' ? 'YENİ EL' : 'DAĞIT', BJB.bjDeal.x, BJB.bjDeal.y + dy, bj.state === 'result' ? 44 : 52, '#fbf1da', { ow: 7 });
     ink(ctx, ell(BJB.bjDeal.x, BJB.bjDeal.y + dy, 108, 100, 30), true, 4, '#f2cf74', 1.5);
   } else {
-    const on = bj.state === 'play', dbl = on && bj.player.length === 2 && balance >= bj.bet;
-    ctx.globalAlpha = on ? 1 : .45; btnDraw('bjHit', '#2aa3a0', 'ÇEK', t, 44, BJB); btnDraw('bjStand', '#cf4b32', 'DUR', t, 44, BJB);
-    ctx.globalAlpha = dbl ? 1 : .35; btnDraw('bjDouble', '#d9a441', 'KATLA', t, 36, BJB); ctx.globalAlpha = 1;
+    const on = bj.state === 'play';
+    ctx.globalAlpha = on ? 1 : .45; btnDraw('bjHit', '#2aa3a0', 'ÇEK', t, 42, BJB); btnDraw('bjStand', '#cf4b32', 'DUR', t, 42, BJB);
+    ctx.globalAlpha = bjCanDouble() ? 1 : .3; btnDraw('bjDouble', '#d9a441', 'KATLA', t, 32, BJB);
+    ctx.globalAlpha = bjCanSplit() ? 1 : .3; btnDraw('bjSplit', '#8e44ad', 'BÖL', t, 40, BJB); ctx.globalAlpha = 1;
   }
   seed(34);
   const bal = Math.round(dispBal).toLocaleString('tr-TR'), wn = Math.round(dispWin).toLocaleString('tr-TR'), wc = dispWin > 0 ? '#b8321f' : INK, lbl = { align: 'left', outline: false, font: '"Caveat"', weight: 700 };
@@ -1538,6 +1585,7 @@ function bjDown(w) {
     else if (k === 'bjHit') bjHit();
     else if (k === 'bjStand') bjStand();
     else if (k === 'bjDouble') bjDouble();
+    else if (k === 'bjSplit') bjSplit();
     return;
   }
 }
@@ -2074,12 +2122,12 @@ function okSyncSlots(hand) {    // çevrimiçi: ıstakadaki sırayı koru, eli e
 function okPush() {
   if (ok.mode !== 'online') return;
   ok.hands[ok.me] = okHand();
-  mpWrite(t => { t.g = { pile: ok.pile.map(okClean), hands: ok.hands.map(h => h.map(okClean)), disc: ok.disc.map(h => h.map(okClean)), ind: okClean(ok.ind), okey: okCtx.okey, turn: ok.turn, phase: ok.phase, bots: ok.bots, winner: ok.winner, starter: ok.starter }; if (ok.winner !== -2) t.status = 'over'; });
+  mpWrite(t => { t.g = { pile: ok.pile.map(okClean), hands: ok.hands.map(h => h.map(okClean)), disc: ok.disc.map(h => h.map(okClean)), ind: okClean(ok.ind), okey: okCtx.okey, turn: ok.turn, phase: ok.phase, bots: ok.bots, winner: ok.winner, starter: ok.starter, double: !!ok.double }; if (ok.winner !== -2) t.status = 'over'; });
 }
 function okDeal(bots, starter) {
   const d = okNewDeck(), ii = d.findIndex(t => !t.fj); ok.ind = d.splice(ii, 1)[0];
   okCtx.okey = { c: ok.ind.c, n: ok.ind.n % 13 + 1 };
-  ok.hands = [[], [], [], []]; ok.disc = [[], [], [], []]; ok.fly = []; ok.winner = -2; ok.mood = [0, 0, 0, 0]; ok.bots = bots; ok.starter = starter;
+  ok.hands = [[], [], [], []]; ok.disc = [[], [], [], []]; ok.fly = []; ok.winner = -2; ok.double = false; ok.mood = [0, 0, 0, 0]; ok.bots = bots; ok.starter = starter;
   for (let p = 0; p < 4; p++) for (let k = 0; k < (p === starter ? 15 : 14); k++) ok.hands[p].push(d.pop());
   ok.pile = d; ok.turn = starter; ok.phase = 'discard'; ok.think = -1; ok.state = 'play';
 }
@@ -2106,7 +2154,7 @@ function okDiscard(i) {
   const t = ok.slots[i]; if (!t) return;
   ok.slots[i] = null; ok.sel = -1; okFly(t, true, slotPos(i), OK_D[0]); ok.disc[ok.me].push(t); thud(.08, 2200);
   ok.hands[ok.me] = okHand();
-  if (okIsWin(okHand())) { ok.winner = ok.me; okPush(); return setTimeout(() => okEnd(ok.me), 420); }
+  if (okIsWin(okHand())) { ok.winner = ok.me; ok.double = isJ(t); okPush(); return setTimeout(() => okEnd(ok.me), 420); }
   ok.turn = (ok.me + 1) % 4; ok.phase = 'draw'; okPush();
   if (ok.mode === 'ai') okRun();
 }
@@ -2139,8 +2187,8 @@ function okEnd(w, remote) {
   if (!remote) okPush();
   const once = k => ok.mode !== 'online' || mpPayOnce(k);
   if (w === ok.me) {
-    if (once('win')) { const pay = ok.bet * 4; setBalance(balance + pay); lastWin = pay; banner('OKEY! Bitirdin', '+' + (pay - ok.bet).toLocaleString('tr-TR') + ' akçe', { big: true, dur: 3200, y: .42 }); spawnCoins(80, 500, 1300); melody([0, 1, 2, 3, 4, 5, 6, 7, 6, 4, 7], .11); shake = 12; zoomKick = .04; }
-  } else if (w >= 0) { ok.mood[w] = 1; banner(okName(w) + ' bitirdi!', 'Eli ortada · ' + (ok.mode === 'online' ? 'ev sahibi yeni el açabilir' : 'YENİ EL için bas'), { dur: 3200, col: '#1f4e9c', y: .42 }); tone('sine', 220, .5, .05, 0, 140); }
+    if (once('win')) { const pay = ok.bet * (ok.double ? 8 : 4); setBalance(balance + pay); lastWin = pay; banner(ok.double ? 'OKEY ATARAK BİTİRDİN!' : 'OKEY! Bitirdin', '+' + (pay - ok.bet).toLocaleString('tr-TR') + ' akçe' + (ok.double ? ' · çifte' : ''), { big: true, dur: 3200, y: .42 }); spawnCoins(ok.double ? 120 : 80, 500, 1300); melody([0, 1, 2, 3, 4, 5, 6, 7, 6, 4, 7], .11); shake = 12; zoomKick = .04; }
+  } else if (w >= 0) { ok.mood[w] = 1; banner(okName(w) + (ok.double ? ' okey atarak bitirdi!' : ' bitirdi!'), 'Eli ortada · ' + (ok.mode === 'online' ? 'ev sahibi yeni el açabilir' : 'YENİ EL için bas'), { dur: 3200, col: '#1f4e9c', y: .42 }); tone('sine', 220, .5, .05, 0, 140); }
   else if (once('refund')) { setBalance(balance + ok.bet); banner('Taşlar bitti', 'Berabere, bahis iade', { dur: 2600, col: '#2a7a5a', y: .42 }); }
   if (once('drop')) rollDrop();
 }
@@ -2245,7 +2293,7 @@ function okRemote(d, prev, force) {
   const oldTop = s => ok.disc[s] && ok.disc[s].length ? ok.disc[s][ok.disc[s].length - 1].id : null;
   const flights = [];
   if (!newRound) for (let s = 0; s < 4; s++) { const nt = g.disc[s].length ? g.disc[s][g.disc[s].length - 1] : null; if (s !== ok.me && nt && nt.id !== oldTop(s) && g.disc[s].length > ok.disc[s].length) flights.push([s, nt]); }
-  ok.pile = g.pile; ok.hands = g.hands; ok.disc = g.disc; ok.ind = g.ind; okCtx.okey = g.okey; ok.bots = g.bots; ok.starter = g.starter;
+  ok.pile = g.pile; ok.hands = g.hands; ok.disc = g.disc; ok.ind = g.ind; okCtx.okey = g.okey; ok.bots = g.bots; ok.starter = g.starter; ok.double = !!g.double;
   const prevTurn = ok.turn; ok.turn = g.turn; ok.phase = g.phase;
   for (const [s, nt] of flights) { const top = ok.disc[s][ok.disc[s].length - 1]; okFly(top, true, OK_RACK[dpos(s)], OK_D[dpos(s)], 380, 0, .6, 1); thud(.07, 2200); }
   okSyncSlots(ok.hands[ok.me]);
@@ -2306,7 +2354,7 @@ const hatIcon = (c, h) => { c.translate(100, 100); c.scale(1.6, 1.6); c.translat
 let AV = Object.assign({ fur: 0, eye: 0, hat: 'fez', acc: 'nazar', robe: 0 }, store.get('av', {}));
 let INV = store.get('inv', []);           // [{k, id, no, col}]
 let FOUND = store.get('found', []);        // keşfedilen eşya id'leri
-const saveInv = () => { store.set('inv', INV); store.set('found', FOUND); };
+const saveInv = () => { store.set('inv', INV); store.set('found', FOUND); cloudDirty(); };
 const owns = id => INV.some(x => x.id === id);
 
 // ---------- şapkalar ve aksesuarlar (kedi başı koordinatlarında: 200'lük kutu) ----------
@@ -2384,7 +2432,7 @@ function myAvatarSprite() {
   if (key !== avSpriteKey) { const px = Math.ceil(300 * Math.max(.35, S) * DPR), cvs = makeCanvas(px, px), c = cvs.getContext('2d'); c.scale(px / 300, px / 300); c.translate(50, 0); const o = BOIL; BOIL = 0; drawAvatar(c, AV); BOIL = o; avSprite = cvs; avSpriteKey = key; }
   return avSprite;
 }
-function setAV(patch) { Object.assign(AV, patch); store.set('av', AV); if (typeof mpPresence === 'function') mpPresence(); }
+function setAV(patch) { Object.assign(AV, patch); store.set('av', AV); mpPresence(); cloudDirty(); }
 
 // ---------- eşya düşürme ----------
 function rollTier() {
@@ -2436,9 +2484,9 @@ function openSheet(tab) { sheetTab = tab; renderSheet(); sheetEl.classList.add('
 function closeSheet() { sheetEl.classList.remove('show'); if (typeof mpCloseLobbyList === 'function') mpCloseLobbyList(); }
 function renderSheet() {
   sheetBody.textContent = '';
-  const tabs = el('div', { class: 'tabs' }, [['karakter', 'Karakter'], ['canta', 'Çanta'], ['koleksiyon', 'Koleksiyon'], ['cok', 'Arkadaşlarla']].map(([k, n]) => el('button', { class: k === sheetTab ? 'on' : '', text: n, on: () => { sheetTab = k; renderSheet(); } })));
+  const tabs = el('div', { class: 'tabs' }, [['karakter', 'Karakter'], ['canta', 'Çanta'], ['koleksiyon', 'Koleksiyon'], ['cok', 'Arkadaşlarla'], ['sira', 'Sıralama'], ['kurallar', 'Kurallar']].map(([k, n]) => el('button', { class: k === sheetTab ? 'on' : '', text: n, on: () => { sheetTab = k; renderSheet(); } })));
   sheetBody.appendChild(tabs);
-  if (sheetTab === 'karakter') renderKarakter(); else if (sheetTab === 'canta') renderCanta(); else if (sheetTab === 'koleksiyon') renderKoleksiyon(); else if (typeof renderCok === 'function') renderCok();
+  if (sheetTab === 'karakter') renderKarakter(); else if (sheetTab === 'canta') renderCanta(); else if (sheetTab === 'koleksiyon') renderKoleksiyon(); else if (sheetTab === 'sira') renderSira(); else if (sheetTab === 'kurallar') renderKurallar(); else renderCok();
 }
 function optRow(title, opts) { return el('div', { class: 'optrow' }, [el('h3', { text: title }), el('div', { class: 'opts' }, opts)]); }
 function optBtn(img, label, on, sel) { return el('button', { class: 'opt' + (sel ? ' sel' : ''), title: label, on }, [img ? el('img', { src: img, alt: '' }) : el('span', { class: 'none', text: '✕' }), el('small', { text: label })]); }
@@ -2515,6 +2563,9 @@ async function mpInit() {
   } catch { }
   MP.ready = true;
   if (sheetEl.classList.contains('show') && sheetTab === 'cok') renderSheet();
+  if (MP.db && MP.uid) await cloudLoad();
+  const rc = MP.ok && store.get('mpTable', null);
+  if (rc) { try { const s = await mpRef(rc).get(); const t = s.exists ? s.data() : null; if (t && t.seats.some(x => x && x.uid === MP.uid)) { LOBBYMODE = 'multi'; banner('Masana dönüyorsun', 'Masa ' + rc, { dur: 2000, col: '#2a7a5a', top: true }); mpEnter(rc, t); return; } } catch { } store.set('mpTable', null); }
 }
 mpInit();
 function mpPresence() { if (MP.room) MP.room.presence({ av: AV, uid: MP.uid, scene, table: MP.code || null }).catch(() => { }); }
@@ -2601,11 +2652,11 @@ async function mpJoin(code) {
 }
 async function mpEnter(code, t) {
   mpReset(true);
-  MP.code = code; MP.t = t; MP.rev = t.rev || 0; MP.seat = t.seats.findIndex(x => x && x.uid === MP.uid);
+  MP.code = code; MP.t = t; MP.rev = t.rev || 0; MP.seat = t.seats.findIndex(x => x && x.uid === MP.uid); store.set('mpTable', code); emoToasts = []; emoOpen = false;
   MP.unsub = mpRef(code).onSnapshot(s => mpOnData(s.exists ? s.data() : null), () => { });
   clearInterval(MP.hb); MP.hb = setInterval(() => { if (MP.t && MP.t.status === 'open' && MP.t.host === MP.uid) mpWrite(() => { }); }, 30000);
   clearInterval(MP.poll); MP.poll = setInterval(() => { if (!MP.code || document.hidden) return; mpRef(MP.code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { }); }, 4000);
-  if (MP.room) MP.room.join('t-' + code.toLowerCase()).then(r => { MP.nr = r; r.on('poke', () => mpRef(code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { })); }).catch(() => { });
+  if (MP.room) MP.room.join('t-' + code.toLowerCase()).then(r => { MP.nr = r; r.on('emote', m => { const i = m.data && m.data.i; if (!m.isMe && typeof i === 'number') emoShow(m.by, -1, i); }); r.on('poke', () => mpRef(code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { })); }).catch(() => { });
   closeSheet();
   if (t.game === 'tavla') { tv.mode = 'online'; tvRemote(t, null); } else if (t.game === 'okey') { ok.mode = 'online'; okRemote(t, null); } else { bj.mode = 'online'; bjRemote(t, null); }
   go(GSCENE[t.game]); mpPresence();
@@ -2613,7 +2664,7 @@ async function mpEnter(code, t) {
 function mpReset(keepScene) {
   clearInterval(MP.poll); clearInterval(MP.hb); MP.starting = false; try { if (MP.unsub) MP.unsub(); if (MP.nr) MP.nr.leave(); } catch { }
   MP.unsub = null; MP.nr = null; MP.code = null; MP.t = null; MP.seat = -1; MP.rev = 0;
-  if (!keepScene) { tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; tv.state = 'bet'; ok.state = 'bet'; bj.state = 'bet'; }
+  if (!keepScene) { store.set('mpTable', null); tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; tv.state = 'bet'; ok.state = 'bet'; bj.state = 'bet'; }
   mpPresence();
 }
 async function mpLeave() {
@@ -2796,6 +2847,180 @@ function bjoDown(w) {
 }
 
 // =============================================================
+//  EKLER: sıra süresi, hazır mesajlar, bulut kaydı, sıralama, kurallar
+// =============================================================
+const TURN_LIMIT = 45000;
+function mpTurnKey(t) {
+  const g = t && t.g; if (!g || t.status !== 'play') return null;
+  if (t.game === 'tavla') return g.phase === 'over' || g.phase === 'opening' ? null : t.round + ':' + g.turn;
+  if (t.game === 'okey') return g.winner !== -2 ? null : t.round + ':' + g.turn;
+  return g.phase === 'play' ? t.round + ':' + g.turn : null;
+}
+function mpTurnUid() { const t = MP.t, g = t && t.g; if (!g) return null; if (t.game === 'okey' && g.bots[g.turn]) return null; const s = t.seats[g.turn]; return s ? s.uid : null; }
+function mpTrackTurn() { const k = mpTurnKey(MP.t); if (k !== MP.turnKey) { MP.turnKey = k; MP.turnSince = Date.now(); } }
+function mpTurnLimit(idle) { const t = MP.t, humans = t.seats.filter(Boolean).map(s => s.uid), runner = humans.includes(t.host) ? t.host : humans[0]; return TURN_LIMIT + (idle === runner && humans.length > 1 ? 15000 : 0); }
+function mpTurnLeft() { const idle = mpTurnUid(); if (!MP.turnKey || !idle) return null; return Math.max(0, mpTurnLimit(idle) - (Date.now() - MP.turnSince)); }
+function mpTurnWatch() {
+  if (!MP.code || !MP.t) return; mpTrackTurn();
+  const idle = mpTurnUid(); if (!MP.turnKey || !idle || MP.autoKey === MP.turnKey) return;
+  const el = Date.now() - MP.turnSince, humans = MP.t.seats.filter(Boolean).map(s => s.uid);
+  const runner = humans.includes(MP.t.host) ? MP.t.host : humans[0], actor = idle === runner ? humans.find(u => u !== runner) : runner;
+  const limit = mpTurnLimit(idle);
+  const mine = MP.uid === actor || (MP.uid === idle && el > limit + 20000);
+  if (!mine || el < limit) return;
+  MP.autoKey = MP.turnKey;
+  banner('Süre doldu', (idle === MP.uid ? 'Senin' : mpName(idle) + ' için') + ' hamle otomatik oynandı', { dur: 1800, col: '#1f4e9c', top: true });
+  if (MP.t.game === 'tavla') tvAutoPlay(); else if (MP.t.game === 'okey') okAutoPlay(MP.t.g.turn); else bjoAutoStand();
+}
+function tvAutoPlay() {
+  const prev = MP.t, g = prev.g, side = g.turn; let dice = g.dice, st;
+  if (g.phase === 'move' || g.phase === 'wait') st = cloneSt(g.start || g.st);
+  else { dice = [1 + Math.floor(Math.random() * 6), 1 + Math.floor(Math.random() * 6)]; st = cloneSt(g.st); }
+  const best = tvBest(st, side, dice); if (best) st = best.st;
+  const won = st.off[side] === 15;
+  mpWrite(x => { x.g = Object.assign({}, x.g, { st, dice, diceSide: side, made: [], start: st, turn: won ? side : 1 - side, phase: won ? 'over' : 'roll', winner: won ? side : -1, mars: won ? st.off[1 - side] === 0 : false }); if (won) x.status = 'over'; }).then(() => tvRemote(MP.t, prev));
+}
+function okAutoPlay(p) {
+  if (ok.state !== 'play' || ok.turn !== p) return;
+  if (p === ok.me) ok.hands[ok.me] = okHand();
+  const hand = ok.hands[p];
+  if (ok.phase === 'draw') { if (!ok.pile.length) { ok.winner = -1; okEnd(-1); return; } hand.push(ok.pile.pop()); ok.phase = 'discard'; }
+  const d = okChooseDiscard(hand); hand.splice(hand.indexOf(d), 1); ok.disc[p].push(d);
+  if (p === ok.me) okSyncSlots(hand);
+  if (okIsWin(hand)) { ok.winner = p; okEnd(p); return; }
+  ok.turn = (p + 1) % 4; ok.phase = 'draw'; okPush(); okMaybeRunBot();
+}
+function bjoAutoStand() {
+  const t = MP.t, g = t.g; if (g.phase !== 'play') return;
+  const prev = t, G = JSON.parse(JSON.stringify(g)); if (G.hands[G.turn]) G.hands[G.turn].done = true;
+  G.turn = bjoNextSeat(G, g.turn, t.seats); if (G.turn === -1) G.phase = 'dealer';
+  mpWrite(x => { x.g = G; }).then(() => bjRemote(MP.t, prev));
+}
+setInterval(mpTurnWatch, 1000);
+
+// ---------- hazır mesajlar (oda olayı) ----------
+const EMOTES = ['Selam!', 'Bravo!', 'Hadi bakalım!', 'Eyvah!', 'Şanslısın', 'Rövanş?'];
+let emoOpen = false, emoToasts = [];
+function emoBtn() { return { x: W - 12 - SAFE.r - 64, y: BACK.y + 56, w: 64, h: 44 }; }
+function emoItem(i) { return { x: W - 12 - SAFE.r - 170, y: BACK.y + 108 + i * 48, w: 170, h: 42 }; }
+const inR = (r, x, y) => x >= r.x && x <= r.x + r.w && y >= r.y && y <= r.y + r.h;
+function emoShow(uid, seat, i) { if (!(i >= 0 && i < EMOTES.length)) return; emoToasts.push({ who: uid === MP.uid ? 'Sen' : uid ? mpName(uid) : 'Oyuncu', text: EMOTES[i], t0: performance.now() }); emoToasts = emoToasts.slice(-3); tone('sine', 990, .08, .04); }
+function emoSend(i) {
+  emoOpen = false; const now = Date.now(); if (now - (MP.lastEmo || 0) < 1500) return; MP.lastEmo = now;
+  emoShow(MP.uid, MP.seat, i); if (MP.nr) MP.nr.emit('emote', { i }).catch(() => { });
+}
+function emoHit(x, y) {
+  if (!MP.code || scene === 'lobby') return false;
+  if (emoOpen) { for (let i = 0; i < EMOTES.length; i++) if (inR(emoItem(i), x, y)) { emoSend(i); return true; } }
+  if (inR(emoBtn(), x, y)) { emoOpen = !emoOpen; tone('triangle', 700, .05, .04); return true; }
+  if (emoOpen) { emoOpen = false; return true; }
+  return false;
+}
+function drawEmotes(t) {
+  if (!MP.code || scene === 'lobby') return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(73);
+  const b = emoBtn(), p = rr(b.x, b.y, b.w, b.h, 12, 12); wash(ctx, p, emoOpen ? '#f2cf74' : '#f4e8cc', 1); ink(ctx, p, true, 2.5, INK, 1);
+  const bub = sub([[b.x + 14, b.y + 10], [b.x + 50, b.y + 10], [b.x + 50, b.y + 28], [b.x + 30, b.y + 28], [b.x + 20, b.y + 36], [b.x + 22, b.y + 28], [b.x + 14, b.y + 28]], 5, true); wash(ctx, bub, '#2aa3a0', .5); ink(ctx, bub, true, 2, INK, .6);
+  if (emoOpen) EMOTES.forEach((e, i) => { const r = emoItem(i), q = rr(r.x, r.y, r.w, r.h, 12, 12); wash(ctx, q, '#fbf4e2', 1); ink(ctx, q, true, 2.2, INK, 1); inkText(ctx, e, r.x + r.w / 2, r.y + r.h / 2 + 1, 26, INK, { outline: false, font: '"Caveat"', weight: 700 }); });
+  const now = performance.now(); emoToasts = emoToasts.filter(x => now - x.t0 < 3200);
+  emoToasts.forEach((x, i) => {
+    const a = clamp((3200 - (now - x.t0)) / 400, 0, 1), s = easeOutBack(clamp((now - x.t0) / 300, 0, 1)), txt = x.who + ': ' + x.text, y = BACK.y + 112 + i * 52;
+    ctx.save(); ctx.globalAlpha = a; ctx.translate(12 + SAFE.l, y); ctx.scale(s, s);
+    ctx.font = '700 26px "Caveat", cursive'; const w = ctx.measureText(txt).width + 34, q = rr(0, 0, w, 42, 14, 14);
+    wash(ctx, q, '#fbf4e2', 1); ink(ctx, q, true, 2.4, INK, 1); inkText(ctx, txt, w / 2, 22, 26, x.who === 'Sen' ? '#1f4e9c' : '#cf4b32', { outline: false, font: '"Caveat"', weight: 700 });
+    ctx.restore();
+  });
+  ctx.globalAlpha = 1;
+}
+function drawTurnTimer() {
+  if (!MP.code || scene === 'lobby') return; const left = mpTurnLeft(); if (left === null || left > 30000) return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(74);
+  const mine = mpTurnUid() === MP.uid, sec = Math.ceil(left / 1000), txt = (mine ? 'Sıran: ' : mpName(mpTurnUid()) + ': ') + sec + ' sn';
+  ctx.font = '700 24px "Caveat", cursive'; const w = ctx.measureText(txt).width + 30, x = W / 2 - w / 2, y = BACK.y + 104, p = rr(x, y, w, 36, 10, 12);
+  wash(ctx, p, sec <= 10 ? '#cf4b32' : '#f4e8cc', 1); ink(ctx, p, true, 2.2, INK, 1); inkText(ctx, txt, W / 2, y + 19, 24, sec <= 10 ? '#fbf1da' : INK, { outline: false, font: '"Caveat"', weight: 700 });
+  if (mine && sec <= 10 && sec !== MP.lastBeep) { MP.lastBeep = sec; tone('square', 880, .05, .03); }
+}
+
+// ---------- ses ve kurallar düğmeleri ----------
+function hudBtns() {
+  const hasBal = scene === 'tavla' || scene === 'okey' || (scene === 'bj' && bj.mode === 'online'), y = BACK.y + 24, base = W - 12 - SAFE.r - (hasBal ? 150 : 0);
+  return { sound: { x: base - 26, y, r: 20 }, rules: { x: base - 72, y, r: 20 } };
+}
+function hudHit(x, y) {
+  if (scene === 'slot' || (scene === 'lobby' && !LOBBYMODE)) return false;
+  const H = hudBtns();
+  if (Math.hypot(x - H.sound.x, y - H.sound.y) < 26) { muted = !muted; store.set('mute', muted); if (!muted) tone('triangle', 660, .08, .05); return true; }
+  if (Math.hypot(x - H.rules.x, y - H.rules.y) < 26) { rulesGame = scene === 'lobby' ? 'tavla' : scene; openSheet('kurallar'); return true; }
+  return false;
+}
+function drawHud() {
+  if (scene === 'slot' || (scene === 'lobby' && !LOBBYMODE)) return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const H = hudBtns(); seed(75);
+  for (const k of ['sound', 'rules']) { const b = H[k], c = ell(b.x, b.y, b.r, b.r, 16); wash(ctx, c, '#f4e8cc', 1); ink(ctx, c, true, 2.4, INK, .8); }
+  inkText(ctx, '?', H.rules.x, H.rules.y + 2, 28, INK, { outline: false });
+  const x = H.sound.x - 6, y = H.sound.y, sp = sub([[x - 8, y - 4], [x - 2, y - 4], [x + 5, y - 10], [x + 5, y + 10], [x - 2, y + 4], [x - 8, y + 4]], 4, true); wash(ctx, sp, INK, .4);
+  if (muted) { ink(ctx, [[x + 9, y - 6], [x + 16, y + 6]], false, 2.5); ink(ctx, [[x + 16, y - 6], [x + 9, y + 6]], false, 2.5); } else ink(ctx, [[x + 10, y - 6], [x + 13, y], [x + 10, y + 6]], false, 2.2);
+}
+let rulesGame = 'tavla';
+const RULES = {
+  slot: ['Padişah Slot', ['Kolu aşağı çek ya da ÇEVİR\'e bas. Bahsi − / + ile ayarla, OTO kendiliğinden çevirir.', '10 kazanç çizgisi soldan sağa sayılır; kazanç = (bahis ÷ 10) × çarpan.', 'Padişah Kavuğu joker olarak her sembolün yerine geçer (nazar hariç).', 'Ekranın herhangi bir yerinde 3 ya da daha fazla Nazar Boncuğu Çarkıfelek bonusunu açar: bahsin ×2 – ×50.', 'Ayrıntılı kazanç tablosu makinedeki ? düğmesinde.']],
+  bj: ['Yirmi Bir (Blackjack)', ['Amaç: 21\'i geçmeden krupiyeden yüksek toplam yapmak. Resimli kartlar 10, As 1 ya da 11 sayılır.', 'ÇEK yeni kart ister, DUR eli bitirir, KATLA bahsi ikiye katlayıp tek kart daha alır.', 'BÖL: ilk iki kart aynı değerdeyse ikinci bir bahisle iki ayrı ele ayırırsın (bir kez). Bölünen aslara birer kart gelir.', 'İlk iki kartla 21 Blackjack\'tir ve 3:2 öder (bölünmüş elde 21 sayılır, blackjack sayılmaz).', 'Krupiye 17\'ye ulaşana kadar kart çeker, 17\'de durur. Çevrimiçi masada her oyuncu kendi elini krupiyeye karşı oynar.']],
+  okey: ['Okey', ['106 taş: dört renkte 1–13 arası ikişer takım ve 2 sahte okey.', 'Göstergenin bir üstü (aynı renk, 13\'ten sonra 1) okeydir ve her taşın yerine geçer. Sahte okey, okeyin kendi değerini taşır.', 'Sıran gelince ortadan ya da soldaki oyuncunun attığı taşı al, ardından bir taş at. İlk el 15 taşla başlayan oyuncunundur.', 'Elindeki 14 taşın tamamı seri (aynı renk ardışık, 12-13-1 geçerli) ve perlerden (aynı sayı, farklı renkte 3–4 taş) ya da 7 çiftten oluşunca son taşı atarak bitirirsin.', 'Bitiren bahsin 4 katını alır; OKEY taşını atarak bitirirsen kazanç iki katına çıkar. Ortada taş kalmazsa el berabere biter.', 'DİZ düğmesi taşlarını renge ya da en iyi seri/per düzenine göre dizer; taşları sürükleyerek de dizebilirsin.']],
+  tavla: ['Tavla', ['Amaç: 15 pulunu kendi evine (sağ alt çeyrek) getirip hepsini toplamak.', 'İki zar at; her zar ayrı bir hamledir. Çift gelirse dört hamle yaparsın.', 'Tek pul duran (açık) noktaya gelirsen kırarsın; kırılan pul bara çıkar ve önce rakibin evinden içeri girmelidir.', 'İki ya da daha fazla rakip pulu olan nokta kapalıdır.', 'Oynanabilen zarı oynamak zorundasın; zarlardan yalnız biri oynanabiliyorsa büyüğü oynanır.', 'Bütün pulların evdeyken toplamaya başlarsın. Rakip hiç pul toplayamadan bitirirsen MARS olur ve kazanç iki katına çıkar.']],
+};
+function renderKurallar() {
+  sheetBody.appendChild(el('div', { class: 'bets' }, Object.keys(RULES).map(k => el('button', { class: k === rulesGame ? 'on' : '', text: RULES[k][0].split(' (')[0], on: () => { rulesGame = k; renderSheet(); } }))));
+  const [title, items] = RULES[rulesGame] || RULES.tavla;
+  sheetBody.appendChild(el('h3', { text: title }));
+  sheetBody.appendChild(el('ul', { style: 'margin:0;padding-left:20px;font-size:19px;line-height:1.25' }, items.map(x => el('li', { text: x, style: 'margin:4px 0' }))));
+  sheetBody.appendChild(el('h3', { text: 'Çok oyunculu' }));
+  sheetBody.appendChild(el('p', { class: 'hint', text: 'Sıran geldiğinde 45 saniyen var; süre dolarsa hamlen otomatik oynanır. Masadaki baloncuk düğmesiyle hazır mesaj gönderebilirsin. Sayfa yenilenirse oturduğun masaya geri dönersin.' }));
+}
+
+// ---------- bulut kaydı ve sıralama ----------
+let cloudT = 0, cloudReady = false;
+function cloudDirty() { if (!cloudReady) return; clearTimeout(cloudT); cloudT = setTimeout(cloudSave, 4000); }
+async function cloudSave() {
+  if (!MP.db || !MP.uid) return; const at = Date.now(); store.set('savedAt', at);
+  try {
+    await MP.db.doc('data/users/' + MP.uid + '/profile').set({ bal: balance, inv: INV, found: FOUND, av: AV, savedAt: at });
+    if (MP.ok) await MP.db.doc('leaders/' + MP.uid).set({ akce: balance, av: AV, items: INV.length, found: FOUND.length, at });
+  } catch { }
+}
+async function cloudLoad() {
+  if (!MP.db || !MP.uid) return;
+  try {
+    const s = await MP.db.doc('data/users/' + MP.uid + '/profile').get();
+    if (s.exists) {
+      const d = s.data();
+      if ((d.savedAt || 0) > store.get('savedAt', 0) && typeof d.bal === 'number') {
+        balance = Math.max(0, Math.round(d.bal)); dispBal = balance; store.set('bal', balance);
+        if (Array.isArray(d.inv)) INV = d.inv; if (Array.isArray(d.found)) FOUND = d.found; if (d.av && typeof d.av === 'object') AV = Object.assign({ fur: 0, eye: 0, hat: 'fez', acc: 'nazar', robe: 0 }, d.av);
+        store.set('inv', INV); store.set('found', FOUND); store.set('av', AV); store.set('savedAt', d.savedAt);
+        banner('Kayıt yüklendi', 'Akçen, çantan ve karakterin buluttan geldi', { dur: 2400, col: '#2a7a5a', top: true });
+        cloudReady = true; mpPresence(); return;
+      }
+    }
+  } catch { }
+  cloudReady = true; cloudSave();
+}
+function renderSira() {
+  sheetBody.appendChild(el('p', { class: 'hint', text: 'En çok akçesi olan oyuncular. Bakiyen birkaç saniyede bir buluta kaydedilir; bu sayede başka cihazdan girince de kaldığın yerden devam edersin.' }));
+  if (!MP.ok) { sheetBody.appendChild(el('div', { class: 'warn', text: 'Sıralama, oyun claude.ai üzerinde açıldığında görünür.' })); return; }
+  const list = el('div', { class: 'tables' }, [el('p', { class: 'hint', text: 'Yükleniyor…' })]); sheetBody.appendChild(list);
+  MP.db.collection('leaders').orderBy('akce', 'desc').limit(25).get().then(async snap => {
+    const rows = snap.docs.map(d => Object.assign({ uid: d.id }, d.data())).filter(r => typeof r.akce === 'number').sort((a, b) => b.akce - a.akce).slice(0, 20);
+    await mpNames(rows.map(r => r.uid)); list.textContent = '';
+    if (!rows.length) list.appendChild(el('p', { class: 'hint', text: 'Henüz kimse yok.' }));
+    rows.forEach((r, i) => list.appendChild(el('div', { class: 'trow', style: r.uid === MP.uid ? 'background:#f6dfa0' : '' }, [
+      el('b', { text: (i + 1) + '.' }),
+      el('span', {}, [el('img', { src: iconURL('av', r.av && typeof r.av === 'object' ? r.av : {}, 56), alt: '', style: 'width:40px;height:40px;vertical-align:middle;margin-right:6px' }), document.createTextNode(r.uid === MP.uid ? 'Sen' : mpName(r.uid)), el('small', { text: ' · ' + (r.found || 0) + '/' + ITEMS.length + ' eşya', style: 'opacity:.7' })]),
+      el('b', { text: Math.round(r.akce).toLocaleString('tr-TR') }),
+    ])));
+  }).catch(() => { list.textContent = 'Sıralama okunamadı.'; });
+}
+
+// =============================================================
 //  ANA DÖNGÜ
 // =============================================================
 let last = performance.now(), started = false;
@@ -2851,6 +3076,7 @@ function frame(t) {
   if (scene === 'tavla' || scene === 'okey' || (scene === 'bj' && bj.mode === 'online')) drawCornerBal();
   if (MP.code && scene !== 'lobby') { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(72); const w = 150, x = W / 2 - w / 2, y = BACK.y + 56, p = rr(x, y, w, 40, 10, 14); wash(ctx, p, '#2a7a5a', 1); ink(ctx, p, true, 2.5, INK, 1); inkText(ctx, 'Masa ' + MP.code, W / 2, y + 21, 24, '#fbf1da', { outline: false }); }
   drawBack(t);
+  drawHud(); drawTurnTimer(); drawEmotes(t);
   drawIris(t);
   // kağıt dokusu + vinyet
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -2867,7 +3093,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__nazar = { mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__nazar = { bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>
