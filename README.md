@@ -16,14 +16,19 @@ Türk temalı, **birinci şahıs (POV)** bakışlı, tamamen **el çizimi** gör
 
 Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi ortaktır.
 
+## Batak
+- **İhaleli tekli Batak:** sen ve üç kedi (Paşa, Sultan, Zeytin). En az 5 el ihale, kozu ihaleyi alan seçer; renk takibi, yükseltme ve koz zorunluluğu, koz kırılmadan kozla açılmaz. İhaleyi tutturursan bahsin 2 katı + 5'in üstündeki her el için ek ödül; tutturamazsan **battın**.
+
 ## İlerleme ve Çarşı
 - Oynadıkça XP ve **seviye** (her seviyede akçe + Bakır Sandık), oyun istatistikleri.
 - **Günlük görevler** (3 görev) ve seri büyüyen **günlük hediye**.
+- **Günlük şans çarkı** (Çarşı'da, günde bir ücretsiz çevirme: akçe ya da sandık).
 - **Çarşı:** Bakır / Gümüş / Altın sandık ve her gün yenilenen tezgâh.
 - **Başarımlar:** 13 kalıcı hedef (ilk pişti, mars, blackjack, Çarkıfelek ×50, rulette tek sayı, 10. seviye, 100.000 akçe…), her biri akçe ödüllü; Görevler sekmesinde.
 - **Zorluk:** Kurallar sekmesinden kedileri **Kolay** ya da **Usta** yap; Usta modda kazanınca daha fazla XP.
 
 ## Karakter, çanta ve koleksiyon
+- **Okey taş takımları** (Yeşim, Sedef, Kehribar), **zarlar** (Kırmızı, Akik, Altın), Sorguçlu Sarık ve Kehribar Tesbih. Bazı başarımlar özel **unvan** kazandırır (Pişti Kurdu, Okey Ustası, İhale Kralı, Mars Ustası).
 - Yeni kozmetik türleri: **kart arkası**, **masa çuhası**, çok oyunculuda adının yanında görünen **unvan**; yeni şapka, aksesuar ve kürkler.
 - **Karakter:** sen de bir kedisin: kürk, göz, şapka, aksesuar ve kaftan rengini seç. Çok oyunculu masalarda diğerleri seni böyle görür.
 - **Eşya düşmesi:** her çevirme, el ve oyun sonunda şans: Yaygın 1/25, Nadir 1/200, **Destansı 1/1.000**, **Efsanevi 1/1.000.000** (Kaşıkçı Elması, Topkapı Hançeri, Altın Sultan Tacı, Altın Tüy Kürkü).
@@ -36,6 +41,7 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - Aynı cihazda iki kişilik Tavla da var.
 - Masalarda rakibin adının yanında **seviyesi ve unvanı** görünür.
 - **İzleyici modu:** Arkadaşlarla › *Süren oyunları izle* listesinden oynanan bir masayı canlı izle.
+- **Masa sohbeti:** baloncuk menüsündeki *Yaz…* ile masaya kısa mesaj yaz.
 - **Çay ısmarla:** masadaki baloncuk menüsünden herkese 20'şer akçelik çay ısmarla.
 - Sıra süresi 45 saniye; süre dolarsa hamle otomatik oynanır. Masada hazır mesajlar (Selam!, Bravo!, Rövanş?…) gönderilebilir. Sayfa yenilenirse oturulan masaya geri dönülür.
 - Akçe, çanta ve karakter claude.ai'de bulut kaydına yazılır (başka cihazdan devam edilir); **Sıralama** sekmesi en zengin oyuncuları gösterir.
