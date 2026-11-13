@@ -21,7 +21,7 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - Çok oyunculu da oynanır: 2-4 kişi, boş koltuklara kediler oturur.
 
 ## Tombala ve Kazı Kazan
-- **Tombala:** 1-90 pullar torbadan çekilir; 1 ya da 2 kart al. Çinko (bahis kadar), İkinci Çinko (2 katı), Tombala (4 katı). Kediler Fındık, Tarçın ve Pamuk toplam 7 kartla oynar; HIZLI düğmesi çekilişi hızlandırır.
+- **Tombala:** 1-90 pullar torbadan çekilir; 1 ya da 2 kart al. Çinko (bahis kadar), İkinci Çinko (2 katı), Tombala (4 katı). Kediler Fındık, Tarçın ve Pamuk toplam 7 kartla oynar; HIZLI düğmesi çekilişi hızlandırır. Çok oyunculuda 2-4 kişi aynı torbadan oynar.
 - **Kazı Kazan:** 50 / 250 / 1000 akçelik bilet, parmakla kazı; üç aynı resim ×1'den ×100'e kadar.
 
 ## İlerleme ve Çarşı

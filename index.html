@@ -1076,7 +1076,7 @@ cv.addEventListener('pointerdown', e => {
   if (spect() && scene !== 'lobby' && !(e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h)) return;
   if (e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h) { if (scene !== 'lobby') leaveGame(e.clientX, e.clientY); else if (LOBBYMODE) { LOBBYMODE = null; tone('sine', 520, .1, .05); } return; }
   if (scene === 'lobby' && !LOBBYMODE) { const m = modeAt(w); if (m) pickMode(m, e.clientX, e.clientY); return; }
-  if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : lb === 'gorev' ? 'gorev' : 'cok'); return; } const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); if (SIGNS[i].id === 'carsi' || SIGNS[i].id === 'kazi') { openSheet(SIGNS[i].id); return; } if (LOBBYMODE === 'multi' && ONLINE_GAMES.includes(SIGNS[i].id)) { mpQuick(SIGNS[i].id); return; } ps.mode = 'ai'; bb.mode = 'ai'; tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; bt.mode = 'ai'; bt.me = 0; bt.state = 'bet'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY); } return; }
+  if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : lb === 'gorev' ? 'gorev' : 'cok'); return; } const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); if (SIGNS[i].id === 'carsi' || SIGNS[i].id === 'kazi') { openSheet(SIGNS[i].id); return; } if (LOBBYMODE === 'multi' && ONLINE_GAMES.includes(SIGNS[i].id)) { mpQuick(SIGNS[i].id); return; } ps.mode = 'ai'; bb.mode = 'ai'; tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; bt.mode = 'ai'; bt.me = 0; bt.state = 'bet'; tb.mode = 'ai'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY); } return; }
   if (scene === 'batak') { btDown(w); return; }
   if (scene === 'tombala') { tbDown(w); return; }
   if (scene === 'bj') { bjDown(w); return; }
@@ -1150,7 +1150,7 @@ const SIGNS = [
   { id: 'pisti', title: 'Pişti', sub: 'Minnoş\'a karşı kart' }, { id: 'barbut', title: 'Barbut', sub: 'Zarlar konuşsun' },
   { id: 'rulet', title: 'Rulet', sub: 'Top nerede duracak?' }, { id: 'batak', title: 'Batak', sub: 'Üç kediyle ihale' }, { id: 'tombala', title: 'Tombala', sub: 'Torbadan ne çıkacak?' }, { id: 'kazi', title: 'Kazı Kazan', sub: 'Kazı, üç aynısını bul' }, { id: 'carsi', title: 'Çarşı', sub: 'Sandık aç, eşya al' },
 ].map((s, i) => Object.assign(s, { x: 0, y: 0, w: 456, h: 220, k: 1, rope: i * .7, row: 0, col: 0 }));
-const ONLINE_GAMES = ['bj', 'okey', 'tavla', 'pisti', 'barbut', 'batak'];
+const ONLINE_GAMES = ['bj', 'okey', 'tavla', 'pisti', 'barbut', 'batak', 'tombala'];
 const trans = { t0: 0, to: null, done: true, x: 0, y: 0 };
 const safeTop = (() => { try { const d = document.createElement('div'); d.style.cssText = 'position:fixed;top:0;height:env(safe-area-inset-top);visibility:hidden'; document.body.appendChild(d); const h = d.offsetHeight; d.remove(); return h; } catch { return 0; } })();
 const BACK = { x: 12, y: 12 + safeTop, w: 116, h: 48 };
@@ -1173,7 +1173,7 @@ function updateTrans(t) {
     if (scene === 'pisti' && ps.mode !== 'online' && ps.state !== 'play') { ps.state = 'bet'; ps.scores = null; banner('Pişti', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'barbut' && bb.mode !== 'online' && (bb.state === 'bet' || bb.state === 'over')) { bb.state = 'bet'; bb.call = ''; bb.hist = []; banner('Barbut', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'batak' && bt.mode !== 'online' && !['bid', 'trump', 'play'].includes(bt.state)) { bt.state = 'bet'; bt.pts = null; banner('Batak', 'Bahsini seç, DAĞIT\'a bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
-    if (scene === 'tombala' && tb.state !== 'play') { tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; banner('Tombala', 'Kart sayını ve bahsini seç', { dur: 2200, col: '#1f4e9c', y: .3 }); }
+    if (scene === 'tombala' && tb.mode !== 'online' && tb.state !== 'play') { tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; banner('Tombala', 'Kart sayını ve bahsini seç', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'rulet') banner('Rulet', 'Tahtaya fiş koy, ÇEVİR\'e bas', { dur: 2200, col: '#1f4e9c', top: true });
     if (scene === 'slot') banner('Bol şans!', 'Kolu aşağı çek ya da ÇEVİR\'e bas', { dur: 2400, col: '#1f4e9c' });
     trans.x = W / 2; trans.y = H / 2; mpPresence();
@@ -1202,7 +1202,7 @@ async function leaveGame(x, y) {
   if (scene === 'okey' && ok.mode !== 'online' && ok.state === 'play') { ok.state = 'bet'; ok.slots = new Array(24).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.fly = []; }
   if (scene === 'pisti' && ps.mode !== 'online' && ps.state === 'play') { ps.state = 'bet'; ps.hands = [[], []]; ps.pile = []; ps.cap = [[], []]; }
   if (scene === 'barbut' && bb.mode !== 'online' && bb.state !== 'bet' && bb.state !== 'over') { bb.state = 'bet'; bb.hist = []; bb.call = ''; }
-  if (scene === 'tombala' && tb.state === 'play') { clearTimeout(tb.timer); tb.state = 'bet'; tb.cards = []; }
+  if (scene === 'tombala' && tb.mode !== 'online' && tb.state === 'play') { clearTimeout(tb.timer); tb.state = 'bet'; tb.cards = []; }
   if (scene === 'batak' && bt.mode !== 'online' && bt.state !== 'bet' && bt.state !== 'over') { bt.state = 'bet'; bt.hands = [[], [], [], []]; bt.trick = []; }
   if (scene === 'bj' && bj.mode !== 'online' && bj.state !== 'bet' && bj.state !== 'result') { if (bj.state === 'play') { bj.state = 'bet'; bjResetHands(); } else bj.abandon = true; }
   go('lobby', x, y);
@@ -2588,7 +2588,7 @@ function renderKoleksiyon() {
 //  ÇOK OYUNCULU: masalar (db), anlık dürtme (room), isimler (user)
 // =============================================================
 const MP = { ready: false, ok: false, db: null, room: null, user: null, uid: null, names: {}, peers: [], code: null, seat: -1, t: null, unsub: null, nr: null, rev: 0, wid: '', wq: Promise.resolve(), lobbyUnsub: null, tables: [], cBet: 1, paid: new Set(store.get('mpPaid', [])) };
-const MAXSEATS = { tavla: 2, okey: 4, bj: 3, pisti: 2, barbut: 2, batak: 4 }, GNAME = { tavla: 'Tavla', okey: 'Okey', bj: 'Yirmi Bir', pisti: 'Pişti', barbut: 'Barbut', batak: 'Batak' }, GSCENE = { batak: 'batak', tavla: 'tavla', okey: 'okey', bj: 'bj', pisti: 'pisti', barbut: 'barbut' };
+const MAXSEATS = { tavla: 2, okey: 4, bj: 3, pisti: 2, barbut: 2, batak: 4, tombala: 4 }, GNAME = { tombala: 'Tombala', tavla: 'Tavla', okey: 'Okey', bj: 'Yirmi Bir', pisti: 'Pişti', barbut: 'Barbut', batak: 'Batak' }, GSCENE = { tombala: 'tombala', batak: 'batak', tavla: 'tavla', okey: 'okey', bj: 'bj', pisti: 'pisti', barbut: 'barbut' };
 async function mpInit() {
   try {
     if (!window.claude || typeof window.claude.use !== 'function') { MP.ready = true; return; }
@@ -2641,6 +2641,7 @@ function mpAutoStart() {
   else if (t.game === 'pisti' && n === 2) later(1200, psOnlineStart);
   else if (t.game === 'barbut' && n === 2) later(1200, bbOnlineStart);
   else if (t.game === 'batak' && n >= 2) later(n >= 4 ? 1200 : 8000, btOnlineStart);
+  else if (t.game === 'tombala' && n >= 2) later(n >= 4 ? 1500 : 7000, tbOnlineStart);
 }
 function mpCode() { const A = 'ABCDEFGHJKMNPQRSTUVWXYZ23456789'; let s = ''; for (let i = 0; i < 5; i++) s += A[Math.floor(Math.random() * A.length)]; return s; }
 const mpRef = code => MP.db.doc('tables/' + code);
@@ -2662,7 +2663,7 @@ function mpOnData(d) {
   const prev = MP.t; MP.t = d; MP.rev = d.rev || 0; MP.seat = d.seats.findIndex(x => x && x.uid === MP.uid);
   mpNames(d.seats.filter(Boolean).map(x => x.uid));
   if (prev) { const was = new Set(prev.seats.filter(Boolean).map(x => x.uid)); d.seats.forEach(s => { if (s && !was.has(s.uid) && s.uid !== MP.uid) { banner(mpName(s.uid) + ' masaya oturdu', null, { dur: 1500, col: '#2a7a5a', top: true }); tone('sine', 880, .12, .05); } }); }
-  if (d.game === 'tavla') tvRemote(d, prev); else if (d.game === 'okey') okRemote(d, prev); else if (d.game === 'bj') bjRemote(d, prev); else if (d.game === 'pisti') psRemote(d, prev); else if (d.game === 'batak') btRemote(d, prev); else if (d.game === 'barbut') bbRemote(d, prev);
+  if (d.game === 'tavla') tvRemote(d, prev); else if (d.game === 'okey') okRemote(d, prev); else if (d.game === 'bj') bjRemote(d, prev); else if (d.game === 'pisti') psRemote(d, prev); else if (d.game === 'batak') btRemote(d, prev); else if (d.game === 'tombala') tbRemote(d, prev); else if (d.game === 'barbut') bbRemote(d, prev);
   mpAutoStart();
 }
 async function mpCreate(game, quick) {
@@ -2699,13 +2700,14 @@ async function mpEnter(code, t) {
   clearInterval(MP.poll); MP.poll = setInterval(() => { if (!MP.code || document.hidden) return; mpRef(MP.code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { }); }, 4000);
   if (MP.room) MP.room.join('t-' + code.toLowerCase()).then(r => { MP.nr = r; r.on('emote', m => { const i = m.data && m.data.i; if (!m.isMe && typeof i === 'number') emoShow(m.by, -1, i); }); r.on('gift', teaRecv); r.on('chat', chatRecv); r.on('poke', () => mpRef(code).get().then(s => mpOnData(s.exists ? s.data() : null)).catch(() => { })); }).catch(() => { });
   closeSheet();
-  if (t.game === 'tavla') { tv.mode = 'online'; tvRemote(t, null); } else if (t.game === 'okey') { ok.mode = 'online'; okRemote(t, null); } else if (t.game === 'pisti') { ps.mode = 'online'; psRemote(t, null); } else if (t.game === 'batak') { bt.mode = 'online'; btRemote(t, null); } else if (t.game === 'barbut') { bb.mode = 'online'; bbRemote(t, null); } else { bj.mode = 'online'; bjRemote(t, null); }
+  if (t.game === 'tavla') { tv.mode = 'online'; tvRemote(t, null); } else if (t.game === 'okey') { ok.mode = 'online'; okRemote(t, null); } else if (t.game === 'pisti') { ps.mode = 'online'; psRemote(t, null); } else if (t.game === 'batak') { bt.mode = 'online'; btRemote(t, null); } else if (t.game === 'tombala') { tb.mode = 'online'; tb.round = 0; tbRemote(t, null); } else if (t.game === 'barbut') { bb.mode = 'online'; bbRemote(t, null); } else { bj.mode = 'online'; bjRemote(t, null); }
   go(GSCENE[t.game]); mpPresence();
 }
 function mpReset(keepScene) {
   clearInterval(MP.poll); clearInterval(MP.hb); MP.starting = false; try { if (MP.unsub) MP.unsub(); if (MP.nr) MP.nr.leave(); } catch { }
   MP.unsub = null; MP.nr = null; MP.code = null; MP.t = null; MP.seat = -1; MP.rev = 0;
-  if (!keepScene) { store.set('mpTable', null); bt.mode = 'ai'; bt.me = 0; bt.state = 'bet'; ps.mode = 'ai'; bb.mode = 'ai'; ps.state = 'bet'; bb.state = 'bet'; tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; tv.state = 'bet'; ok.state = 'bet'; bj.state = 'bet'; }
+  clearInterval(tb.loop); tb.loop = 0;
+  if (!keepScene) { store.set('mpTable', null); tb.mode = 'ai'; tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; bt.mode = 'ai'; bt.me = 0; bt.state = 'bet'; ps.mode = 'ai'; bb.mode = 'ai'; ps.state = 'bet'; bb.state = 'bet'; tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; tv.view = 0; ok.me = 0; tv.state = 'bet'; ok.state = 'bet'; bj.state = 'bet'; }
   mpPresence();
 }
 async function mpLeave() {
@@ -2756,6 +2758,7 @@ function renderCok() {
       el('button', { class: 'big', text: 'Pişti · 2 kişi', on: () => mpCreate('pisti') }),
       el('button', { class: 'big', text: 'Barbut · 2 kişi', on: () => mpCreate('barbut') }),
       el('button', { class: 'big', text: 'Batak · 2-4 kişi', on: () => mpCreate('batak') }),
+      el('button', { class: 'big', text: 'Tombala · 2-4 kişi', on: () => mpCreate('tombala') }),
     ]));
     const inp = el('input', { placeholder: 'MASA KODU', maxlength: '5', autocapitalize: 'characters' });
     box.appendChild(el('h3', { text: 'Kodla katıl' }));
@@ -3416,7 +3419,7 @@ async function mpWatch(code) {
     clearInterval(MP.poll); MP.poll = setInterval(() => { if (!MP.code || document.hidden) return; mpRef(MP.code).get().then(q => mpOnData(q.exists ? q.data() : null)).catch(() => { }); }, 4000);
     if (MP.room) MP.room.join('t-' + code.toLowerCase()).then(r => { MP.nr = r; r.on('emote', m => { const i = m.data && m.data.i; if (!m.isMe && typeof i === 'number') emoShow(m.by, -1, i); }); r.on('gift', teaRecv); r.on('chat', chatRecv); r.on('poke', () => mpRef(code).get().then(q => mpOnData(q.exists ? q.data() : null)).catch(() => { })); }).catch(() => { });
     closeSheet();
-    const G = t.game; ({ tavla: () => { tv.mode = 'online'; tvRemote(t, null); }, okey: () => { ok.mode = 'online'; okRemote(t, null); }, pisti: () => { ps.mode = 'online'; psRemote(t, null); }, batak: () => { bt.mode = 'online'; btRemote(t, null); }, barbut: () => { bb.mode = 'online'; bbRemote(t, null); }, bj: () => { bj.mode = 'online'; bjRemote(t, null); } })[G]();
+    const G = t.game; ({ tavla: () => { tv.mode = 'online'; tvRemote(t, null); }, okey: () => { ok.mode = 'online'; okRemote(t, null); }, pisti: () => { ps.mode = 'online'; psRemote(t, null); }, batak: () => { bt.mode = 'online'; btRemote(t, null); }, tombala: () => { tb.mode = 'online'; tb.round = 0; tbRemote(t, null); }, barbut: () => { bb.mode = 'online'; bbRemote(t, null); }, bj: () => { bj.mode = 'online'; bjRemote(t, null); } })[G]();
     go(GSCENE[G]); banner('İzleyici modu', GNAME[G] + ' masası ' + code, { dur: 2200, top: true, col: '#2a7a5a' });
   } catch { note('Masa izlenemedi.'); }
 }
@@ -4137,7 +4140,7 @@ function drawBatak(t) {
 // =============================================================
 const TB_CATS = [{ name: 'Fındık', v: 1, hat: 'kasket', body: '#5a4632', n: 2 }, { name: 'Tarçın', v: 3, hat: 'fez', body: '#7a1e28', n: 3 }, { name: 'Pamuk', v: 2, hat: 'mavifes', body: '#24405a', n: 2 }];
 const TB_PRIZE = [1, 2, 4], TB_PNAME = ['Çinko', 'İkinci Çinko', 'TOMBALA'];
-const tb = { state: 'bet', bet: 0, ncard: 1, cards: [], cats: [], bag: [], drawn: [], cur: null, curT: 0, stage: 0, timer: 0, fast: false, wins: [], drops: [], won: 0 };
+const tb = { mode: 'ai', loop: 0, round: 0, state: 'bet', bet: 0, ncard: 1, cards: [], cats: [], bag: [], drawn: [], cur: null, curT: 0, stage: 0, timer: 0, fast: false, wins: [], drops: [], won: 0 };
 const TBB = { tbMinus: { x: 190, y: 1560, r: 50 }, tbPlus: { x: 330, y: 1560, r: 50 }, tbCards: { x: 520, y: 1560, r: 62 }, tbGo: { x: 770, y: 1560, r: 90 }, tbFast: { x: 770, y: 1560, r: 70 } };
 function TBLay() {
   if (LAND) { P(TBB.tbMinus, 1690, 1050); P(TBB.tbPlus, 1830, 1050); P(TBB.tbCards, 1500, 1050, 58); P(TBB.tbGo, 1760, 850, 90); P(TBB.tbFast, 1760, 850, 70);
@@ -4161,6 +4164,7 @@ function tbCard() {
 const tbRows = c => c.g.filter((r, i) => r.every((n, j) => !n || c.m[i][j])).length;
 const tbLeft = (c, stage) => { const per = c.g.map((r, i) => r.filter((n, j) => n && !c.m[i][j]).length).sort((a, b) => a - b); return per.slice(0, stage + 1).reduce((a, b) => a + b, 0); };
 function tbStart() {
+  if (tb.mode === 'online') return tbOnlineStart();
   if (tb.state === 'play') return;
   const total = BETS[betIdx] * tb.ncard; if (balance < total) { if (!dailyGift()) banner('Akçe yetmedi', tb.ncard + ' kart ' + total + ' akçe', { y: .45 }); return; }
   setBalance(balance - total); lastWin = 0; tb.bet = BETS[betIdx];
@@ -4194,8 +4198,52 @@ function tbOver() {
   gameEvent('tombala', 'play'); if (tb.won > 0) gameEvent('tombala', 'win'); rollDrop();
   setTimeout(() => banner(tb.won ? 'Toplam +' + tb.won.toLocaleString('tr-TR') + ' akçe' : 'Bu sefer olmadı', 'YENİ OYUN için bas', { dur: 2600, col: tb.won ? '#cf4b32' : '#1f4e9c', y: .3 }), 900);
 }
+// ---------- tombala çevrimiçi ----------
+const tbMarked = (g, drawn) => ({ g, m: g.map(r => r.map(n => !!n && drawn.has(n))) });
+async function tbOnlineStart() {
+  const t = MP.t; if (!t || t.host !== MP.uid) return;
+  const order = Array.from({ length: 90 }, (_, i) => i + 1); for (let i = 89; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [order[i], order[j]] = [order[j], order[i]]; }
+  const g = { order, n: 0, cards: t.seats.map(s => s ? [tbCard().g] : null), cats: TB_CATS.map(k => Array.from({ length: k.n }, () => tbCard().g)), stage: 0, wins: [], phase: 'play', at: Date.now() };
+  const prev = MP.t; await mpWrite(x => { x.status = 'play'; x.round = (x.round || 0) + 1; x.g = g; }); tbRemote(MP.t, prev);
+}
+function tbHostTick() {
+  const t = MP.t; if (!t || t.game !== 'tombala' || !t.g || t.g.phase !== 'play' || !mpIsRunner()) { clearInterval(tb.loop); tb.loop = 0; return; }
+  mpWrite(x => {
+    const g = x.g; if (!g || g.phase !== 'play' || g.n >= 90) return; g.n++;
+    const drawn = new Set(g.order.slice(0, g.n)), need = g.stage + 1, rowsOf = cg => tbRows(tbMarked(cg, drawn));
+    const seats = [], cats = [];
+    (g.cards || []).forEach((cs, s) => { if (cs && x.seats[s] && cs.some(cg => rowsOf(cg) >= need)) seats.push(s); });
+    g.cats.forEach((cs, k) => { if (cs.some(cg => rowsOf(cg) >= need)) cats.push(k); });
+    if (seats.length || cats.length) { g.wins.push({ st: g.stage, seats, cats, n: g.n }); g.stage++; if (g.stage >= 3) { g.phase = 'over'; x.status = 'over'; } }
+    if (g.n >= 90 && g.phase === 'play') { g.phase = 'over'; x.status = 'over'; }
+  }).then(() => tbRemote(MP.t, tb.lastT));
+}
+function tbRemote(d, prev) {
+  tb.mode = 'online'; tb.bet = d.bet; tb.lastT = d; const g = d.g;
+  if (!g || d.status === 'open') { if (tb.state !== 'bet') { tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; } return; }
+  if (MP.seat >= 0 && mpPayOnce('bet')) { setBalance(balance - d.bet); lastWin = 0; tb.won = 0; }
+  const newRound = !tb.round || tb.round !== d.round; if (newRound) { tb.round = d.round; tb.drops = []; tb.won = 0; tb.seenWins = 0; tb.cur = null; banner('Tombala', 'Torba karışıyor…', { dur: 1500, col: '#1f4e9c', y: .3 }); thud(.2, 300); }
+  const drawn = g.order.slice(0, g.n), set = new Set(drawn), last = drawn[drawn.length - 1];
+  const mySeat = Math.max(0, MP.seat), oldMarks = tb.cards.map(c => c.m.map(r => r.slice()));
+  tb.cards = (g.cards[MP.seat >= 0 ? MP.seat : (g.cards.findIndex(Boolean))] || []).map(cg => tbMarked(cg, set));
+  tb.cats = g.cats.map(cs => cs.map(cg => tbMarked(cg, set)));
+  tb.others = g.cards.map((cs, s2) => cs && s2 !== MP.seat && d.seats[s2] ? { name: mpName(d.seats[s2].uid), av: d.seats[s2].av, left: g.stage < 3 ? Math.min(...cs.map(cg => tbLeft(tbMarked(cg, set), g.stage))) : null } : null).filter(Boolean);
+  if (last && last !== tb.cur) { tb.cur = last; tb.curT = performance.now(); tone('triangle', 500 + last * 6, .1, .05); thud(.06, 900); tb.cards.forEach((c, k) => c.g.forEach((r, i) => r.forEach((x, j) => { if (x === last && !(oldMarks[k] && oldMarks[k][i][j])) tb.drops.push({ k, i, j, t0: performance.now() + 250 }); }))); }
+  tb.drawn = drawn; tb.stage = g.stage;
+  tb.wins = g.wins.map(w => ({ st: w.st, me: MP.seat >= 0 && w.seats.includes(MP.seat), cats: [...w.cats.map(k => TB_CATS[k].name), ...w.seats.filter(s => s !== MP.seat).map(s => d.seats[s] ? mpName(d.seats[s].uid) : 'Oyuncu')] }));
+  for (let i = tb.seenWins || 0; i < tb.wins.length; i++) {
+    const w = tb.wins[i], st = w.st;
+    if (w.me) { const pay = Math.round(tb.bet * TB_PRIZE[st]); if (mpPayOnce('tb' + st)) { setBalance(balance + pay); tb.won += pay; lastWin = tb.won; } banner(TB_PNAME[st] + '!', '+' + pay.toLocaleString('tr-TR') + ' akçe' + (w.cats.length ? ' · ' + w.cats.join(', ') + ' de' : ''), { big: true, dur: 2400, y: .3 }); spawnCoins(st === 2 ? 70 : 30, 500, 700); melody(st === 2 ? [0, 1, 2, 3, 4, 5, 6, 7] : [0, 2, 4, 7], .1); if (st === 2) extEvent('tombala'); }
+    else { banner(TB_PNAME[st] + ': ' + w.cats.join(', '), st < 2 ? 'Sıradaki ödül: ' + TB_PNAME[st + 1] : 'Oyun bitti', { dur: 2000, col: '#1f4e9c', y: .3 }); tone('sine', 300, .3, .05, 0, 200); }
+  }
+  tb.seenWins = tb.wins.length;
+  const wasOver = tb.state === 'over'; tb.state = g.phase === 'over' ? 'over' : 'play';
+  if (tb.state === 'over' && !wasOver && !newRound) { if (MP.seat >= 0) { gameEvent('tombala', 'play'); if (tb.won > 0) gameEvent('tombala', 'win'); if (mpPayOnce('drop')) rollDrop(); } setTimeout(() => banner(tb.won ? 'Toplam +' + tb.won.toLocaleString('tr-TR') + ' akçe' : 'Bu sefer olmadı', MP.t && MP.t.host === MP.uid ? 'YENİ için bas' : 'Ev sahibi yeni oyunu başlatabilir', { dur: 2600, col: tb.won ? '#cf4b32' : '#1f4e9c', y: .3 }), 900); }
+  if (tb.state === 'play' && mpIsRunner() && !tb.loop) tb.loop = setInterval(tbHostTick, 1900);
+}
 function tbDown(w) {
   TBLay();
+  if (tb.mode === 'online') { if (tb.state !== 'play' && MP.t && MP.t.host === MP.uid && hitSet(TBB, w, ['tbGo'])) tbOnlineStart(); return; }
   if (tb.state === 'play') { const k = hitSet(TBB, w, ['tbFast']); if (k) tb.fast = !tb.fast; return; }
   const k = hitSet(TBB, w, ['tbMinus', 'tbPlus', 'tbCards', 'tbGo']); if (!k) return;
   if (k === 'tbCards') { tb.ncard = tb.ncard === 1 ? 2 : 1; return; }
@@ -4207,7 +4255,7 @@ function drawTombalaTable(c) {
   for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 60, 202], [500 + i * 170, v.y1 + 300]], false, 2, '#1e1008', 3);
   const L = TBLay(), w = L.cw * 9 + 40;
 }
-function tbDrawCard(card, x, y, cw, ch, t, dim) {
+function tbDrawCard(card, x, y, cw, ch, t, dim, ck) {
   seed(1710 + y); const w = cw * 9, h = ch * 3, p = rr(x - 14, y - 14, w + 28, h + 28, 14, 20); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x - 6, y - 4, w + 28, h + 28);
   wash(ctx, p, dim ? '#d8ccb0' : '#f6ecd2', 1); ink(ctx, p, true, 3);
   ctx.strokeStyle = '#b8462a'; ctx.lineWidth = 2; ctx.globalAlpha = .7; for (let i = 1; i < 9; i++) { ctx.beginPath(); ctx.moveTo(x + i * cw, y); ctx.lineTo(x + i * cw, y + h); ctx.stroke(); } for (let r = 1; r < 3; r++) { ctx.beginPath(); ctx.moveTo(x, y + r * ch); ctx.lineTo(x + w, y + r * ch); ctx.stroke(); } ctx.globalAlpha = 1;
@@ -4220,7 +4268,7 @@ function tbDrawCard(card, x, y, cw, ch, t, dim) {
       if (!n) { ctx.fillStyle = 'rgba(184,70,42,.12)'; ctx.fillRect(x + j * cw + 4, y + i * ch + 4, cw - 8, ch - 8); return; }
       inkText(ctx, String(n), cx, cy + 2, 44, INK, { outline: false });
       if (card.m[i][j]) {
-        const d = tb.drops.find(q => q.c === card && q.i === i && q.j === j), u = d ? clamp((t - d.t0) / 260, 0, 1) : 1; if (u <= 0) return;
+        const d = tb.drops.find(q => (q.c ? q.c === card : q.k === ck) && q.i === i && q.j === j), u = d ? clamp((t - d.t0) / 260, 0, 1) : 1; if (u <= 0) return;
         ctx.save(); ctx.translate(cx, cy - (1 - u) * 60); ctx.scale(.6 + .4 * u, .6 + .4 * u); seed(1800 + n);
         const pul = ell(0, 0, 32, 30, 16); wash(ctx, pul, '#c0392b', .4); ink(ctx, pul, true, 2.2, INK, .6); ctx.globalAlpha = .9; inkText(ctx, String(n), 0, 2, 30, '#fbf1da', { outline: false }); ctx.globalAlpha = 1; ctx.restore();
       }
@@ -4244,8 +4292,9 @@ function drawTombala(t) {
   const rec = tb.drawn.slice(-8, -1).reverse(); rec.forEach((n, i) => tbBall(L.recent.x - (rec.length - 1) * L.recent.gap / 2 + i * L.recent.gap, L.recent.y, 34, n, false));
   inkText(ctx, tb.drawn.length + '/90', L.ball.x + 140, L.ball.y + 60, 30, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
   // kartlar
-  if (tb.cards.length) tb.cards.forEach((c, k) => tbDrawCard(c, L.cardX, L.cardY[k], L.cw, L.ch, t, tb.state === 'over'));
+  if (tb.cards.length) tb.cards.forEach((c, k) => tbDrawCard(c, L.cardX, L.cardY[k], L.cw, L.ch, t, tb.state === 'over', k));
   else for (let k = 0; k < tb.ncard; k++) { seed(1760 + k); const p = rr(L.cardX - 14, L.cardY[k] - 14, L.cw * 9 + 28, L.ch * 3 + 28, 14, 20); wash(ctx, p, '#f6ecd2', 1); ink(ctx, p, true, 3); inkText(ctx, 'TOMBALA KARTI', L.cardX + L.cw * 4.5, L.cardY[k] + L.ch * 1.5, 56, '#b8462a', { outline: false }); }
+  if (tb.mode === 'online' && tb.others && tb.others.length) { const y0 = L.cardY[1] + (LAND ? 20 : 0); inkText(ctx, 'Masadakiler', L.cardX + 40, y0, 34, '#f2cf74', { outline: INK, ow: 4, font: '"Caveat"', weight: 700, align: 'left' }); tb.others.forEach((o, k) => { const y = y0 + 70 + k * 80; drawAvatarMini(L.cardX + 70, y, 70, o.av); inkText(ctx, o.name + (o.left !== null ? ' · ' + o.left + ' kaldı' : ''), L.cardX + 130, y + 4, 32, o.left !== null && o.left <= 2 ? '#f2cf74' : '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700, align: 'left' }); }); }
   // kediler
   TB_CATS.forEach((K, k) => {
     const [x, y] = L.cats[k]; drawCatAt(x, y - 40, .38, 0, K.v, K.hat, t, tb.wins.some(w => w.cats.includes(K.name)), K.body); setWorld(1);
@@ -4257,7 +4306,8 @@ function drawTombala(t) {
   const Pz = L.prize; TB_PNAME.forEach((nm, k) => { const done = tb.wins.find(w => w.st === k), x = Pz.x + (k - 1) * 260; seed(1770 + k); const q = rr(x - 120, Pz.y - 30, 240, 60, 14, 14); wash(ctx, q, done ? (done.me ? '#f2cf74' : '#8a7a5a') : tb.stage === k && tb.state === 'play' ? '#fbf4e2' : '#d8ccb0', 1); ink(ctx, q, true, 2.5); inkText(ctx, nm + ' ×' + String(TB_PRIZE[k]).replace('.', ','), x, Pz.y + 2, 28, INK, { outline: false, font: '"Caveat"', weight: 700 }); });
   // düğmeler
   const S_ = L.status;
-  if (tb.state === 'play') { const dy = btnDraw('tbFast', tb.fast ? '#cf4b32' : '#2aa3a0', null, t, 40, TBB); inkText(ctx, tb.fast ? 'HIZLI' : 'NORMAL', TBB.tbFast.x, TBB.tbFast.y + dy, 30, '#fbf1da', { ow: 5 }); statusTag(S_.x - (LAND ? 0 : 120), S_.y + (LAND ? 0 : 110), 'Numaralar kendiliğinden kapanır · kart başı ' + tb.bet + ' akçe', LAND ? S_.w : 520); }
+  if (tb.mode === 'online') { if (tb.state !== 'play' && MP.t && MP.t.host === MP.uid) { const g = TBB.tbGo, dy = btnDraw('tbGo', '#cf4b32', null, t, 40, TBB); inkText(ctx, tb.state === 'over' ? 'YENİ' : 'BAŞLA', g.x, g.y + dy, 44, '#fbf1da', { ow: 7 }); } statusTag(S_.x - (LAND ? 0 : 120), S_.y + (LAND ? 0 : 110), tb.state === 'play' ? 'Herkes aynı torbadan · kart ' + tb.bet + ' akçe' : MP.t && MP.t.host === MP.uid ? 'Masa ' + MP.code + ' · istediğinde başlat' : 'Ev sahibinin başlatması bekleniyor', LAND ? S_.w : 520); }
+  else if (tb.state === 'play') { const dy = btnDraw('tbFast', tb.fast ? '#cf4b32' : '#2aa3a0', null, t, 40, TBB); inkText(ctx, tb.fast ? 'HIZLI' : 'NORMAL', TBB.tbFast.x, TBB.tbFast.y + dy, 30, '#fbf1da', { ow: 5 }); statusTag(S_.x - (LAND ? 0 : 120), S_.y + (LAND ? 0 : 110), 'Numaralar kendiliğinden kapanır · kart başı ' + tb.bet + ' akçe', LAND ? S_.w : 520); }
   else {
     betRow(TBB, ['tbMinus', 'tbPlus', 'tbGo'], t, tb.state === 'over' ? 'YENİ' : 'BAŞLA');
     const dy = btnDraw('tbCards', '#8e44ad', null, t, 40, TBB); inkText(ctx, tb.ncard + ' kart', TBB.tbCards.x, TBB.tbCards.y + dy, 32, '#fbf1da', { ow: 5 });
