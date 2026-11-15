@@ -44,6 +44,7 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 
 ## Karakter, çanta ve koleksiyon
 - **Kostümler:** Denizci Forması, İşlemeli Cepken, Mahalle Takımı Forması, Kahveci Önlüğü, Derviş Hırkası, Yeniçeri Üniforması, Smokin, Efe Kıyafeti, Sipahi Zırhı, Lale Desenli Sultan Kaftanı, Altın Sırma Kaftan. Yeni şapkalar (takke, hasır şapka, aşçı kepi, sikke, silindir, miğfer) ve aksesuarlar (gözlük, güneş gözlüğü, pala bıyık, atkı, pipo, madalya).
+- İkinci paket: Çizgili Pijama, Usta Tulumu, Karate Kıyafeti, Hekim Önlüğü, Korsan Ceketi, Kahraman Pelerini, Astronot Tulumu, Samur Kürklü Pelerin; bere, parti külahı, kovboy ve korsan şapkası, kulaklık, altın hale; Siyam, Mavi Rus, Smokin ve Pembe kürkler. Gardıropta henüz sahip olunmayan eşyalar kilitli olarak görünür; önizleme kaydırırken sabit kalır.
 - **Profil kartı:** sıralamada ya da salondakiler listesinde bir oyuncuya dokun; kostümüyle görürsün, 100 / 500 akçe hediye edebilirsin.
 - **Okey taş takımları** (Yeşim, Sedef, Kehribar), **zarlar** (Kırmızı, Akik, Altın), Sorguçlu Sarık ve Kehribar Tesbih. Bazı başarımlar özel **unvan** kazandırır (Pişti Kurdu, Okey Ustası, İhale Kralı, Mars Ustası).
 - Yeni kozmetik türleri: **kart arkası**, **masa çuhası**, çok oyunculuda adının yanında görünen **unvan**; yeni şapka, aksesuar ve kürkler.

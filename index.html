@@ -32,12 +32,12 @@ canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
   border:2px solid var(--ink);border-radius:30px 26px 32px 24px;padding:6px 30px;cursor:pointer}
 input{user-select:text;-webkit-user-select:text}
 .sheet{touch-action:pan-y}
-#sheet .sheet{max-width:600px;transform:rotate(-.5deg)}
+#sheet .sheet{max-width:600px;transform:none;outline:2px solid rgba(43,26,18,.7);outline-offset:-8px}#sheet .sheet::before{display:none}#sheet .sheet .x{position:sticky;top:-10px;float:right;margin:-12px -8px 0 0;z-index:6;background:var(--paper);border-radius:50%;width:44px;height:44px;line-height:1;border:2px solid var(--ink)}
 .sheet .x{position:absolute;top:6px;right:10px;font:400 30px "Caveat Brush",cursive;background:none;border:0;color:var(--ink);cursor:pointer;z-index:2}
 .tabs{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin:0 26px 10px}
 .tabs button{font:400 22px "Caveat Brush",cursive;background:#e8d9b5;color:var(--ink);border:2px solid var(--ink);border-radius:14px 10px 16px 12px;padding:4px 12px;cursor:pointer}
 .tabs button.on{background:var(--coral);color:var(--paper)}
-.preview{display:flex;align-items:center;gap:12px}.preview img{width:120px;height:120px;flex:none}.preview p{margin:0}
+.preview{display:flex;align-items:center;gap:12px;position:sticky;top:-22px;z-index:3;background:var(--paper);border-bottom:2px solid #c9b48a;padding:16px 0 4px;margin-bottom:6px}.preview img{width:120px;height:120px;flex:none}.preview p{margin:0;padding-right:44px}.opt.lock{opacity:.5;filter:grayscale(.6)}.opt.lock small::before{content:'🔒 '}
 .optrow h3,h3.tier,.sheet h3{margin:12px 0 4px;font:400 24px "Caveat Brush",cursive;color:#6a1b24}
 .opts{display:flex;gap:6px;flex-wrap:wrap}
 .opt{display:flex;flex-direction:column;align-items:center;width:80px;padding:4px;background:#efe3c4;border:2px solid rgba(43,26,18,.35);border-radius:12px;cursor:pointer;font:inherit;color:var(--ink)}
@@ -2460,7 +2460,7 @@ const owns = id => INV.some(x => x.id === id);
 
 // ---------- şapkalar ve aksesuarlar (kedi başı koordinatlarında: 200'lük kutu) ----------
 function drawHat(c, h) {
-  if (drawHat2(c, h) || drawHat4(c, h) || (h === 'sorguc' && drawHat3(c, h))) return;
+  if (drawHat2(c, h) || drawHat4(c, h) || drawHat5(c, h) || (h === 'sorguc' && drawHat3(c, h))) return;
   if (h === 'fez') return drawFez(c);
   if (h === 'kasket') return drawKasket(c);
   if (h === 'mavifes') { const f = sub([[72, 66], [128, 66], [121, 10], [79, 10]], 8, true); wash(c, f, '#1f4e9c', 1.5); ink(c, f, true, 3); wash(c, ell(100, 10, 21, 5, 14), '#163a74', 1); ink(c, [[100, 8], [116, 20], [124, 44]], false, 3, '#d9a441', 1); return; }
@@ -2598,14 +2598,16 @@ function optRow(title, opts) { return el('div', { class: 'optrow' }, [el('h3', {
 function optBtn(img, label, on, sel) { return el('button', { class: 'opt' + (sel ? ' sel' : ''), title: label, on }, [img ? el('img', { src: img, alt: '' }) : el('span', { class: 'none', text: '✕' }), el('small', { text: label })]); }
 function renderKarakter() {
   sheetBody.appendChild(el('div', { class: 'preview' }, [el('img', { src: iconURL('av', AV, 200), alt: 'Karakterin' }), el('p', { text: 'Bu kedi sensin. Çok oyunculu masalarda diğerleri seni böyle görür.' })]));
-  const furs = FURS.map((f, i) => (!f.item || owns(f.item)) ? optBtn(iconURL('fur', i, 80), f.name, () => { setAV({ fur: i }); renderSheet(); }, AV.fur === i) : null).filter(Boolean);
+  const lockBtn = it => { const b = optBtn(iconURL('item', it.id, 80), it.label || it.name, () => note(it.name + ' henüz sende yok. ' + TIERS[it.tier].name + ' bir eşya: sandıklardan ve oyun sonu şansından çıkar' + (it.tier <= 2 && !it.noDrop ? ', Çarşı tezgâhına' + (it.slot === 'kostum' ? ' ve Terzi\'ye' : '') + ' da gelir.' : '.')), false); b.classList.add('lock'); return b; };
+  const locked = slot => ITEMS.filter(i => i.slot === slot && !owns(i.id)).sort((a, b) => a.tier - b.tier).map(lockBtn);
+  const furs = [...FURS.map((f, i) => (!f.item || owns(f.item)) ? optBtn(iconURL('fur', i, 80), f.name, () => { setAV({ fur: i }); renderSheet(); }, AV.fur === i) : null).filter(Boolean), ...locked('fur')];
   sheetBody.appendChild(optRow('Kürk', furs));
   sheetBody.appendChild(optRow('Gözler', EYES.map((e, i) => el('button', { class: 'opt eye' + (AV.eye === i ? ' sel' : ''), on: () => { setAV({ eye: i }); renderSheet(); } }, [el('span', { class: 'dot', style: 'background:' + e[0] }), el('span', { class: 'dot', style: 'background:' + e[1] })]))));
   const hats = [...FREE_HATS, ...ITEMS.filter(i => i.slot === 'hat' && owns(i.id)).map(i => i.id)];
-  sheetBody.appendChild(optRow('Şapka', hats.map(h => optBtn(h === 'none' ? null : iconURL('hat', h, 80), h === 'none' ? 'Yok' : h === 'fez' ? 'Fes' : h === 'kasket' ? 'Kasket' : ITEM[h].name, () => { setAV({ hat: h }); renderSheet(); }, AV.hat === h))));
+  sheetBody.appendChild(optRow('Şapka', hats.map(h => optBtn(h === 'none' ? null : iconURL('hat', h, 80), h === 'none' ? 'Yok' : h === 'fez' ? 'Fes' : h === 'kasket' ? 'Kasket' : ITEM[h].name, () => { setAV({ hat: h }); renderSheet(); }, AV.hat === h)).concat(locked('hat'))));
   const accs = [...FREE_ACC, ...ITEMS.filter(i => i.slot === 'acc' && owns(i.id)).map(i => i.id)];
-  sheetBody.appendChild(optRow('Aksesuar', accs.map(a => optBtn(a === 'none' ? null : iconURL('acc', a, 80), a === 'none' ? 'Yok' : a === 'nazar' ? 'Nazar Kolye' : ITEM[a].name, () => { setAV({ acc: a }); renderSheet(); }, AV.acc === a))));
-  const opt3 = (slot, defId, defLabel, defImg) => [defId, ...ITEMS.filter(i => i.slot === slot && owns(i.id)).map(i => i.id)].map(id => optBtn(id === defId ? defImg : iconURL(slot === 'back' ? 'back' : 'item', id, 80), id === defId ? defLabel : (ITEM[id].label || ITEM[id].name), () => { setAV({ [slot]: id }); renderSheet(); }, AV[slot] === id));
+  sheetBody.appendChild(optRow('Aksesuar', accs.map(a => optBtn(a === 'none' ? null : iconURL('acc', a, 80), a === 'none' ? 'Yok' : a === 'nazar' ? 'Nazar Kolye' : ITEM[a].name, () => { setAV({ acc: a }); renderSheet(); }, AV.acc === a)).concat(locked('acc'))));
+  const opt3 = (slot, defId, defLabel, defImg) => [defId, ...ITEMS.filter(i => i.slot === slot && owns(i.id)).map(i => i.id)].map(id => optBtn(id === defId ? defImg : iconURL(slot === 'back' ? 'back' : 'item', id, 80), id === defId ? defLabel : (ITEM[id].label || ITEM[id].name), () => { setAV({ [slot]: id }); renderSheet(); }, AV[slot] === id)).concat(locked(slot));
   sheetBody.appendChild(optRow('Kart arkası', opt3('back', 'nazar', 'Nazar', iconURL('back', 'nazar', 80))));
   sheetBody.appendChild(optRow('Masa çuhası', opt3('felt', 'none', 'Oyunun kendi rengi', null)));
   sheetBody.appendChild(optRow('Kostüm', opt3('kostum', 'none', 'Düz kaftan', null)));
@@ -3353,6 +3355,7 @@ const FACE_ACC = ['gozluk', 'biyik', 'gunes', 'pipo'];
 const BODY = [[52, 160], [148, 160], [210, 300], [-10, 300]];
 function drawKostum(c, k) {
   if (!k || k === 'none' || !ITEM[k]) return;
+  if (drawKostum2(c, k)) return;
   seed(1200 + k.length * 7); const bd = sub(BODY, 14, true);
   c.save(); trace(c, bd, true, 0); c.clip();
   const fill = col => { c.fillStyle = col; c.fillRect(-20, 150, 240, 160); };
@@ -3390,9 +3393,58 @@ function drawAcc4(c, a) {
 }
 function drawItemIcon4(c, it) {
   if (it.slot === 'kostum') { c.save(); c.translate(18, -112); c.scale(.82, .82); seed(1201); const bd = sub(BODY, 14, true); wash(c, bd, ROBES[0], 2); drawKostum(c, it.id); ink(c, [[60, 162], [100, 205], [140, 162]], false, 4, '#d9a441', 1); c.restore(); return true; }
-  if (it.slot === 'hat' && ['hasir', 'silindir', 'migfer', 'sikke'].includes(it.id)) { c.save(); c.translate(100, 100); c.scale(1.05, 1.05); c.translate(-100, -(HAT_CY[it.id] || 40)); drawHat(c, it.id); c.restore(); return true; }
+  if (it.slot === 'hat' && ['hasir', 'silindir', 'migfer', 'sikke', 'kovboy', 'korsansapka', 'parti', 'kulaklik', 'hale'].includes(it.id)) { c.save(); c.translate(100, 100); c.scale(1.05, 1.05); c.translate(-100, -(HAT_CY[it.id] || 40)); drawHat(c, it.id); c.restore(); return true; }
   if (it.slot === 'acc' && ['atki', 'madalya'].includes(it.id)) { c.save(); c.translate(100, 100); c.scale(1.6, 1.6); c.translate(-100, -205); drawAcc(c, it.id); c.restore(); return true; }
   if (it.slot === 'acc' && FACE_ACC.includes(it.id)) { c.save(); c.translate(15, 5); c.scale(.85, .85); drawKedi(c, false, false, 0); drawAcc(c, it.id); c.restore(); return true; }
+  return false;
+}
+// ---------- kozmetik 4: ikinci kostüm paketi, şapkalar, kürkler ----------
+const NEW_ITEMS4 = [
+  { id: 'k_pijama', name: 'Çizgili Pijama', tier: 0, slot: 'kostum', price: 150 },
+  { id: 'k_tulum', name: 'Usta Tulumu', tier: 0, slot: 'kostum', price: 170 },
+  { id: 'k_karate', name: 'Karate Kıyafeti', tier: 0, slot: 'kostum', price: 180 },
+  { id: 'k_doktor', name: 'Hekim Önlüğü', tier: 1, slot: 'kostum', price: 2300 },
+  { id: 'k_korsan', name: 'Korsan Ceketi', tier: 1, slot: 'kostum', price: 2700 },
+  { id: 'k_pelerin', name: 'Kahraman Pelerini', tier: 1, slot: 'kostum', price: 2900 },
+  { id: 'k_astronot', name: 'Astronot Tulumu', tier: 2, slot: 'kostum', price: 48000 },
+  { id: 'k_kral', name: 'Samur Kürklü Pelerin', tier: 2, slot: 'kostum', price: 54000 },
+  { id: 'bere', name: 'Ressam Beresi', tier: 0, slot: 'hat', price: 120 },
+  { id: 'parti', name: 'Parti Külahı', tier: 0, slot: 'hat', price: 100 },
+  { id: 'kovboy', name: 'Kovboy Şapkası', tier: 1, slot: 'hat', price: 2200 },
+  { id: 'korsansapka', name: 'Korsan Şapkası', tier: 1, slot: 'hat', price: 2500 },
+  { id: 'kulaklik', name: 'Kulaklık', tier: 1, slot: 'hat', price: 1900 },
+  { id: 'hale', name: 'Altın Hale', tier: 2, slot: 'hat', price: 46000 },
+  { id: 'kurk_siyam', name: 'Siyam Kürkü', tier: 0, slot: 'fur', price: 170 },
+  { id: 'kurk_mavi', name: 'Mavi Rus Kürkü', tier: 1, slot: 'fur', price: 2300 },
+  { id: 'kurk_smokin', name: 'Smokin Kedi Kürkü', tier: 1, slot: 'fur', price: 2400 },
+  { id: 'kurk_pembe', name: 'Pembe Pamuk Şeker Kürkü', tier: 2, slot: 'fur', price: 44000 },
+];
+NEW_ITEMS4.forEach(i => { ITEMS.push(i); ITEM[i.id] = i; });
+FURS.push({ name: 'Siyam', p: '#5a4030', b: '#efe2c8', item: 'kurk_siyam' }, { name: 'Mavi Rus', p: null, b: '#9aa6ba', item: 'kurk_mavi' }, { name: 'Smokin', p: '#22222e', p2: '#22222e', b: '#fbf8f2', item: 'kurk_smokin' }, { name: 'Pembe', p: '#f29ac0', b: '#fbe3ee', item: 'kurk_pembe' });
+Object.assign(HAT_CY, { bere: 50, parti: 20, kovboy: 46, korsansapka: 40, kulaklik: 80, hale: 20 });
+function drawKostum2(c, k) {
+  seed(1500 + k.length * 5); const bd = sub(BODY, 14, true);
+  const known = ['k_pijama', 'k_tulum', 'k_karate', 'k_doktor', 'k_korsan', 'k_pelerin', 'k_astronot', 'k_kral']; if (!known.includes(k)) return false;
+  c.save(); trace(c, bd, true, 0); c.clip();
+  const fill = col => { c.fillStyle = col; c.fillRect(-20, 150, 240, 160); };
+  if (k === 'k_pijama') { fill('#cfe3f4'); c.fillStyle = '#5c8fd6'; for (let x = -10; x < 220; x += 20) c.fillRect(x, 150, 7, 160); for (let q = 0; q < 3; q++) { const bt = ell(100, 196 + q * 34, 6, 6, 8); wash(c, bt, '#fbf8f2', .4); ink(c, bt, true, 1.4); } }
+  else if (k === 'k_tulum') { fill('#c0392b'); c.fillStyle = '#fbf8f2'; for (let y = 160; y < 300; y += 16) for (let x = -10 + (y / 16 % 2) * 8; x < 220; x += 16) { c.globalAlpha = .25; c.fillRect(x, y, 8, 8); } c.globalAlpha = 1; const ov = sub([[62, 196], [138, 196], [176, 300], [24, 300]], 8, true); wash(c, ov, '#2a5a9c', 1); ink(c, ov, true, 2.5); for (const sx of [-1, 1]) { ink(c, [[100 + sx * 32, 196], [100 + sx * 40, 160]], false, 8, '#2a5a9c', 1); const bt = ell(100 + sx * 32, 200, 5, 5, 8); wash(c, bt, '#f2cf74', .3); } const pk = rr(82, 226, 36, 28, 4, 8); ink(c, pk, true, 2, '#16386b', 1); }
+  else if (k === 'k_karate') { fill('#fbf8f2'); ink(c, [[70, 160], [118, 250]], false, 4, '#c9c2b0', 1); ink(c, [[130, 160], [82, 250]], false, 4, '#c9c2b0', 1); c.fillStyle = '#16161c'; c.fillRect(-20, 244, 240, 18); const kn = rr(88, 240, 24, 26, 4, 8); wash(c, kn, '#16161c', .5); ink(c, [[94, 264], [86, 292]], false, 7, '#16161c', 1); ink(c, [[106, 264], [116, 292]], false, 7, '#16161c', 1); }
+  else if (k === 'k_doktor') { fill('#fbf8f2'); const sh = sub([[82, 160], [118, 160], [100, 214]], 6, true); wash(c, sh, '#8fd0c8', 1); ink(c, sh, true, 2); ink(c, [[100, 214], [100, 300]], false, 2, '#c9c2b0', 1); ink(c, [[74, 162], [70, 214], [96, 232], [122, 214], [126, 162]], false, 4, '#34343f', 1.5); const st = ell(96, 238, 9, 9, 10); wash(c, st, '#c8d0d8', .4); ink(c, st, true, 2); const pk = rr(126, 232, 34, 30, 4, 8); ink(c, pk, true, 2, '#c9c2b0', 1); c.fillStyle = '#c0392b'; c.fillRect(138, 240, 10, 3.5); c.fillRect(141.2, 236.5, 3.5, 10); }
+  else if (k === 'k_korsan') { fill('#3a1c1c'); const sh = sub([[76, 160], [124, 160], [112, 300], [88, 300]], 6, true); wash(c, sh, '#fbf8f2', 1); c.fillStyle = '#c0392b'; for (let y = 172; y < 300; y += 22) c.fillRect(80, y, 40, 9); for (const sg of [-1, 1]) { ink(c, [[100 + sg * 24, 160], [100 + sg * 14, 300]], false, 4, '#d9a441', 1); for (let q = 0; q < 4; q++) { const bt = ell(100 + sg * (36 + q * 3), 184 + q * 28, 5, 5, 8); wash(c, bt, '#f2cf74', .4); ink(c, bt, true, 1.2); } } c.fillStyle = '#16161c'; c.fillRect(-20, 250, 240, 14); const bk = rr(90, 246, 20, 22, 3, 8); ink(c, bk, true, 3, '#f2cf74', 1); }
+  else if (k === 'k_pelerin') { fill('#1f4e9c'); const em = ell(100, 216, 30, 24, 14); wash(c, em, '#f2cf74', .6); ink(c, em, true, 2.5); c.save(); c.translate(84, 196); c.scale(.16, .16); drawNazar(c); c.restore(); for (const sg of [-1, 1]) { const cp = sub([[100 + sg * 44, 160], [100 + sg * 130, 160], [100 + sg * 130, 300], [100 + sg * 70, 300]], 8, true); wash(c, cp, '#c0392b', 1); ink(c, cp, true, 2.5); } c.fillStyle = '#f2cf74'; c.fillRect(-20, 262, 240, 12); }
+  else if (k === 'k_astronot') { fill('#eef1f4'); hatch(c, bd, .2, 12, '#9aa6ba', .3); const ch = rr(70, 190, 60, 44, 8, 10); wash(c, ch, '#c8d0d8', 1); ink(c, ch, true, 2.5); [['#c0392b', 80], ['#2a7a5a', 96], ['#1f4e9c', 112]].forEach(([col, x]) => { c.fillStyle = col; c.fillRect(x, 200, 9, 9); }); ink(c, [[78, 222], [122, 222]], false, 3, '#6a747e', 1); const rg = rr(56, 158, 88, 16, 8, 10); wash(c, rg, '#c8d0d8', 1); ink(c, rg, true, 2.5); c.fillStyle = '#c0392b'; c.fillRect(-20, 268, 240, 8); const fl = rr(150, 200, 26, 18, 2, 6); wash(c, fl, '#c0392b', .4); ink(c, fl, true, 1.4); const st = star4(163, 209, 5); wash(c, st, '#fbf8f2', .3); }
+  else if (k === 'k_kral') { fill('#6a1b4a'); for (const sg of [-1, 1]) { const fr = sub([[100 + sg * 6, 160], [100 + sg * 44, 160], [100 + sg * 66, 300], [100 + sg * 22, 300]], 8, true); wash(c, fr, '#fbf8f2', 1); ink(c, fr, true, 2); c.fillStyle = '#16161c'; for (let q = 0; q < 6; q++) { c.beginPath(); c.ellipse(100 + sg * (26 + q * 4), 174 + q * 22, 3, 5, 0, 0, 7); c.fill(); } } const br = star4(100, 176, 12); wash(c, br, '#f2cf74', .5); ink(c, br, true, 1.6); c.fillStyle = '#f2cf74'; for (let q = 0; q < 5; q++) { c.beginPath(); c.arc(-4 + q * 8, 200 + q * 22, 3, 0, 7); c.arc(204 - q * 8, 200 + q * 22, 3, 0, 7); c.fill(); } }
+  c.restore(); ink(c, bd, true, 3.5); return true;
+}
+function drawHat5(c, h) {
+  seed(1600 + h.length);
+  if (h === 'bere') { const b = sub([[54, 66], [62, 36], [100, 22], [144, 34], [156, 58], [120, 70], [80, 72]], 10, true); wash(c, b, '#b02a22', 1.5); ink(c, b, true, 3); ink(c, [[100, 24], [104, 10]], false, 4, '#7a1812', 1); return true; }
+  if (h === 'parti') { const p = sub([[68, 72], [100, -30], [132, 72]], 8, true); wash(c, p, '#2aa3a0', 1.5); c.save(); trace(c, p, true, 0); c.clip(); c.fillStyle = '#f2cf74'; for (let y = -20; y < 80; y += 22) for (let x = 60 + (y / 22 % 2) * 12; x < 140; x += 24) { c.beginPath(); c.arc(x, y, 5, 0, 7); c.fill(); } c.restore(); ink(c, p, true, 3); const pm = ell(100, -32, 11, 11, 12); wash(c, pm, '#cf4b32', .6); ink(c, pm, true, 2); const bn = rr(64, 62, 72, 12, 5, 10); wash(c, bn, '#cf4b32', .6); ink(c, bn, true, 2); return true; }
+  if (h === 'kovboy') { const br = sub([[14, 56], [50, 70], [100, 74], [150, 70], [186, 56], [160, 78], [100, 86], [40, 78]], 10, true); wash(c, br, '#8a5a2a', 1.5); ink(c, br, true, 3); const cr = sub([[64, 70], [66, 26], [86, 14], [100, 24], [114, 14], [134, 26], [136, 70]], 10, true); wash(c, cr, '#9a6a36', 1.5); ink(c, cr, true, 3); const bn = rr(64, 54, 72, 12, 3, 10); wash(c, bn, '#3a2a1c', .6); ink(c, bn, true, 1.6); const st = star4(100, 60, 7); wash(c, st, '#f2cf74', .3); return true; }
+  if (h === 'korsansapka') { const b = sub([[30, 66], [56, 30], [100, 8], [144, 30], [170, 66], [100, 56]], 10, true); wash(c, b, '#16161c', 1.5); ink(c, b, true, 3); ink(c, [[38, 62], [100, 50], [162, 62]], false, 3, '#d9a441', 1); const sk = ell(100, 32, 11, 10, 10); wash(c, sk, '#fbf8f2', .4); ink(c, sk, true, 1.6); ink(c, [[86, 44], [114, 22]], false, 3, '#fbf8f2', .6); ink(c, [[114, 44], [86, 22]], false, 3, '#fbf8f2', .6); return true; }
+  if (h === 'kulaklik') { ink(c, [[44, 110], [50, 62], [100, 40], [150, 62], [156, 110]], false, 7, '#22222e', 1.5); for (const x of [40, 160]) { const e = ell(x, 114, 16, 24, 14); wash(c, e, '#c0392b', 1); ink(c, e, true, 3); } return true; }
+  if (h === 'hale') { c.save(); c.globalAlpha = .35; const g = ell(100, 18, 54, 16, 20); wash(c, g, '#fff1b0', 2); c.restore(); ink(c, ell(100, 18, 46, 12, 20), true, 7, '#f2cf74', 1); ink(c, ell(100, 18, 46, 12, 20), true, 2, '#b8862b', 1); return true; }
   return false;
 }
 // ---------- yeni şapka/aksesuar çizimleri ----------
@@ -3527,7 +3579,7 @@ function renderCarsi() {
   sheetBody.appendChild(el('h3', { text: 'Terzi · kostümler' }));
   sheetBody.appendChild(el('p', { class: 'hint', text: 'Kostümler her zaman burada satılır. Aldığın kostümü Karakter sekmesinden giy.' }));
   const g3 = el('div', { class: 'grid' });
-  ITEMS.filter(i => i.slot === 'kostum' && i.tier <= 2).forEach(it => { const tr = TIERS[it.tier], has = owns(it.id), worn = AV.kostum === it.id; g3.appendChild(el('div', { class: 'item', style: '--tc:' + tr.col }, [el('img', { src: iconURL('item', it.id, 96), alt: '' }), el('b', { text: it.name }), el('small', { text: tr.name }), el('div', { class: 'acts' }, [has ? el('button', { text: worn ? 'Çıkar' : 'Giy', on: () => { setAV({ kostum: worn ? 'none' : it.id }); renderSheet(); } }) : el('button', { class: 'sell', text: 'Al · ' + shopPrice(it).toLocaleString('tr-TR'), on: () => { if (balance < shopPrice(it)) { note('Akçen yetmiyor.'); return; } setBalance(balance - shopPrice(it)); giveItem(it.id, 0); setAV({ kostum: it.id }); renderSheet(); } })])])); });
+  ITEMS.filter(i => i.slot === 'kostum' && i.tier <= 2).sort((a, b) => a.tier - b.tier).forEach(it => { const tr = TIERS[it.tier], has = owns(it.id), worn = AV.kostum === it.id; g3.appendChild(el('div', { class: 'item', style: '--tc:' + tr.col }, [el('img', { src: iconURL('item', it.id, 96), alt: '' }), el('b', { text: it.name }), el('small', { text: tr.name }), el('div', { class: 'acts' }, [has ? el('button', { text: worn ? 'Çıkar' : 'Giy', on: () => { setAV({ kostum: worn ? 'none' : it.id }); renderSheet(); } }) : el('button', { class: 'sell', text: 'Al · ' + shopPrice(it).toLocaleString('tr-TR'), on: () => { if (balance < shopPrice(it)) { note('Akçen yetmiyor.'); return; } setBalance(balance - shopPrice(it)); giveItem(it.id, 0); setAV({ kostum: it.id }); renderSheet(); } })])])); });
   sheetBody.appendChild(g3);
   sheetBody.appendChild(el('p', { class: 'hint', text: 'Tezgâh her gün yenilenir. Sandıktan çıkan eşyalar çantana gider; istersen satabilir ya da koleksiyona koyabilirsin.' }));
 }
