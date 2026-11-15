@@ -756,12 +756,8 @@ function drawMachine(t) {
   seed(17);
   const pn = rr(RX, 1060, RW, 82, 14, 30); wash(c, pn, '#f4e8cc', 2); ink(c, pn, true, 3);
   ink(c, [[RX + 260, 1068], [RX + 260, 1134]], false, 2, INK, 1); ink(c, [[RX + 500, 1068], [RX + 500, 1134]], false, 2, INK, 1);
-  inkText(c, 'AKÇE', RX + 20, 1080, 24, '#6a1b24', { align: 'left', outline: false, font: '"Caveat"', weight: 700 });
-  inkText(c, Math.round(dispBal).toLocaleString('tr-TR'), RX + 20, 1114, 44, INK, { align: 'left', outline: false });
-  inkText(c, 'BAHİS', RX + 380, 1080, 24, '#6a1b24', { outline: false, font: '"Caveat"', weight: 700 });
-  inkText(c, String(BETS[betIdx]), RX + 380, 1114, 44, INK, { outline: false });
-  inkText(c, 'KAZANÇ', RX + RW - 20, 1080, 24, '#6a1b24', { align: 'right', outline: false, font: '"Caveat"', weight: 700 });
-  inkText(c, Math.round(dispWin).toLocaleString('tr-TR'), RX + RW - 20, 1114, 44, dispWin > 0 ? '#b8321f' : INK, { align: 'right', outline: false });
+  { const o = { outline: false, fit: true }, cell = (txt, x, w, al, col) => { let fs = 42; c.font = `${fs}px "Caveat Brush", cursive`; const mw = c.measureText(txt).width; if (mw > w) fs *= w / mw; inkText(c, txt, x, 1103, fs, col, Object.assign({ align: al }, o)); };
+    cell(Math.round(dispBal).toLocaleString('tr-TR') + ' akçe', RX + 18, 228, 'left', INK); cell('bahis ' + BETS[betIdx], RX + 380, 220, 'center', INK); cell('kazanç ' + Math.round(dispWin).toLocaleString('tr-TR'), RX + RW - 18, 228, 'right', dispWin > 0 ? '#b8321f' : INK); }
   // konsol
   seed(18);
   const co = rr(100, 1160, 800, 240, 24, 30); wash(c, co, '#b8862b', 2); hatch(c, rr(100, 1330, 800, 70, 20), .2, 7, INK, .22); ink(c, co, true, 3.5);
@@ -1180,7 +1176,7 @@ function updateTrans(t) {
     if (scene === 'barbut' && bb.mode !== 'online' && (bb.state === 'bet' || bb.state === 'over')) { bb.state = 'bet'; bb.call = ''; bb.hist = []; banner('Barbut', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'batak' && bt.mode !== 'online' && !['bid', 'trump', 'play'].includes(bt.state)) { bt.state = 'bet'; bt.pts = null; banner('Batak', 'Bahsini seç, DAĞIT\'a bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'tombala' && tb.mode !== 'online' && tb.state !== 'play') { tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; banner('Tombala', 'Kart sayını ve bahsini seç', { dur: 2200, col: '#1f4e9c', y: .3 }); }
-    { const seen = store.get('seenScenes', {}); if (scene !== 'lobby' && !seen[scene] && RULES[scene]) { seen[scene] = 1; store.set('seenScenes', seen); setTimeout(() => { if (scene === trans.to) banner('İlk kez mi?', 'Kurallar için üstteki ? düğmesine dokun', { dur: 3200, col: '#2a7a5a', top: true }); }, 2600); } }
+    { const seen = store.get('seenScenes', {}); if (scene !== 'lobby' && !seen[scene] && RULES[scene]) { seen[scene] = 1; store.set('seenScenes', seen); setTimeout(() => { if (scene === trans.to) banner('Kurallar için ? düğmesi', null, { dur: 2200, col: '#2a7a5a', top: true }); }, 2600); } }
     if (scene === 'yaris' && yr.state !== 'run') { yr.state = 'bet'; yr.pick = -1; banner('Kedi Yarışı', 'Kedini seç, bahsini koy', { dur: 2200, col: '#1f4e9c', top: true }); }
     if (scene === 'rulet') banner('Rulet', 'Tahtaya fiş koy, ÇEVİR\'e bas', { dur: 2200, col: '#1f4e9c', top: true });
     if (scene === 'slot') banner('Bol şans!', 'Kolu aşağı çek ya da ÇEVİR\'e bas', { dur: 2400, col: '#1f4e9c' });
@@ -1836,7 +1832,14 @@ function drawCornerBal() {
   const w = 150, x = W - w - 12 - SAFE.r, y = BACK.y, p = rr(x, y, w, 48, 10, 14); wash(ctx, p, '#b8862b', 1); ink(ctx, p, true, 2.5, INK, 1);
   inkText(ctx, Math.round(dispBal).toLocaleString('tr-TR') + ' akçe', x + w / 2, y + 25, 26, INK, { outline: false });
 }
-function statusTag(x, y, txt, w = 360) { if (spect() && /^(Sıra sende|Sıran|Sen )/.test(String(txt))) txt = 'İzliyorsun · sıra: ' + (mpTurnUid() ? mpName(mpTurnUid()) : '…'); seed(68); const hs = Math.max(1, (MINTXT * 1.5) / (34 * Math.max(.01, S))), hh = 60 * Math.min(1.7, hs); const p = rr(x - w / 2, y - hh / 2, w, hh, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5); let fs = 34 * Math.min(1.7, hs); ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(txt).width; if (mw > w - 30) fs *= (w - 30) / mw; inkText(ctx, txt, x, y + 2, fs, INK, { outline: false, font: '"Caveat"', weight: 700, fit: true }); }
+function statusTag(x, y, txt, w = 360) {
+  if (spect() && /^(Sıra sende|Sıran|Sen )/.test(String(txt))) txt = 'İzliyorsun · sıra: ' + (mpTurnUid() ? mpName(mpTurnUid()) : '…');
+  seed(68); const hs = Math.min(1.7, Math.max(1, (MINTXT * 1.5) / (34 * Math.max(.01, S)))); let fs = 34 * hs, lines = [String(txt)];
+  ctx.font = `700 ${fs}px "Caveat", cursive`;
+  if (ctx.measureText(txt).width > w - 30) { const words = String(txt).split(' '); let best = null; for (let k = 1; k < words.length; k++) { const a = words.slice(0, k).join(' '), b = words.slice(k).join(' '), m = Math.max(ctx.measureText(a).width, ctx.measureText(b).width); if (!best || m < best.m) best = { m, a, b }; } if (best) { lines = [best.a, best.b]; if (best.m > w - 30) fs *= (w - 30) / best.m; } else fs *= (w - 30) / ctx.measureText(txt).width; }
+  const lh = fs * 1.05, hh = Math.max(60 * hs, lines.length * lh + 22), p = rr(x - w / 2, y - hh / 2, w, hh, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5);
+  lines.forEach((ln, k) => inkText(ctx, ln, x, y + 2 + (k - (lines.length - 1) / 2) * lh, fs, INK, { outline: false, font: '"Caveat"', weight: 700, fit: true }));
+}
 function betRow(set, ids, t, label) {
   btnDraw(ids[0], '#2aa3a0', '−', t, 62, set); btnDraw(ids[1], '#2aa3a0', '+', t, 58, set);
   const a = set[ids[0]], b = set[ids[1]];
@@ -4055,7 +4058,7 @@ function BTL() {
     P(BTB.btPass, 1500, 790, 55); P(BTB.btBidM, 1630, 790, 45); P(BTB.btBidP, 1830, 790, 45); P(BTB.btBid, 1760, 960, 75);
     P(BTB.btS0, 1660, 790, 60); P(BTB.btS1, 1820, 790, 60); P(BTB.btS2, 1660, 950, 60); P(BTB.btS3, 1820, 950, 60);
     return { table: [380, 330, 1160, 530], trickC: { x: 960, y: 590 }, off: [[0, 110], [160, 0], [0, -110], [-160, 0]], seat: [{ x: 960, y: 960 }, { x: 1700, y: 520 }, { x: 960, y: 230 }, { x: 220, y: 520 }],
-      cats: [null, [1700, 520, .7, -.12], [960, 230, .6, 0], [220, 520, .7, .12]], lab: [null, [1700, 720], [960, 380], [220, 720]], hand: { x: 960, y: 960, sp: 90 }, status: { x: 190, y: 830, w: 340 }, info: { x: 620, y: 385 } };
+      cats: [null, [1700, 520, .7, -.12], [960, 230, .6, 0], [220, 520, .7, .12]], lab: [null, [1700, 372], [960, 380], [220, 372]], hand: { x: 960, y: 960, sp: 90 }, status: { x: 190, y: 800, w: 340 }, info: { x: 620, y: 385 } };
   }
   P(BTB.btMinus, 190, 1640); P(BTB.btPlus, 330, 1640); P(BTB.btGo, 730, 1640, 90);
   P(BTB.btPass, 150, 1640, 62); P(BTB.btBidM, 330, 1640, 50); P(BTB.btBidP, 530, 1640, 50); P(BTB.btBid, 780, 1640, 80);
