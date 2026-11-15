@@ -27,6 +27,13 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - **Tombala:** 1-90 pullar torbadan çekilir; 1 ya da 2 kart al. Çinko (bahis kadar), İkinci Çinko (2 katı), Tombala (4 katı). Kediler Fındık, Tarçın ve Pamuk toplam 7 kartla oynar; HIZLI düğmesi çekilişi hızlandırır. Çok oyunculuda 2-4 kişi aynı torbadan oynar.
 - **Kazı Kazan:** 50 / 250 / 1000 akçelik bilet, parmakla kazı; üç aynı resim ×1'den ×100'e kadar.
 
+## Domino
+- 28 taş, 7'şer dağıtılır; uçlara uyan taşı koy, elini ilk bitiren kazanır. Uyan taş yoksa ortadan çek.
+
+## Görüntü ve animasyon
+- **Yüksek kalite (2K):** çizim çözünürlüğü ekranın uzun kenarında 2560 piksele kadar çıkar, arka plan daha keskin çizilir. Cihaz zorlanırsa oyun kendiliğinden hızlı moda geçer; Kurallar ve Ayarlar'dan değiştirilebilir.
+- Animasyonlar: salonda oyun kartlarının sırayla belirmesi, büyük kazançta konfeti, bakiye değişince uçan +/− sayılar, ana düğmede halka, Batak'ta kart dağıtma, havada süzülen ışık zerreleri.
+
 ## Kedi Yarışı
 - Beş kedi yarışır; her yarışta oranlar değişir (×1,5 – ×15). Kedini seç, bahsini koy; birinci gelirse bahsin oranla çarpılır.
 
