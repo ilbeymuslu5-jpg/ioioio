@@ -27,7 +27,11 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - **Tombala:** 1-90 pullar torbadan çekilir; 1 ya da 2 kart al. Çinko (bahis kadar), İkinci Çinko (2 katı), Tombala (4 katı). Kediler Fındık, Tarçın ve Pamuk toplam 7 kartla oynar; HIZLI düğmesi çekilişi hızlandırır. Çok oyunculuda 2-4 kişi aynı torbadan oynar.
 - **Kazı Kazan:** 50 / 250 / 1000 akçelik bilet, parmakla kazı; üç aynı resim ×1'den ×100'e kadar.
 
+## Kedi Yarışı
+- Beş kedi yarışır; her yarışta oranlar değişir (×1,5 – ×15). Kedini seç, bahsini koy; birinci gelirse bahsin oranla çarpılır.
+
 ## İlerleme ve Çarşı
+- **Çarşı** oyun listesinden ayrıdır (salonun alt çubuğunda): sandıklar, günlük çark, günün tezgâhı ve her zaman açık **Terzi** (kostümler).
 - Oynadıkça XP ve **seviye** (her seviyede akçe + Bakır Sandık), oyun istatistikleri.
 - **Günlük görevler** (3 görev) ve seri büyüyen **günlük hediye**.
 - **VIP bahisler:** 1.000 / 2.500 / 5.000 akçelik bahisler Seviye 5 / 10 / 15'te açılır.
@@ -39,6 +43,8 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - **Zorluk:** Kurallar sekmesinden kedileri **Kolay** ya da **Usta** yap; Usta modda kazanınca daha fazla XP.
 
 ## Karakter, çanta ve koleksiyon
+- **Kostümler:** Denizci Forması, İşlemeli Cepken, Mahalle Takımı Forması, Kahveci Önlüğü, Derviş Hırkası, Yeniçeri Üniforması, Smokin, Efe Kıyafeti, Sipahi Zırhı, Lale Desenli Sultan Kaftanı, Altın Sırma Kaftan. Yeni şapkalar (takke, hasır şapka, aşçı kepi, sikke, silindir, miğfer) ve aksesuarlar (gözlük, güneş gözlüğü, pala bıyık, atkı, pipo, madalya).
+- **Profil kartı:** sıralamada ya da salondakiler listesinde bir oyuncuya dokun; kostümüyle görürsün, 100 / 500 akçe hediye edebilirsin.
 - **Okey taş takımları** (Yeşim, Sedef, Kehribar), **zarlar** (Kırmızı, Akik, Altın), Sorguçlu Sarık ve Kehribar Tesbih. Bazı başarımlar özel **unvan** kazandırır (Pişti Kurdu, Okey Ustası, İhale Kralı, Mars Ustası).
 - Yeni kozmetik türleri: **kart arkası**, **masa çuhası**, çok oyunculuda adının yanında görünen **unvan**; yeni şapka, aksesuar ve kürkler.
 - **Karakter:** sen de bir kedisin: kürk, göz, şapka, aksesuar ve kaftan rengini seç. Çok oyunculu masalarda diğerleri seni böyle görür.

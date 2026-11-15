@@ -449,7 +449,7 @@ function pluck(freq, delay = 0, vol = .1) {
 const HICAZ = [293.7, 311.1, 370, 392, 440, 466.2, 523.3, 587.3, 622.3, 740];
 function melody(seq, step = .13) { seq.forEach((n, i) => pluck(HICAZ[n], i * step)); }
 // ---------- arka plan müziği (hicaz, prosedürel) ----------
-let MUSIC = store.get('music', true), musBar = 0;
+let MUSIC = store.get('music', true), musBar = 0, SWAY = store.get('sway', true);
 const MUS_PHR = [[0, 2, 3, 4, 3, 2, 1, 0], [4, 5, 4, 3, 2, 3, 2, 1], [7, 6, 5, 4, 5, 4, 3, 2], [2, 3, 4, 2, 1, 0, 1, 0], [4, 4, 5, 7, 6, 5, 4, 3], [3, 2, 1, 2, 3, 2, 1, 0]];
 function musicTick() {
   if (!MUSIC || muted || document.hidden || !AC || AC.state !== 'running') return;
@@ -511,7 +511,7 @@ function getLayers(name) {
   const key = `${W}x${H}|${DPR}|${S.toFixed(5)}|${CAM0.x},${CAM0.y}|${LAND}|${paintingOK}|${AV.felt}`;
   let e = layerCache[name];
   if (!e || e.key !== key) {
-    const fn = { bg: drawBackground, fg: drawTable, bj: drawBJTable, tv: drawTavlaTable, ok: drawOkeyTable, bb: drawBarbutTable, ps: drawPistiTable, bt: drawBatakTable, tb: drawTombalaTable, rl: drawRuletTable }[name], o = BOIL;
+    const fn = { bg: drawBackground, fg: drawTable, bj: drawBJTable, tv: drawTavlaTable, ok: drawOkeyTable, bb: drawBarbutTable, ps: drawPistiTable, bt: drawBatakTable, tb: drawTombalaTable, yr: drawYarisTable, rl: drawRuletTable }[name], o = BOIL;
     e = { key, l: [0, 1].map(b => { BOIL = b; return renderLayer(fn, name === 'bg' ? 1.1 : 0, name === 'bg'); }) }; BOIL = o; layerCache[name] = e;
   }
   return e.l;
@@ -524,7 +524,7 @@ function readSafe() {
 }
 function sceneView(sc) {
   if (!LAND) return { cx: 500, cy: 900, w: 1000, h: 1800 };
-  return ({ lobby: { cx: 1000, cy: 500, w: 2000, h: 900 }, pisti: { cx: 960, cy: 640, w: 1920, h: 980 }, batak: { cx: 960, cy: 640, w: 1920, h: 980 }, tombala: { cx: 960, cy: 640, w: 1920, h: 980 }, barbut: { cx: 880, cy: 712, w: 2020, h: 1030 }, rulet: { cx: 1000, cy: 640, w: 2000, h: 1040 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 712, w: 2020, h: 1030 }, okey: { cx: 900, cy: 655, w: 1580, h: 1100 } })[sc];
+  return ({ lobby: { cx: 1000, cy: 500, w: 2000, h: 900 }, pisti: { cx: 960, cy: 640, w: 1920, h: 980 }, batak: { cx: 960, cy: 640, w: 1920, h: 980 }, tombala: { cx: 960, cy: 640, w: 1920, h: 980 }, yaris: { cx: 960, cy: 640, w: 1920, h: 980 }, barbut: { cx: 880, cy: 712, w: 2020, h: 1030 }, rulet: { cx: 1000, cy: 640, w: 2000, h: 1040 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 712, w: 2020, h: 1030 }, okey: { cx: 900, cy: 655, w: 1580, h: 1100 } })[sc];
 }
 function setView(sc) {
   const v = sceneView(sc), nS = Math.min(W / v.w, H / v.h), changed = Math.abs(nS - S) > 1e-6;
@@ -1081,6 +1081,7 @@ cv.addEventListener('pointerdown', e => {
   if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : lb === 'gorev' ? 'gorev' : lb === 'carsi' ? 'carsi' : 'cok'); return; } LOB.drag = { id: e.pointerId, y0: w.y, sy0: LOB.sy, moved: false, last: w.y, lt: performance.now(), x: e.clientX, y: e.clientY }; LOB.v = 0; try { cv.setPointerCapture(e.pointerId); } catch { } return; }
   if (scene === 'batak') { btDown(w); return; }
   if (scene === 'tombala') { tbDown(w); return; }
+  if (scene === 'yaris') { yrDown(w); return; }
   if (scene === 'bj') { bjDown(w); return; }
   if (scene === 'tavla') { tvDown(w); return; }
   if (scene === 'okey') { okDown(w, e); return; }
@@ -1152,7 +1153,7 @@ const SIGNS = [
   { id: 'slot', title: 'Padişah Slot', sub: 'Kolu çek, şansını dene' }, { id: 'bj', title: 'Yirmi Bir', sub: 'Kedi krupiyeye karşı' },
   { id: 'okey', title: 'Okey', sub: 'Üç kediye karşı' }, { id: 'tavla', title: 'Tavla', sub: 'Kahveci Reis\'e karşı' },
   { id: 'pisti', title: 'Pişti', sub: 'Minnoş\'a karşı kart' }, { id: 'barbut', title: 'Barbut', sub: 'Zarlar konuşsun' },
-  { id: 'rulet', title: 'Rulet', sub: 'Top nerede duracak?' }, { id: 'batak', title: 'Batak', sub: 'Üç kediyle ihale' }, { id: 'tombala', title: 'Tombala', sub: 'Torbadan ne çıkacak?' }, { id: 'kazi', title: 'Kazı Kazan', sub: 'Kazı, üç aynısını bul' },
+  { id: 'rulet', title: 'Rulet', sub: 'Top nerede duracak?' }, { id: 'batak', title: 'Batak', sub: 'Üç kediyle ihale' }, { id: 'tombala', title: 'Tombala', sub: 'Torbadan ne çıkacak?' }, { id: 'yaris', title: 'Kedi Yarışı', sub: 'Kedini seç, koştur' }, { id: 'kazi', title: 'Kazı Kazan', sub: 'Kazı, üç aynısını bul' },
 ].map((s, i) => Object.assign(s, { x: 0, y: 0, w: 456, h: 220, k: 1, rope: i * .7, row: 0, col: 0 }));
 const ONLINE_GAMES = ['bj', 'okey', 'tavla', 'pisti', 'barbut', 'batak', 'tombala'];
 const trans = { t0: 0, to: null, done: true, x: 0, y: 0 };
@@ -1180,6 +1181,7 @@ function updateTrans(t) {
     if (scene === 'batak' && bt.mode !== 'online' && !['bid', 'trump', 'play'].includes(bt.state)) { bt.state = 'bet'; bt.pts = null; banner('Batak', 'Bahsini seç, DAĞIT\'a bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'tombala' && tb.mode !== 'online' && tb.state !== 'play') { tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; banner('Tombala', 'Kart sayını ve bahsini seç', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     { const seen = store.get('seenScenes', {}); if (scene !== 'lobby' && !seen[scene] && RULES[scene]) { seen[scene] = 1; store.set('seenScenes', seen); setTimeout(() => { if (scene === trans.to) banner('İlk kez mi?', 'Kurallar için üstteki ? düğmesine dokun', { dur: 3200, col: '#2a7a5a', top: true }); }, 2600); } }
+    if (scene === 'yaris' && yr.state !== 'run') { yr.state = 'bet'; yr.pick = -1; banner('Kedi Yarışı', 'Kedini seç, bahsini koy', { dur: 2200, col: '#1f4e9c', top: true }); }
     if (scene === 'rulet') banner('Rulet', 'Tahtaya fiş koy, ÇEVİR\'e bas', { dur: 2200, col: '#1f4e9c', top: true });
     if (scene === 'slot') banner('Bol şans!', 'Kolu aşağı çek ya da ÇEVİR\'e bas', { dur: 2400, col: '#1f4e9c' });
     trans.x = W / 2; trans.y = H / 2; mpPresence();
@@ -1196,6 +1198,7 @@ function drawIris(t) {
 }
 async function leaveGame(x, y) {
   if (!trans.done) return;
+  if (scene === 'yaris' && yr.state === 'run') { banner('Yarış sürüyor', 'Bitişi bekle', { dur: 1200, col: '#1f4e9c', top: true }); return; }
   if (scene === 'rulet' && rl.state === 'spin') { banner('Top dönüyor', 'Sonucu bekle', { dur: 1200, col: '#1f4e9c', top: true }); return; }
   if (scene === 'rulet' && rl.state === 'bet' && rlTotal()) { setBalance(balance + rlTotal()); rl.bets = {}; go('lobby', x, y); return; }
   if (scene === 'slot' && state !== 'idle') { banner('Önce çevirme bitsin', state.startsWith('bonus') ? 'Çarkı çevir' : null, { dur: 1300, col: '#1f4e9c', top: true }); return; }
@@ -1214,7 +1217,7 @@ async function leaveGame(x, y) {
   if (scene === 'bj' && bj.mode !== 'online' && bj.state !== 'bet' && bj.state !== 'result') { if (bj.state === 'play') { bj.state = 'bet'; bjResetHands(); } else bj.abandon = true; }
   go('lobby', x, y);
 }
-function canLeave() { if (MP.code) return true; return scene === 'slot' ? state === 'idle' : scene === 'bj' ? (bj.state === 'bet' || bj.state === 'result') : scene === 'tavla' ? (tv.state === 'bet' || tv.state === 'over') : scene === 'okey' ? (ok.state === 'bet' || ok.state === 'over') : scene === 'pisti' ? (ps.state === 'bet' || ps.state === 'over') : scene === 'barbut' ? (bb.state === 'bet' || bb.state === 'over') : scene === 'rulet' ? rl.state !== 'spin' && !rlTotal() || rl.state === 'result' : scene === 'batak' ? bt.state === 'bet' || bt.state === 'over' : scene === 'tombala' ? tb.state !== 'play' : false; }
+function canLeave() { if (MP.code) return true; return scene === 'slot' ? state === 'idle' : scene === 'bj' ? (bj.state === 'bet' || bj.state === 'result') : scene === 'tavla' ? (tv.state === 'bet' || tv.state === 'over') : scene === 'okey' ? (ok.state === 'bet' || ok.state === 'over') : scene === 'pisti' ? (ps.state === 'bet' || ps.state === 'over') : scene === 'barbut' ? (bb.state === 'bet' || bb.state === 'over') : scene === 'rulet' ? rl.state !== 'spin' && !rlTotal() || rl.state === 'result' : scene === 'batak' ? bt.state === 'bet' || bt.state === 'over' : scene === 'tombala' ? tb.state !== 'play' : scene === 'yaris' ? yr.state !== 'run' : false; }
 function drawBack(t) {
   if (scene === 'lobby' && !LOBBYMODE) return;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
@@ -1225,7 +1228,7 @@ function drawBack(t) {
 }
 const LOB = { cat: store.get('lobCat', 'all'), sy: 0, v: 0, drag: null };
 const LOB_CATS = [['all', 'Tümü'], ['kart', 'Kart'], ['masa', 'Masa'], ['sans', 'Şans']];
-const GAME_CAT = { bj: 'kart', pisti: 'kart', batak: 'kart', okey: 'masa', tavla: 'masa', tombala: 'masa', slot: 'sans', rulet: 'sans', barbut: 'sans', kazi: 'sans', carsi: 'carsi' };
+const GAME_CAT = { bj: 'kart', pisti: 'kart', batak: 'kart', okey: 'masa', tavla: 'masa', tombala: 'masa', yaris: 'sans', slot: 'sans', rulet: 'sans', barbut: 'sans', kazi: 'sans', carsi: 'carsi' };
 const CAT_COL = { kart: '#7a1e28', masa: '#1f4e9c', sans: '#2a6b4a', carsi: '#8a5a12' };
 function LOBL() {
   if (LAND) return { titleY: 120, subY: 196, coinY: 0, chipY: 430, top: 470, bot: 955, cols: 4, tw: 440, th: 330, x0: 290, dx: 470, gap: 24, lx: 1000 };
@@ -1302,6 +1305,7 @@ function drawSignArt(id, t, i) {   // eski çizim çerçevesi: x -190..190, y 16
   else if (id === 'rulet') { const sp = rlWheelSpr[BOIL % 2]; if (sp) { ctx.save(); ctx.translate(0, 235); ctx.rotate(t * .0006); ctx.drawImage(sp, -95, -95, 190, 190); ctx.restore(); } }
   else if (id === 'batak') { [['A', 'maca', -.36], ['K', 'maca', -.12], ['Q', 'maca', .12], ['J', 'maca', .36]].forEach(([r, su, rot], k) => { ctx.save(); ctx.translate(-75 + k * 50, 250 + Math.abs(k - 1.5) * 8 + (k === 0 ? bob(0) * .6 : 0)); ctx.rotate(rot); ctx.drawImage(cardSprite(r + su, c => drawCardFace(c, r, su)), -50, -70, 100, 140); ctx.restore(); }); }
   else if (id === 'tombala') { [[23, -110, 250], [7, 0, 225], [61, 110, 250]].forEach(([n, x, y], k) => { seed(1950 + k); const yy = y + bob(k); const b = ell(x, yy, 52, 50, 20); wash(ctx, b, '#c0392b', 1); ink(ctx, b, true, 3); const inr = ell(x, yy, 34, 33, 16); wash(ctx, inr, '#fbf1da', .6); inkText(ctx, String(n), x, yy + 3, 40, INK, { outline: false }); }); }
+  else if (id === 'yaris') { const g = rr(-180, 180, 360, 120, 14, 16); wash(ctx, g, '#4a9a55', 1); ink(ctx, g, true, 3); ink(ctx, [[-180, 240], [180, 240]], false, 2, '#fbf8f2', 1); for (let k = 0; k < 6; k++) { ctx.fillStyle = k % 2 ? '#fbf8f2' : '#22222e'; ctx.fillRect(150, 182 + k * 19.5, 12, 19.5); } YR_CATS.slice(0, 2).forEach((C, k) => drawAvatarMini(-60 + k * 90 + Math.sin(t * .004 + k * 2) * 26, 204 + k * 62, 62, C.av)); }
   else if (id === 'kazi') { ctx.save(); ctx.translate(0, 235); ctx.rotate(-.08 + Math.sin(t * .002) * .03); seed(998); const tk = rr(-150, -70, 300, 140, 12, 16); wash(ctx, tk, '#f4e8cc', 1); ink(ctx, tk, true, 3); const fo = rr(-130, -50, 260, 100, 8, 16); wash(ctx, fo, '#d9a441', 1); hatch(ctx, fo, .6, 8, '#8a5a12', .3); ink(ctx, fo, true, 2); const cl = rr(-120, -40, 110, 80, 8, 12); wash(ctx, cl, '#fbf4e2', 1); const sp = symSprites[2] && symSprites[2][BOIL]; if (sp) ctx.drawImage(sp, -105, -38, 76, 76); ctx.restore(); }
   else if (id === 'carsi') { drawChest(ctx, 0, 240 + bob(0) * .5, 1.25, '#e2b04e'); }
 }
@@ -2861,6 +2865,27 @@ function renderCok() {
   box.appendChild(el('h3', { text: 'Aynı cihazda' }));
   box.appendChild(el('button', { class: 'big', text: 'İki kişilik Tavla (sırayla oynanır)', on: () => { closeSheet(); if (MP.code) mpLeave(); tv.mode = 'local2'; tv.view = 0; tv.state = 'bet'; go('tavla'); } }));
 }
+// ---------- profil kartı ve akçe hediyesi ----------
+function showProfile(uid, av, extra) {
+  const p = note(''), box = document.getElementById('askText'); box.textContent = '';
+  const a = av && typeof av === 'object' ? av : {}, t = titleOf(a);
+  box.appendChild(el('img', { src: iconURL('av', a, 220), alt: '', style: 'display:block;width:170px;height:170px;margin:0 auto' }));
+  box.appendChild(el('div', { text: uid === MP.uid ? 'Sen' : mpName(uid), style: 'font-family:\'Caveat Brush\',cursive;font-size:34px;text-align:center;color:#7a1e28' }));
+  if (t) box.appendChild(el('div', { text: '« ' + t + ' »', style: 'text-align:center;color:#8e44ad;font-size:24px' }));
+  (extra || []).forEach(x => box.appendChild(el('div', { text: x, style: 'text-align:center;font-size:22px' })));
+  if (uid !== MP.uid && MP.room) box.appendChild(el('div', { class: 'bets', style: 'justify-content:center;margin-top:8px' }, [100, 500].map(n => el('button', { text: n + ' akçe hediye et', on: () => giftSend(uid, n) }))));
+  return p;
+}
+function giftSend(uid, amt) {
+  if (!MP.room) return; if (balance < amt + 200) { banner('Akçen yetmiyor', 'Hediye için ' + (amt + 200) + ' akçen olmalı', { dur: 1600, top: true }); return; }
+  const now = Date.now(); if (now - (MP.lastGift || 0) < 5000) { banner('Biraz bekle', null, { dur: 1000, top: true }); return; } MP.lastGift = now;
+  setBalance(balance - amt); MP.room.emit('invite', { to: uid, gift: amt }).catch(() => { }); banner('Hediye gönderildi', mpName(uid) + ' ' + amt + ' akçe aldı', { dur: 1800, top: true, col: '#2a7a5a' }); coinPing(); cloudDirty();
+}
+function giftRecv(m) {
+  const amt = m.data.gift === 500 ? 500 : 100, G = store.get('giftDay', { d: '', n: 0 }); if (G.d !== today()) { G.d = today(); G.n = 0; }
+  if (G.n >= 3000) return; G.n += amt; store.set('giftDay', G);
+  setBalance(balance + amt); lastWin = amt; banner('Hediye geldi!', mpName(m.by) + ' sana ' + amt + ' akçe gönderdi', { dur: 2600, top: true, col: '#2a7a5a' }); spawnCoins(15); coinPing(); cloudDirty();
+}
 // ---------- davet ----------
 function inviteSend(uid, btn) {
   if (!MP.room || !MP.code || !MP.t) return; const now = Date.now(); MP.invAt = MP.invAt || {};
@@ -2869,8 +2894,10 @@ function inviteSend(uid, btn) {
   if (btn) { btn.textContent = 'Gönderildi'; btn.disabled = true; } banner('Davet gönderildi', mpName(uid) + ' masana çağrıldı', { dur: 1500, top: true, col: '#2a7a5a' });
 }
 async function inviteRecv(m) {
-  const d = m && m.data; if (!d || m.isMe || d.to !== MP.uid || MP.code) return;
+  const d = m && m.data; if (!d || m.isMe || d.to !== MP.uid) return;
   try { await mpNames([m.by]); } catch { }
+  if (d.gift) return giftRecv(m);
+  if (MP.code) return;
   const code = String(d.code || ''); if (!/^[A-Z0-9]{5}$/.test(code) || !GNAME[d.game]) return;
   if (document.getElementById('ask').classList.contains('show')) return;
   tone('triangle', 880, .1, .05); tone('triangle', 1320, .14, .05, .12);
@@ -2884,7 +2911,7 @@ function renderPeers(box) {
   box.appendChild(el('div', { class: 'tables' }, list.map(p => {
     const pr = p.presence, uid = pr.uid, tb = typeof pr.table === 'string' && /^[A-Z0-9]{5}$/.test(pr.table) ? pr.table : null;
     const act = MP.code ? (tb === MP.code ? el('small', { text: 'masanda' }) : el('button', { text: 'Davet et', on: e => inviteSend(uid, e.target) })) : tb ? el('button', { text: 'Yanına otur', on: () => { closeSheet(); mpJoin(tb); } }) : el('small', { text: 'salonda' });
-    return el('div', { class: 'trow' }, [el('img', { src: iconURL('av', pr.av && typeof pr.av === 'object' ? pr.av : {}, 56), alt: '', style: 'width:40px;height:40px' }), el('span', { text: mpName(uid) + (tb && !MP.code ? ' · masa ' + tb : '') }), act]);
+    return el('div', { class: 'trow' }, [el('img', { src: iconURL('av', pr.av && typeof pr.av === 'object' ? pr.av : {}, 56), alt: '', style: 'width:40px;height:40px;cursor:pointer', on: () => showProfile(uid, pr.av, [pr.scene && pr.scene !== 'lobby' ? 'Şu an oyunda' : 'Salonda']) }), el('span', { text: mpName(uid) + (tb && !MP.code ? ' · masa ' + tb : '') }), act]);
   })));
 }
 // ---------- Yirmi Bir çevrimiçi ----------
@@ -3099,7 +3126,7 @@ function drawTurnTimer() {
 
 // ---------- ses ve kurallar düğmeleri ----------
 function hudBtns() {
-  const hasBal = ['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak', 'tombala'].includes(scene) || (scene === 'bj' && bj.mode === 'online'), y = BACK.y + 24, base = W - 12 - SAFE.r - (hasBal ? 150 : 0);
+  const hasBal = ['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak', 'tombala', 'yaris'].includes(scene) || (scene === 'bj' && bj.mode === 'online'), y = BACK.y + 24, base = W - 12 - SAFE.r - (hasBal ? 150 : 0);
   return { sound: { x: base - 26, y, r: 20 }, rules: { x: base - 72, y, r: 20 } };
 }
 function hudHit(x, y) {
@@ -3119,6 +3146,7 @@ function drawHud() {
 }
 let rulesGame = 'tavla';
 const RULES = {
+  yaris: ['Kedi Yarışı', ['Beş kedi yarışır. Her kedinin yanında oranı yazar: düşük oran favori, yüksek oran sürpriz demektir.', 'Bir kulvara dokunarak kedini seç, bahsini ayarla ve KOŞ!\'a bas.', 'Kedin birinci gelirse bahsin oranla çarpılır (örneğin ×6 oranlı kedi 10 akçeye 60 akçe öder).', 'Her yarıştan sonra oranlar yeniden belirlenir.']],
   tombala: ['Tombala', ['1\'den 90\'a kadar pullar torbadan tek tek çekilir. Her kartta 3 sıra, sırada 5 sayı vardır.', 'Çekilen sayı kartında varsa üstüne kırmızı pul kendiliğinden konur.', 'Bir sırayı ilk dolduran ÇİNKO yapar (kart bahsi kadar), iki sırayı dolduran İKİNCİ ÇİNKO (2 katı), üç sırayı dolduran TOMBALA (4 katı).', 'Bir ya da iki kart alabilirsin; her kart bahis kadar tutar. Kediler Fındık, Tarçın ve Pamuk toplam 7 kartla oynar.', 'Aynı çekilişte birden çok kişi ödülü yakalarsa herkes ödülünü alır. HIZLI düğmesi çekilişi hızlandırır.']],
   kazi: ['Kazı Kazan', ['Çarşı yanındaki Kazı Kazan tabelasından 50, 250 ya da 1000 akçelik bilet al.', 'Altın yaldızı parmağınla kazı ya da Hepsini kazı\'ya bas.', 'Dokuz kutudan üçü aynı resimse çarpanı kadar kazanırsın: Simit ×1, Lokum ×2, Çay ×5, Kahve ×10, Van Kedisi ×50, Padişah Kavuğu ×100.']],
   batak: ['Batak (ihaleli)', ['Dört kişi oynanır, herkese 13 kart dağıtılır. Sen ve üç kedi: Paşa, Sultan, Zeytin.', 'İhale: sırayla en az 5 el söylenir ya da pas geçilir. En yüksek söyleyen kozu seçer ve ilk kartı atar. Herkes pas geçerse dağıtan 5 ile zorunlu alır.', 'Yerdeki rengi takip etmek zorunludur; elinde daha büyüğü varsa yükseltmek zorunludur.', 'Rengin yoksa koz atmak zorunludur (yerde koz varsa yükseltmek gerekir). Kozun da yoksa istediğini atarsın.', 'Koz kırılmadan (biri koz atmadan) kozla el açılamaz.', 'Puan: ihaleyi alan tutturursa aldığı el kadar, tutturamazsa eksi ihale kadar puan alır (BATTI). Diğerleri aldıkları el kadar.', 'En yüksek puan kazanır: bahsin 2 katı. İhaleyi sen alıp tutturursan 5\'in üstündeki her el için bahsin yarısı kadar ek ödül. Rakibin battığı elde 3+ el aldıysan bahsin iade.']],
@@ -3199,7 +3227,7 @@ function renderSira() {
     rows = wkMode ? rows.map(r => Object.assign(r, { sc: weekScore(r, WEEK.id) })).filter(r => r.sc > 0).sort((a, b) => b.sc - a.sc).slice(0, 20) : rows.filter(r => typeof r.akce === 'number').map(r => Object.assign(r, { sc: r.akce })).sort((a, b) => b.sc - a.sc).slice(0, 20);
     await mpNames(rows.map(r => r.uid)); list.textContent = '';
     if (!rows.length) list.appendChild(el('p', { class: 'hint', text: wkMode ? 'Bu hafta henüz kimse puan almadı. İlk sen ol!' : 'Henüz kimse yok.' }));
-    rows.forEach((r, i) => list.appendChild(el('div', { class: 'trow', style: r.uid === MP.uid ? 'background:#f6dfa0' : '' }, [
+    rows.forEach((r, i) => list.appendChild(el('div', { class: 'trow', style: 'cursor:pointer;' + (r.uid === MP.uid ? 'background:#f6dfa0' : ''), on: () => showProfile(r.uid, r.av, ['Seviye ' + (r.lv || 1), Math.round(r.akce || 0).toLocaleString('tr-TR') + ' akçe', (r.found || 0) + '/' + ITEMS.length + ' eşya keşfetti']) }, [
       el('b', { text: (i < 3 ? ['🥇', '🥈', '🥉'][i] : (i + 1) + '.') }),
       el('span', {}, [el('img', { src: iconURL('av', r.av && typeof r.av === 'object' ? r.av : {}, 56), alt: '', style: 'width:40px;height:40px;vertical-align:middle;margin-right:6px' }), document.createTextNode(r.uid === MP.uid ? 'Sen' : mpName(r.uid)), el('small', { text: ' · Sv ' + (r.lv || 1) + (titleOf(r.av) ? ' · ' + titleOf(r.av) : '') + ' · ' + (r.found || 0) + '/' + ITEMS.length + ' eşya', style: 'opacity:.7' })]),
       el('b', { text: Math.round(r.sc).toLocaleString('tr-TR') + (wkMode ? ' XP' : '') }),
@@ -3404,8 +3432,8 @@ function drawItemIcon2(c, it) {
 // ---------- seviye ve istatistik ----------
 let XP = store.get('xp', 0), STATS = store.get('stats', {});
 const levelOf = x => Math.floor(Math.sqrt(Math.max(0, x) / 40)) + 1, xpFor = l => 40 * (l - 1) * (l - 1);
-const XPPLAY = { tombala: 6, kazi: 1, batak: 12, slot: 1, bj: 3, tavla: 20, okey: 15, pisti: 12, barbut: 4, rulet: 2 }, XPWIN = { tombala: 6, kazi: 2, batak: 18, slot: 1, bj: 3, tavla: 25, okey: 30, pisti: 15, barbut: 5, rulet: 2 };
-const FEAT_GAMES = ['bj', 'okey', 'tavla', 'pisti', 'barbut', 'rulet', 'batak', 'tombala', 'slot'];
+const XPPLAY = { yaris: 2, tombala: 6, kazi: 1, batak: 12, slot: 1, bj: 3, tavla: 20, okey: 15, pisti: 12, barbut: 4, rulet: 2 }, XPWIN = { yaris: 3, tombala: 6, kazi: 2, batak: 18, slot: 1, bj: 3, tavla: 25, okey: 30, pisti: 15, barbut: 5, rulet: 2 };
+const FEAT_GAMES = ['yaris', 'bj', 'okey', 'tavla', 'pisti', 'barbut', 'rulet', 'batak', 'tombala', 'slot'];
 const featGame = () => FEAT_GAMES[hashStr('feat' + new Date().toDateString()) % FEAT_GAMES.length];
 function gameEvent(g, e) {
   let xp = e === 'play' ? XPPLAY[g] || 1 : e === 'win' ? XPWIN[g] || 1 : e === 'pisti' ? 3 : 0;
@@ -3427,7 +3455,7 @@ const QPOOL = [
   { id: 'tv1', t: 'Bir tavla oyunu bitir', g: 'tavla', e: 'play', n: 1, r: 300 }, { id: 'tvw1', t: 'Tavlada bir kez kazan', g: 'tavla', e: 'win', n: 1, r: 500 },
   { id: 'ok1', t: 'Bir okey eli bitir', g: 'okey', e: 'play', n: 1, r: 300 }, { id: 'psp2', t: 'Piştide 2 pişti yap', g: 'pisti', e: 'pisti', n: 2, r: 400 },
   { id: 'ps1', t: 'Bir pişti oyunu kazan', g: 'pisti', e: 'win', n: 1, r: 400 }, { id: 'bb3', t: 'Barbutta 3 kez kazan', g: 'barbut', e: 'win', n: 3, r: 350 },
-  { id: 'tb1', t: 'Tombalada bir ödül kap', g: 'tombala', e: 'win', n: 1, r: 300 }, { id: 'bt1', t: 'Bir Batak eli kazan', g: 'batak', e: 'win', n: 1, r: 450 }, { id: 'bt2', t: '2 el Batak oyna', g: 'batak', e: 'play', n: 2, r: 250 },
+  { id: 'yr3', t: '3 kedi yarışı oyna', g: 'yaris', e: 'play', n: 3, r: 200 }, { id: 'tb1', t: 'Tombalada bir ödül kap', g: 'tombala', e: 'win', n: 1, r: 300 }, { id: 'bt1', t: 'Bir Batak eli kazan', g: 'batak', e: 'win', n: 1, r: 450 }, { id: 'bt2', t: '2 el Batak oyna', g: 'batak', e: 'play', n: 2, r: 250 },
   { id: 'rl5', t: 'Rulette 5 kez çevir', g: 'rulet', e: 'play', n: 5, r: 200 }, { id: 'rlw2', t: 'Rulette 2 kez kazan', g: 'rulet', e: 'win', n: 2, r: 300 },
   { id: 'mp2', t: 'Çevrimiçi 2 oyun oyna', g: '*', e: 'mp', n: 2, r: 600, mp: true }, { id: 'item1', t: 'Bir eşya bul', g: '*', e: 'item', n: 1, r: 300 },
 ];
@@ -3513,7 +3541,7 @@ function renderGorev() {
   });
   renderAchs();
   sheetBody.appendChild(el('h3', { text: 'İstatistiklerin' }));
-  const names = { tombala: 'Tombala', kazi: 'Kazı Kazan', batak: 'Batak', slot: 'Slot', bj: 'Yirmi Bir', okey: 'Okey', tavla: 'Tavla', pisti: 'Pişti', barbut: 'Barbut', rulet: 'Rulet' };
+  const names = { yaris: 'Kedi Yarışı', tombala: 'Tombala', kazi: 'Kazı Kazan', batak: 'Batak', slot: 'Slot', bj: 'Yirmi Bir', okey: 'Okey', tavla: 'Tavla', pisti: 'Pişti', barbut: 'Barbut', rulet: 'Rulet' };
   sheetBody.appendChild(el('div', { class: 'tables' }, Object.keys(names).map(k => { const s = STATS[k] || { play: 0, win: 0 }; return el('div', { class: 'trow' }, [el('b', { text: names[k] }), el('span', { text: s.play + ' oyun · ' + s.win + ' kazanç' }), el('small', { text: s.play ? Math.round(s.win / s.play * 100) + '%' : '–' })]); })));
 }
 
@@ -3539,6 +3567,7 @@ const ACH = [
   { id: 'kazi50', t: 'Talih Kuşu', d: 'Kazı Kazan\'da ×50 ya da üstünü yakala', r: 2500, ok: () => (EXT.kazi50 || 0) >= 1 },
   { id: 'tombala1', t: 'Tombala!', d: 'Tombalada üç sırayı ilk sen doldur', r: 1200, ok: () => (EXT.tombala || 0) >= 1 },
   { id: 'tour1', t: 'Kahvehane Şampiyonu', d: 'Tavla turnuvasını kazan', r: 2000, ok: () => (EXT.tour || 0) >= 1 },
+  { id: 'longshot', t: 'Sürpriz Uzmanı', d: 'Kedi Yarışı\'nda ×8 ya da üstü oranlı kediyle kazan', r: 1000, ok: () => (EXT.longshot || 0) >= 1 },
   { id: 'rich', t: 'Sultan Hazinesi', d: '100.000 akçeye ulaş', r: 5000, ok: () => balance >= 100000 },
 ];
 let ACHS = store.get('achs', {});   // id → 'open' | 'claimed'
@@ -3563,6 +3592,8 @@ const easy = () => DIFF === 'kolay';
 function renderDiff() {
   sheetBody.appendChild(el('h3', { text: 'Ses' }));
   sheetBody.appendChild(el('div', { class: 'bets' }, [el('button', { class: MUSIC ? 'on' : '', text: 'Müzik ' + (MUSIC ? 'açık' : 'kapalı'), on: () => { MUSIC = !MUSIC; store.set('music', MUSIC); renderSheet(); } }), el('button', { class: !muted ? 'on' : '', text: 'Efektler ' + (muted ? 'kapalı' : 'açık'), on: () => { muted = !muted; store.set('mute', muted); renderSheet(); } })]));
+  sheetBody.appendChild(el('h3', { text: 'Görüntü' }));
+  sheetBody.appendChild(el('div', { class: 'bets' }, [el('button', { class: SWAY ? 'on' : '', text: 'Arka plan salınımı ' + (SWAY ? 'açık' : 'kapalı'), on: () => { SWAY = !SWAY; store.set('sway', SWAY); renderSheet(); } })]));
   sheetBody.appendChild(el('h3', { text: 'Kedilerin ustalığı' }));
   sheetBody.appendChild(el('div', { class: 'bets' }, [['kolay', 'Kolay'], ['usta', 'Usta']].map(([k, n]) => el('button', { class: DIFF === k ? 'on' : '', text: n, on: () => { DIFF = k; store.set('diff', k); renderSheet(); } }))));
   sheetBody.appendChild(el('p', { class: 'hint', text: 'Kolay modda Reis, Minnoş ve okey kedileri ara sıra dalgın oynar. Usta modda kazanırsan biraz daha fazla XP alırsın.' }));
@@ -4474,6 +4505,86 @@ function drawTombala(t) {
   }
 }
 // =============================================================
+//  KEDİ YARIŞI  (5 kedi · oranlı bahis)
+// =============================================================
+const YR_CATS = [
+  { name: 'Şimşek', av: { fur: 3, eye: 2, hat: 'none', acc: 'atki' }, col: '#c0392b' },
+  { name: 'Pamuk', av: { fur: 0, eye: 3, hat: 'takke', acc: 'none' }, col: '#1f4e9c' },
+  { name: 'Duman', av: { fur: 1, eye: 1, hat: 'kasket', acc: 'none' }, col: '#2a7a5a' },
+  { name: 'Zeytin', av: { fur: 2, eye: 0, hat: 'none', acc: 'gozluk' }, col: '#d9a441' },
+  { name: 'Tombik', av: { fur: 0, eye: 2, hat: 'asci', acc: 'biyik' }, col: '#8e44ad' },
+];
+const yr = { state: 'bet', pick: -1, bet: 0, odds: [2, 3, 4, 6, 10], p: [], winner: -1, t0: 0, T: [], a: [], order: [], hist: [] };
+const YRB = { yrMinus: { x: 190, y: 1560, r: 50 }, yrPlus: { x: 330, y: 1560, r: 50 }, yrGo: { x: 760, y: 1560, r: 90 } };
+function YRL() {
+  if (LAND) { P(YRB.yrMinus, 1690, 1050); P(YRB.yrPlus, 1830, 1050); P(YRB.yrGo, 1760, 850, 90); return { x0: 250, x1: 1420, y0: 345, lane: 136, status: { x: 1700, y: 420, w: 380 }, oddX: 110 }; }
+  P(YRB.yrMinus, 190, 1560); P(YRB.yrPlus, 330, 1560); P(YRB.yrGo, 760, 1560, 90); return { x0: 250, x1: 900, y0: 470, lane: 170, status: { x: 500, y: 1400, w: 760 }, oddX: 100 };
+}
+function yrNewOdds() {
+  const w = [5, 4, 3, 2, 1.2].map(x => x * (.75 + Math.random() * .5)); for (let i = 4; i > 0; i--) { const j = Math.floor(Math.random() * (i + 1)); [w[i], w[j]] = [w[j], w[i]]; }
+  const sum = w.reduce((a, b) => a + b, 0); yr.p = w.map(x => x / sum); yr.odds = yr.p.map(p => Math.max(1.5, Math.round(.9 / p * 2) / 2));
+}
+yrNewOdds();
+function yrStart() {
+  if (yr.state === 'run') return; if (yr.pick < 0) { banner('Önce kedini seç', 'Bir kulvara dokun', { dur: 1400, col: '#1f4e9c', top: true }); return; }
+  if (yr.state === 'over') { yr.state = 'bet'; yrNewOdds(); yr.winner = -1; yr.pick = -1; banner('Yeni yarış', 'Oranlar değişti · kedini seç', { dur: 1600, col: '#1f4e9c', top: true }); return; }
+  const bet = payBet(); if (!bet) return; yr.bet = bet;
+  let r = Math.random(), w = 0; for (let i = 0; i < 5; i++) { if (r < yr.p[i]) { w = i; break; } r -= yr.p[i]; w = i; }
+  yr.winner = w; yr.t0 = performance.now(); yr.T = yr.p.map((_, i) => i === w ? 6200 : 6500 + Math.random() * 1500); yr.a = yr.p.map(() => .7 + Math.random() * .8); yr.wob = yr.p.map(() => Math.random() * 6);
+  yr.state = 'run'; banners = []; banner('Başladı!', null, { dur: 900, col: '#cf4b32', top: true }); for (let i = 0; i < 3; i++) tone('square', 660, .08, .05, i * .25); tone('square', 990, .3, .06, .75);
+}
+function yrPos(i, t) { const u = clamp((t - yr.t0 - 900) / yr.T[i], 0, 1); return clamp(Math.pow(u, yr.a[i]) * (1 - .04 * Math.sin(u * 9 + yr.wob[i]) * (1 - u)), 0, 1); }
+function yrUpdate(t) {
+  if (yr.state !== 'run') return;
+  if (t - yr.t0 > 900 && Math.floor(t / 110) !== yr.tick) { yr.tick = Math.floor(t / 110); thud(.03, 1400 + Math.random() * 600); }
+  if (t - yr.t0 - 900 >= yr.T[yr.winner]) {
+    yr.state = 'over'; yr.hist.unshift(yr.winner); yr.hist = yr.hist.slice(0, 8); const won = yr.pick === yr.winner, C = YR_CATS[yr.winner];
+    gameEvent('yaris', 'play');
+    if (won) { const pay = Math.round(yr.bet * yr.odds[yr.winner]); setBalance(balance + pay); lastWin = pay; banner(C.name + ' kazandı!', '×' + String(yr.odds[yr.winner]).replace('.', ',') + ' · +' + (pay - yr.bet).toLocaleString('tr-TR') + ' akçe', { big: true, dur: 2800, top: true }); spawnCoins(yr.odds[yr.winner] >= 6 ? 70 : 35); melody([0, 2, 4, 7], .1); gameEvent('yaris', 'win'); if (yr.odds[yr.winner] >= 8) extEvent('longshot'); }
+    else { banner(C.name + ' kazandı', YR_CATS[yr.pick].name + ' bu sefer yetişemedi', { dur: 2400, col: '#1f4e9c', top: true }); tone('sine', 240, .4, .05, 0, 160); }
+    rollDrop();
+  }
+}
+function yrDown(w) {
+  const L = YRL();
+  if (yr.state !== 'run') { const k = hitSet(YRB, w, ['yrMinus', 'yrPlus', 'yrGo']); if (k) { if (!betKey(k)) yrStart(); return; } }
+  if (yr.state === 'bet') for (let i = 0; i < 5; i++) { const y = L.y0 + i * L.lane; if (w.y > y && w.y < y + L.lane && w.x > L.x0 - 240 && w.x < L.x1 + 80) { yr.pick = i; tone('triangle', 600 + i * 60, .06, .05); return; } }
+}
+function drawYarisTable(c) {
+  const v = visRect(300), L = YRL(); seed(2100);
+  wash(c, sub([[v.x0 - 200, L.y0 - 60], [v.x1 + 200, L.y0 - 60], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#3c2414', 3);
+  const tr = rr(L.x0 - 250, L.y0 - 16, L.x1 - L.x0 + 340, L.lane * 5 + 32, 30, 30); wash(c, tr, '#5a3a1e', 2); ink(c, tr, true, 4);
+  for (let i = 0; i < 5; i++) { const y = L.y0 + i * L.lane, ln = rr(L.x0 - 60, y + 6, L.x1 - L.x0 + 130, L.lane - 12, 14, 24); wash(c, ln, i % 2 ? '#3f8a4a' : '#4a9a55', 1.5); hatch(c, ln, .1, 14, '#1d5a2a', .18); ink(c, ln, true, 2.5); }
+  ink(c, [[L.x0, L.y0], [L.x0, L.y0 + L.lane * 5]], false, 5, '#fbf8f2', 2);
+  for (let k = 0; k < Math.floor(L.lane * 5 / 20); k++) { c.fillStyle = k % 2 ? '#fbf8f2' : '#22222e'; c.fillRect(L.x1, L.y0 + k * 20, 14, 20); c.fillStyle = k % 2 ? '#22222e' : '#fbf8f2'; c.fillRect(L.x1 + 14, L.y0 + k * 20, 14, 20); }
+  inkText(c, 'BİTİŞ', L.x1 + 14, L.y0 - 34, 34, '#f2cf74', { ow: 5 });
+}
+function drawYaris(t) {
+  const L = YRL(); yrUpdate(t);
+  drawLayer(getLayers('yr')[0], 1); setWorld(1);
+  const run = yr.state === 'run', pos = [0, 1, 2, 3, 4].map(i => yr.state === 'bet' ? 0 : yrPos(i, t)), rank = [0, 1, 2, 3, 4].sort((a, b) => pos[b] - pos[a]);
+  for (let i = 0; i < 5; i++) {
+    const C = YR_CATS[i], y = L.y0 + i * L.lane + L.lane / 2, sel = yr.pick === i;
+    // oran kutusu
+    seed(2110 + i); const ox = L.x0 - 150, q = rr(ox - 84, y - L.lane / 2 + 14, 168, L.lane - 28, 16, 14); wash(ctx, q, sel ? '#f2cf74' : '#f4e8cc', 1); ink(ctx, q, true, sel ? 5 : 2.5, sel ? C.col : INK, 1);
+    inkText(ctx, C.name, ox, y - 24, 36, C.col, { outline: false });
+    inkText(ctx, '×' + String(yr.odds[i]).replace('.', ','), ox, y + 26, 46, INK, { outline: false });
+    // kedi
+    const x = lerp(L.x0 + 20, L.x1 - 20, pos[i]), moving = run && pos[i] < 1 && t - yr.t0 > 900, ph = t / 70 + i * 2, bob = moving ? Math.abs(Math.sin(ph)) * 12 : 0;
+    ctx.fillStyle = 'rgba(0,0,0,.25)'; ctx.beginPath(); ctx.ellipse(x - 20, y + 46, 60, 12, 0, 0, 7); ctx.fill();
+    seed(2120 + i); const bd = ell(x - 34, y + 14 - bob * .5, 52, 30, 16); wash(ctx, bd, C.col, 1); ink(ctx, bd, true, 2.5);
+    for (const k of [0, 1, 2, 3]) { const lx = x - 70 + k * 24, sw = moving ? Math.sin(ph + k * 1.6) * 16 : 0; ink(ctx, [[lx, y + 30 - bob * .5], [lx + sw, y + 52]], false, 6, '#fbf8f2', 1); ink(ctx, [[lx, y + 30 - bob * .5], [lx + sw, y + 52]], false, 2, INK, .5); }
+    ink(ctx, [[x - 84, y + 6 - bob * .5], [x - 108, y - 20 - bob + (moving ? Math.sin(ph) * 8 : 0)]], false, 6, C.col, 1);
+    drawAvatarMini(x + 14, y - 14 - bob, 104, C.av);
+    if (yr.state !== 'bet') { const rk = rank.indexOf(i) + 1; inkText(ctx, rk + '.', x + 74, y - 40, 34, rk === 1 ? '#f2cf74' : '#f4e8cc', { outline: INK, ow: 5 }); }
+    if (sel) { inkText(ctx, '◀ senin kedin', Math.min(L.x1 - 150, x + 230), y + 40, 30, '#f2cf74', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 }); }
+  }
+  if (yr.hist.length) { inkText(ctx, 'Son kazananlar:', L.x0 - 200, L.y0 - 44, 30, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700, align: 'left' }); yr.hist.forEach((h, k) => drawAvatarMini(L.x0 + 30 + k * 62, L.y0 - 48, 58, YR_CATS[h].av)); }
+  const S_ = L.status;
+  if (!run) { betRow(YRB, ['yrMinus', 'yrPlus', 'yrGo'], t, yr.state === 'over' ? 'YENİ' : 'KOŞ!'); statusTag(S_.x, S_.y, yr.state === 'over' ? 'Yeni yarış için YENİ\'ye bas' : yr.pick < 0 ? 'Bir kulvara dokun, kedini seç' : YR_CATS[yr.pick].name + ' seçildi · kazanırsa ×' + String(yr.odds[yr.pick]).replace('.', ','), S_.w); }
+  else statusTag(S_.x, S_.y, 'Hadi ' + YR_CATS[yr.pick].name + '!', S_.w);
+}
+// =============================================================
 //  RULET  (Avrupa çarkı 0-36 · sayı 35:1 · renk/tek-çift/yarı 1:1 · düzine 2:1)
 // =============================================================
 const RL_ORDER = [0, 32, 15, 19, 4, 21, 2, 25, 17, 34, 6, 27, 13, 36, 11, 30, 8, 23, 10, 5, 24, 16, 33, 1, 20, 14, 31, 9, 22, 18, 29, 7, 28, 12, 35, 3, 26];
@@ -4621,8 +4732,9 @@ function frame(t) {
   gyro.x = lerp(gyro.x, gyro.tx, .08); gyro.y = lerp(gyro.y, gyro.ty, .08); ptr.x = lerp(ptr.x, ptr.tx, .06); ptr.y = lerp(ptr.y, ptr.ty, .06);
   shake *= Math.pow(.02, dt / 1000);
   for (const o of [gyro, ptr]) for (const k in o) if (!Number.isFinite(o[k])) o[k] = 0;
-  off.x = Math.sin(t * .00061) * 5 + Math.sin(t * .00023) * 3 + gyro.x + ptr.x + 0 * shake;
-  off.y = Math.sin(t * .00093) * 4 + gyro.y + ptr.y + Math.sin(lever.a) * 9;
+  const sw = SWAY ? 1 : 0;
+  off.x = (Math.sin(t * .00061) * 5 + Math.sin(t * .00023) * 3 + gyro.x + ptr.x) * sw;
+  off.y = (Math.sin(t * .00093) * 4 + gyro.y + ptr.y) * sw + Math.sin(lever.a) * 9;
   // kol fiziği
   if (lever.auto) {
     const u = (t - lever.auto) / 520;
@@ -4655,6 +4767,7 @@ function frame(t) {
   else if (scene === 'pisti') drawPisti(t);
   else if (scene === 'batak') drawBatak(t);
   else if (scene === 'tombala') drawTombala(t);
+  else if (scene === 'yaris') drawYaris(t);
   else if (scene === 'barbut') drawBarbut(t);
   else if (scene === 'rulet') drawRulet(t);
   else {
@@ -4665,7 +4778,7 @@ function frame(t) {
   drawParticles(dt);
   drawBanners(t);
   drawItemFlash(t);
-  if (['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak', 'tombala'].includes(scene) || (scene === 'bj' && bj.mode === 'online')) drawCornerBal();
+  if (['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak', 'tombala', 'yaris'].includes(scene) || (scene === 'bj' && bj.mode === 'online')) drawCornerBal();
   if (MP.code && scene !== 'lobby') { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(72); const w = 150, x = W / 2 - w / 2, y = BACK.y + 56, p = rr(x, y, w, 40, 10, 14); wash(ctx, p, '#2a7a5a', 1); ink(ctx, p, true, 2.5, INK, 1); inkText(ctx, 'Masa ' + MP.code, W / 2, y + 21, 24, '#fbf1da', { outline: false }); }
   drawBack(t);
   drawHud(); drawTurnTimer(); drawEmotes(t);
@@ -4685,7 +4798,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__iconURL = iconURL; window.__nazar = { ITEMS, tvEndT: w => tvEnd(w), tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__iconURL = iconURL; window.__nazar = { showProfile, giftSend, yr, yrStart, yrNewOdds, ITEMS, tvEndT: w => tvEnd(w), tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>
