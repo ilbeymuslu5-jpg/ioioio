@@ -173,7 +173,9 @@ function hatch(c, clipPts, ang, gap, col = INK, a = .25, w = 1.3) {
   for (let y = -R; y < R; y += gap) { c.moveTo(-R + J(5), y + J(1)); c.lineTo(R + J(5), y + J(2.5)); }
   c.stroke(); c.restore();
 }
+const MINTXT = 15;
 function inkText(c, txt, x, y, size, fill, opts = {}) {
+  if (typeof ctx !== 'undefined' && c === ctx && !opts.fit) { const m = c.getTransform(), sc = Math.hypot(m.a, m.b) / (DPR || 1); if (sc > 0 && size * sc < MINTXT) { const k = MINTXT / (size * sc); size *= k; if (opts.ow) opts = Object.assign({}, opts, { ow: opts.ow * k }); } }
   const font = opts.font || '"Caveat Brush"';
   c.font = `${opts.weight || ''} ${size}px ${font}, "Comic Sans MS", cursive`;
   c.textAlign = opts.align || 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
@@ -931,7 +933,7 @@ function drawBanners(t) {
   const age = t - b.t0, sc = easeOutBack(clamp(age / 380, 0, 1)), out = clamp((b.dur - age) / 300, 0, 1);
   const y = b.top ? H * .16 : b.y ? H * b.y : scene === 'slot' ? toScreen(500, RY + RH / 2).y : H * .42, w = Math.min(W * .88, b.big ? 460 : 380), h = b.big ? 108 : 78;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.translate(W / 2, y); ctx.scale(sc, sc); ctx.rotate(-.025); ctx.globalAlpha = out;
-  BOIL = Math.floor(t / 140) % 3; seed(90);
+  BOIL = 0; seed(90);
   for (const s of [-1, 1]) { const tail = sub([[s * (w / 2 - 14), -h * .22], [s * (w / 2 + 34), -h * .22], [s * (w / 2 + 18), h * .16], [s * (w / 2 + 34), h * .55], [s * (w / 2 - 14), h * .55]], 10, true); wash(ctx, tail, '#d9c39a', 1.2); ink(ctx, tail, true, 2.5, INK, 1); }
   const body = rr(-w / 2, -h / 2, w, h, 6, 22); wash(ctx, body, '#f4e8cc', 1.5); ink(ctx, body, true, 3, INK, 1.2); ink(ctx, rr(-w / 2 + 8, -h / 2 + 8, w - 16, h - 16, 4, 22), true, 1.4, '#b8862b', 1);
   { let fs = b.big ? 54 : 40; ctx.font = `${fs}px "Caveat Brush", cursive`; const mw = ctx.measureText(b.text).width; if (mw > w - 50) fs *= (w - 50) / mw; inkText(ctx, b.text, 0, b.sub ? -h * .14 : 2, fs, b.col, { ow: b.big ? 7 : 5 }); }
@@ -1076,7 +1078,7 @@ cv.addEventListener('pointerdown', e => {
   if (spect() && scene !== 'lobby' && !(e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h)) return;
   if (e.clientX >= BACK.x && e.clientX <= BACK.x + BACK.w && e.clientY >= BACK.y && e.clientY <= BACK.y + BACK.h) { if (scene !== 'lobby') leaveGame(e.clientX, e.clientY); else if (LOBBYMODE) { LOBBYMODE = null; tone('sine', 520, .1, .05); } return; }
   if (scene === 'lobby' && !LOBBYMODE) { const m = modeAt(w); if (m) pickMode(m, e.clientX, e.clientY); return; }
-  if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : lb === 'gorev' ? 'gorev' : 'cok'); return; } const i = signAt(w); if (i >= 0) { press['sign' + i] = performance.now(); if (SIGNS[i].id === 'carsi' || SIGNS[i].id === 'kazi') { openSheet(SIGNS[i].id); return; } if (LOBBYMODE === 'multi' && ONLINE_GAMES.includes(SIGNS[i].id)) { mpQuick(SIGNS[i].id); return; } ps.mode = 'ai'; bb.mode = 'ai'; tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; bt.mode = 'ai'; bt.me = 0; bt.state = 'bet'; tb.mode = 'ai'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY); } return; }
+  if (scene === 'lobby') { const lb = lobbyBtnAt(w); if (lb) { tone('triangle', 620, .05, .05); openSheet(lb === 'kar' ? 'karakter' : lb === 'canta' ? 'canta' : lb === 'gorev' ? 'gorev' : 'cok'); return; } LOB.drag = { id: e.pointerId, y0: w.y, sy0: LOB.sy, moved: false, last: w.y, lt: performance.now(), x: e.clientX, y: e.clientY }; LOB.v = 0; try { cv.setPointerCapture(e.pointerId); } catch { } return; }
   if (scene === 'batak') { btDown(w); return; }
   if (scene === 'tombala') { tbDown(w); return; }
   if (scene === 'bj') { bjDown(w); return; }
@@ -1100,6 +1102,7 @@ cv.addEventListener('pointerdown', e => {
   else if (b === 'sound') { muted = !muted; store.set('mute', muted); }
 });
 cv.addEventListener('pointermove', e => {
+  if (scene === 'lobby' && LOB.drag && LOB.drag.id === e.pointerId) { const w = toWorld(e.clientX, e.clientY), d = LOB.drag; if (Math.abs(w.y - d.y0) > 14) d.moved = true; if (d.moved) { LOB.sy = d.sy0 - (w.y - d.y0); const now = performance.now(); LOB.v = -(w.y - d.last) / Math.max(8, now - d.lt) * 16; d.last = w.y; d.lt = now; } return; }
   if (e.pointerType === 'mouse' && W > 0 && H > 0) { ptr.tx = (e.clientX / W - .5) * -16; ptr.ty = (e.clientY / H - .5) * -10; }
   if (scene === 'okey' && ok.drag && ok.drag.pid === e.pointerId) { okMove(toWorld(e.clientX, e.clientY)); return; }
   if (!lever.drag || e.pointerId !== ptrId) return;
@@ -1109,8 +1112,9 @@ cv.addEventListener('pointermove', e => {
   lever.a = na;
   if (!lever.fired && lever.a > 2.1) { lever.fired = true; spin(); }
 });
-const endDrag = e => { if (scene === 'okey' && ok.drag && ok.drag.pid === e.pointerId) { okUp(toWorld(e.clientX, e.clientY)); return; } if (lever.drag && e.pointerId === ptrId) { lever.drag = false; lever.v = 0; ptrId = null; } };
+const endDrag = e => { if (LOB.drag && LOB.drag.id === e.pointerId) { const d = LOB.drag; LOB.drag = null; if (!d.moved && scene === 'lobby' && LOBBYMODE && trans.done) lobbyTap(toWorld(e.clientX, e.clientY), e); else if (!d.moved) LOB.v = 0; return; } if (scene === 'okey' && ok.drag && ok.drag.pid === e.pointerId) { okUp(toWorld(e.clientX, e.clientY)); return; } if (lever.drag && e.pointerId === ptrId) { lever.drag = false; lever.v = 0; ptrId = null; } };
 cv.addEventListener('pointerup', endDrag); cv.addEventListener('pointercancel', endDrag);
+cv.addEventListener('wheel', e => { if (scene === 'lobby' && LOBBYMODE) { LOB.sy += e.deltaY / Math.max(.2, S); LOB.v = 0; e.preventDefault(); } }, { passive: false });
 addEventListener('keydown', e => {
   if (e.key === 'Escape') { closeSheet(); document.getElementById('pay').classList.remove('show'); return; }
   if (sheetEl.classList.contains('show')) return;
@@ -1219,35 +1223,73 @@ function drawBack(t) {
   inkText(ctx, scene === 'lobby' ? '‹ Mod' : '‹ Salon', BACK.x + BACK.w / 2, BACK.y + BACK.h / 2 + 1, 28, INK, { outline: false });
   ctx.globalAlpha = 1;
 }
+const LOB = { cat: store.get('lobCat', 'all'), sy: 0, v: 0, drag: null };
+const LOB_CATS = [['all', 'Tümü'], ['kart', 'Kart'], ['masa', 'Masa'], ['sans', 'Şans']];
+const GAME_CAT = { bj: 'kart', pisti: 'kart', batak: 'kart', okey: 'masa', tavla: 'masa', tombala: 'masa', slot: 'sans', rulet: 'sans', barbut: 'sans', kazi: 'sans', carsi: 'carsi' };
+const CAT_COL = { kart: '#7a1e28', masa: '#1f4e9c', sans: '#2a6b4a', carsi: '#8a5a12' };
+function LOBL() {
+  if (LAND) return { titleY: 120, subY: 196, coinY: 0, chipY: 430, top: 470, bot: 955, cols: 4, tw: 440, th: 330, x0: 290, dx: 470, gap: 24, lx: 1000 };
+  return { titleY: 120, subY: 200, coinY: 268, chipY: 372, top: 418, bot: 1645, cols: 2, tw: 456, th: 410, x0: 262, dx: 476, gap: 26, lx: 500 };
+}
+function lobbyList() {
+  const multi = LOBBYMODE === 'multi';
+  let list = SIGNS.map((s, i) => ({ s, i })).filter(o => LOB.cat === 'all' ? true : GAME_CAT[o.s.id] === LOB.cat);
+  if (multi) list = [...list.filter(o => ONLINE_GAMES.includes(o.s.id)), ...list.filter(o => !ONLINE_GAMES.includes(o.s.id))];
+  return list;
+}
+function lobbyTiles() {
+  const L = LOBL(), list = lobbyList();
+  return list.map((o, k) => { const c = k % L.cols, r = Math.floor(k / L.cols); return Object.assign({}, o, { x: L.x0 + c * L.dx, y: L.top + L.gap + L.th / 2 + r * (L.th + L.gap) - LOB.sy, w: L.tw, h: L.th }); });
+}
+function lobbyMaxScroll() { const L = LOBL(), n = lobbyList().length, rows = Math.ceil(n / L.cols); return Math.max(0, L.gap + rows * (L.th + L.gap) - (L.bot - L.top)); }
+function chipRects() { const L = LOBL(), w = LAND ? 220 : 210, g = 16, x0 = L.lx - (LOB_CATS.length * w + (LOB_CATS.length - 1) * g) / 2 + w / 2; return LOB_CATS.map(([k, n], i) => ({ k, n, x: x0 + i * (w + g), y: L.chipY, w, h: 64 })); }
+function chipAt(w) { return chipRects().find(r => Math.abs(w.x - r.x) < r.w / 2 && Math.abs(w.y - r.y) < r.h / 2 + 6); }
+function drawGameTile(o, t) {
+  const { s, x, y, w, h } = o, multi = LOBBYMODE === 'multi', online = ONLINE_GAMES.includes(s.id), cat = GAME_CAT[s.id], col = CAT_COL[cat] || '#7a1e28';
+  const pr = press['sign' + o.i] && t - press['sign' + o.i] < 180 ? .96 : 1;
+  ctx.save(); ctx.translate(x, y); ctx.scale(pr, pr); seed(60 + o.i);
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; trace(ctx, rr(-w / 2 + 8, -h / 2 + 12, w, h, 26, 24), true, 1); ctx.fill();
+  const fr = rr(-w / 2, -h / 2, w, h, 26, 24); wash(ctx, fr, col, 1.5); ink(ctx, fr, true, 4);
+  const artH = h * .6, pp = rr(-w / 2 + 14, -h / 2 + 14, w - 28, artH, 18, 24); wash(ctx, pp, '#f4e8cc', 1.5); hatch(ctx, pp, .25, 12, '#b8862b', .12); ink(ctx, pp, true, 2.5, '#b8862b', 1);
+  ctx.save(); trace(ctx, pp, true, 0); ctx.clip();
+  const sc = Math.min((w - 60) / 380, (artH - 24) / 150); ctx.translate(0, -h / 2 + 14 + artH / 2); ctx.scale(sc, sc); ctx.translate(0, -235); drawSignArt(s.id, t, o.i); ctx.restore();
+  const dim = multi && !online && s.id !== 'carsi';
+  inkText(ctx, s.title, 0, h / 2 - h * .26, LAND ? 50 : 56, '#fbf1da', { ow: 6, fit: true });
+  const sub2 = multi && s.id !== 'carsi' ? (online ? 'Rastgele rakip bul' : 'Tek kişilik') : s.sub;
+  inkText(ctx, sub2, 0, h / 2 - h * .1, LAND ? 30 : 34, dim ? '#d8c8a8' : '#f2dfae', { outline: INK, ow: 4, font: '"Caveat"', weight: 700, fit: true });
+  if (multi && online) { const b = rr(-w / 2 + 26, -h / 2 + 26, 150, 40, 20, 10); wash(ctx, b, '#2a7a5a', 1); ink(ctx, b, true, 2.5); ctx.fillStyle = '#7dff9e'; ctx.beginPath(); ctx.arc(-w / 2 + 48, -h / 2 + 46, 7, 0, 7); ctx.fill(); inkText(ctx, 'ÇEVRİMİÇİ', -w / 2 + 112, -h / 2 + 47, 22, '#fbf1da', { outline: false, font: '"Caveat"', weight: 700, fit: true }); }
+  if (s.id === featGame()) { const b = rr(w / 2 - 176, -h / 2 + 26, 150, 40, 20, 10); wash(ctx, b, '#8e44ad', 1); ink(ctx, b, true, 2.5); inkText(ctx, '2× XP bugün', w / 2 - 101, -h / 2 + 47, 22, '#fbf1da', { outline: false, font: '"Caveat"', weight: 700, fit: true }); }
+  if (s.id === 'carsi' && dwheelReady()) { ctx.fillStyle = '#cf4b32'; ctx.beginPath(); ctx.arc(w / 2 - 30, -h / 2 + 30, 15, 0, 7); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.stroke(); }
+  if (dim) { ctx.fillStyle = 'rgba(20,10,4,.35)'; trace(ctx, fr, true, 0); ctx.fill(); }
+  ctx.restore();
+}
 function drawLobby(t) {
-  setWorld(1);
-  seed(50);
-  const LX = LY.lx;
-  inkText(ctx, 'Nazar Sarayı', LX, 140, 120, '#f2cf74', { ow: 12 });
-  inkText(ctx, LOBBYMODE === 'multi' ? 'Çok oyunculu · bir oyuna dokun' : 'Hangi oyunu oynayalım?', LX, 240, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
-  const pl = rr(LX - 170, 290, 340, 74, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3);
-  inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), LX, 328, 42, INK, { outline: false });
-  SIGNS.forEach((s, i) => {
-    const sway = Math.sin(t * .0011 + s.rope) * .012, hov = press['sign' + i] && t - press['sign' + i] < 200 ? .96 : 1, multi = LOBBYMODE === 'multi';
-    ctx.save(); ctx.translate(s.x, s.y - s.h * s.k / 2); ctx.rotate(sway); ctx.scale(hov * s.k, hov * s.k);
-    seed(60 + i);
-    const above = SIGNS.find(q => q.col === s.col && q.row === s.row - 1), top = above ? above.y + above.h * above.k / 2 - 10 : 400, rl2 = (s.y - s.h * s.k / 2 - top) / s.k;
-    for (const sx of [-1, 1]) { ink(ctx, [[sx * s.w * .34, 4], [sx * s.w * .34, -rl2]], false, 3.5, '#1a0e06', 1.5); const hk = ell(sx * s.w * .34, -rl2, 9, 9, 10); wash(ctx, hk, '#d9a441', 1); ink(ctx, hk, true, 2); }
-    ctx.fillStyle = 'rgba(0,0,0,.35)'; trace(ctx, rr(-s.w / 2 + 10, 12, s.w, s.h, 16, 30), true, 2); ctx.fill();
-    const fr = rr(-s.w / 2, 0, s.w, s.h, 16, 30); wash(ctx, fr, s.id === 'carsi' ? '#2a5a3a' : '#7a1e28', 2); ink(ctx, fr, true, 4);
-    const pp = rr(-s.w / 2 + 14, 14, s.w - 28, s.h - 28, 10, 30); wash(ctx, pp, '#f4e8cc', 2); ink(ctx, pp, true, 2.5, '#b8862b', 1.2);
-    for (const [x, y] of [[-s.w / 2 + 14, 14], [s.w / 2 - 14, 14], [-s.w / 2 + 14, s.h - 14], [s.w / 2 - 14, s.h - 14]]) { const st = star4(x, y, 12); wash(ctx, st, '#f2cf74', 1); ink(ctx, st, true, 1.4); }
-    const online = ONLINE_GAMES.includes(s.id);
-    inkText(ctx, s.title, -s.w / 2 + 34, 58, 48, s.id === 'carsi' ? '#2a7a5a' : '#cf4b32', { ow: 6, align: 'left' });
-    const sub2 = multi && s.id !== 'carsi' ? (online ? 'Rastgele rakip bul' : 'Tek kişilik') : s.sub;
-    inkText(ctx, sub2, -s.w / 2 + 36, 100, 25, multi && online ? '#1f4e9c' : INK, { outline: false, font: '"Caveat"', weight: 700, align: 'left' });
-    if (s.id === featGame()) { ctx.save(); ctx.translate(s.w / 2 - 150, 2); ctx.rotate(.08); ctx.scale(1.5, 1.5); seed(1990); const rb = sub([[-70, 0], [70, 0], [60, 20], [70, 40], [-70, 40], [-60, 20]], 6, true); wash(ctx, rb, '#8e44ad', 1); ink(ctx, rb, true, 2.5); inkText(ctx, 'GÜNÜN OYUNU · 2× XP', 0, 21, 19, '#fbf1da', { outline: false, font: '"Caveat"', weight: 700 }); ctx.restore(); }
-    if (s.id === 'carsi' && dwheelReady()) { ctx.fillStyle = '#cf4b32'; ctx.beginPath(); ctx.arc(s.w / 2 - 34, 34, 14, 0, 7); ctx.fill(); }
-    ctx.save(); ctx.translate(s.w / 2 - 118, s.h / 2 + 8); ctx.scale(.52, .52); ctx.translate(0, -235); drawSignArt(s.id, t, i); ctx.restore();
-    const k = .5 + .5 * Math.sin(t * .005 + i * 2), pb = rr(-s.w / 2 + 30, s.h - 82, 150, 52, 26, 16); wash(ctx, pb, s.id === 'carsi' ? '#2a7a5a' : multi && online ? '#1f4e9c' : '#cf4b32', 1.5); ink(ctx, pb, true, 3);
-    inkText(ctx, s.id === 'carsi' ? 'Gir ›' : multi && online ? 'Eşleş ›' : 'Oyna ›', -s.w / 2 + 105 + k * 3, s.h - 55, 34, '#fbf1da', { ow: 5 });
-    ctx.restore();
-  });
+  setWorld(1); seed(50);
+  const L = LOBL(), LX = L.lx;
+  if (!LOB.drag && LOB.v) { LOB.sy += LOB.v; LOB.v *= .92; if (Math.abs(LOB.v) < .3) LOB.v = 0; }
+  const mx = lobbyMaxScroll(); if (LOB.sy < 0) { LOB.sy *= LOB.drag ? 1 : .8; if (!LOB.drag && LOB.sy > -1) LOB.sy = 0; } if (LOB.sy > mx) { LOB.sy = LOB.drag ? LOB.sy : mx + (LOB.sy - mx) * .8; if (!LOB.drag && LOB.sy - mx < 1) LOB.sy = mx; }
+  inkText(ctx, 'Nazar Sarayı', LX, L.titleY, LAND ? 104 : 110, '#f2cf74', { ow: 12 });
+  inkText(ctx, LOBBYMODE === 'multi' ? 'Çok oyunculu · bir oyuna dokun, eşleş' : 'Hangi oyunu oynayalım?', LX, L.subY, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  if (!LAND) { const pl = rr(LX - 180, L.coinY - 34, 360, 68, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3); inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), LX, L.coinY + 2, 42, INK, { outline: false }); }
+  else { const pl = rr(LX - 180, 260, 360, 68, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3); inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), LX, 296, 42, INK, { outline: false }); }
+  chipRects().forEach(r => { seed(55 + r.x); const on = LOB.cat === r.k, q = rr(r.x - r.w / 2, r.y - r.h / 2, r.w, r.h, 32, 14); wash(ctx, q, on ? '#f2cf74' : 'rgba(30,16,8,.75)', 1); ink(ctx, q, true, on ? 3.5 : 2.5, on ? INK : '#b8862b', 1); inkText(ctx, r.n, r.x, r.y + 2, 40, on ? INK : '#f4e8cc', { outline: false, font: '"Caveat"', weight: 700, fit: true }); });
+  // kaydırılan kartlar
+  const v = visRect(0);
+  ctx.save(); ctx.beginPath(); ctx.rect(v.x0, L.top, v.x1 - v.x0, L.bot - L.top); ctx.clip();
+  lobbyTiles().forEach(o => { if (o.y + o.h / 2 < L.top - 10 || o.y - o.h / 2 > L.bot + 10) return; drawGameTile(o, t); });
+  ctx.restore();
+  // kaydırma ipucu
+  if (mx > 0) { const fr = clamp(LOB.sy / mx, 0, 1), th = Math.max(80, (L.bot - L.top) * (L.bot - L.top) / (L.bot - L.top + mx)), y = L.top + fr * (L.bot - L.top - th), x = v.x1 - 14; ctx.fillStyle = 'rgba(242,207,116,.55)'; ctx.fillRect(x - 5, y, 10, th);
+    if (LOB.sy < mx - 5) { const a = .5 + .5 * Math.sin(t / 300); ctx.globalAlpha = a; inkText(ctx, '▼ kaydır', LX, L.bot - 18, 30, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 }); ctx.globalAlpha = 1; } }
+}
+function lobbyTap(w, e) {
+  const ch = chipAt(w); if (ch) { if (LOB.cat !== ch.k) { LOB.cat = ch.k; store.set('lobCat', ch.k); LOB.sy = 0; LOB.v = 0; tone('triangle', 700, .05, .05); } return; }
+  const L = LOBL(); if (w.y < L.top || w.y > L.bot) return;
+  const o = lobbyTiles().find(o => Math.abs(w.x - o.x) < o.w / 2 && Math.abs(w.y - o.y) < o.h / 2); if (!o) return;
+  const i = o.i; press['sign' + i] = performance.now(); tone('triangle', 620, .05, .05);
+  if (SIGNS[i].id === 'carsi' || SIGNS[i].id === 'kazi') { openSheet(SIGNS[i].id); return; }
+  if (LOBBYMODE === 'multi' && ONLINE_GAMES.includes(SIGNS[i].id)) { mpQuick(SIGNS[i].id); return; }
+  ps.mode = 'ai'; bb.mode = 'ai'; tv.mode = 'ai'; ok.mode = 'ai'; bj.mode = 'ai'; bt.mode = 'ai'; bt.me = 0; bt.state = 'bet'; tb.mode = 'ai'; tv.view = 0; ok.me = 0; go(SIGNS[i].id, e.clientX, e.clientY);
 }
 function drawSignArt(id, t, i) {   // eski çizim çerçevesi: x -190..190, y 160..310
   const bob = k => Math.sin(t * .004 + k + i) * 4;
@@ -1315,10 +1357,10 @@ function drawLobbyButtons(t) {
   plaque(O, 'Arkadaşlar', MP.ok ? (on ? on + ' kişi çevrimiçi' : 'masa kur, katıl') : 'çok oyunculu');
   ctx.fillStyle = on ? '#4fd17a' : '#8a7a5a'; ctx.beginPath(); ctx.arc(O.x - O.w / 2 + 26, O.y, 11, 0, 7); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.stroke();
   const others = MP.peers.filter(p => !p.isMe && p.presence && p.presence.av).slice(0, 6);
-  if (others.length) { const y = LAND ? 395 : 405; inkText(ctx, 'Salonda:', LY.lx - 60 - others.length * 30, y, 28, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700, align: 'right' }); others.forEach((p, i) => drawAvatarMini(LY.lx - 30 - (others.length - 1) * 30 + i * 60 + 20, y - 4, 64, p.presence.av)); }
+  if (others.length) { const y = LAND ? 296 : 268, x0 = LY.lx + 230; others.forEach((p, i) => drawAvatarMini(x0 + i * 58, y - 4, 60, p.presence.av)); }
 }
 function lobbyBtnAt(w) { for (const k in LOBBTN) { const b = LOBBTN[k]; if (Math.abs(w.x - b.x) < b.w / 2 && Math.abs(w.y - b.y) < b.h / 2) return k; } return null; }
-function signAt(w) { for (let i = 0; i < SIGNS.length; i++) { const s = SIGNS[i]; if (Math.abs(w.x - s.x) < s.w * s.k / 2 && w.y > s.y - s.h * s.k / 2 && w.y < s.y + s.h * s.k / 2 + 20) return i; } return -1; }
+function signAt(w) { const o = lobbyTiles().find(o => Math.abs(w.x - o.x) < o.w / 2 && Math.abs(w.y - o.y) < o.h / 2); return o ? o.i : -1; }
 
 // =============================================================
 //  YİRMİ BİR (BLACKJACK)
@@ -1574,7 +1616,7 @@ function drawCards(t) {
 }
 function drawBJ(t) {
   drawCatDealer(t);
-  const bl = Math.floor(t / 280) % 2; drawLayer(getLayers('bj')[bl], 1);
+  const bl = 0; drawLayer(getLayers('bj')[bl], 1);
   drawPaws(t);
   setWorld(1);
   if (bj.mode === 'online') drawBJOnline(t); else drawChips(t), drawCards(t);
@@ -1600,7 +1642,7 @@ function drawBJ(t) {
   } else {
     const st = rr(170, 1660, 660, 76, 16, 20); wash(ctx, st, '#f4e8cc', 1.5); ink(ctx, st, true, 3);
     inkText(ctx, 'AKÇE', 200, 1698, 28, '#6a1b24', lbl);
-    inkText(ctx, bal, 270, 1700, 46, INK, { align: 'left', outline: false });
+    inkText(ctx, bal, 318, 1700, 46, INK, { align: 'left', outline: false });
     inkText(ctx, 'KAZANÇ', 610, 1698, 28, '#6a1b24', { align: 'right', outline: false, font: '"Caveat"', weight: 700 });
     inkText(ctx, wn, 800, 1700, 46, wc, { align: 'right', outline: false });
   }
@@ -1782,7 +1824,7 @@ function drawCornerBal() {
   const w = 150, x = W - w - 12 - SAFE.r, y = BACK.y, p = rr(x, y, w, 48, 10, 14); wash(ctx, p, '#b8862b', 1); ink(ctx, p, true, 2.5, INK, 1);
   inkText(ctx, Math.round(dispBal).toLocaleString('tr-TR') + ' akçe', x + w / 2, y + 25, 26, INK, { outline: false });
 }
-function statusTag(x, y, txt, w = 360) { if (spect() && /^(Sıra sende|Sıran|Sen )/.test(String(txt))) txt = 'İzliyorsun · sıra: ' + (mpTurnUid() ? mpName(mpTurnUid()) : '…'); seed(68); const p = rr(x - w / 2, y - 30, w, 60, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5); let fs = 34; ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(txt).width; if (mw > w - 30) fs *= (w - 30) / mw; inkText(ctx, txt, x, y + 2, fs, INK, { outline: false, font: '"Caveat"', weight: 700 }); }
+function statusTag(x, y, txt, w = 360) { if (spect() && /^(Sıra sende|Sıran|Sen )/.test(String(txt))) txt = 'İzliyorsun · sıra: ' + (mpTurnUid() ? mpName(mpTurnUid()) : '…'); seed(68); const hs = Math.max(1, (MINTXT * 1.5) / (34 * Math.max(.01, S))), hh = 60 * Math.min(1.7, hs); const p = rr(x - w / 2, y - hh / 2, w, hh, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5); let fs = 34 * Math.min(1.7, hs); ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(txt).width; if (mw > w - 30) fs *= (w - 30) / mw; inkText(ctx, txt, x, y + 2, fs, INK, { outline: false, font: '"Caveat"', weight: 700, fit: true }); }
 function betRow(set, ids, t, label) {
   btnDraw(ids[0], '#2aa3a0', '−', t, 62, set); btnDraw(ids[1], '#2aa3a0', '+', t, 58, set);
   const a = set[ids[0]], b = set[ids[1]];
@@ -1987,7 +2029,7 @@ function drawTavla(t) {
     else if (tv.mode !== 'local2') drawCatAt(C.x, C.y, C.s, 0, 1, 'kasket', t, tv.mood === 1, '#5a4632');
   };
   if (!LY.tv.catFront) person();
-  const bl = Math.floor(t / 280) % 2; drawLayer(getLayers('tv')[bl], 1);
+  const bl = 0; drawLayer(getLayers('tv')[bl], 1);
   if (LY.tv.catFront) person();
   setWorld(1);
   if (tv.mode === 'online' || tv.mode === 'local2') { const nm = tv.mode === 'online' ? (oppSeat ? tvName(opp) : 'Rakip bekleniyor…') : 'Aynı cihazda 2 kişi'; drawSeatLabel(C.x, C.y + (LY.tv.catFront ? 175 : -95), nm, tv.mode === 'online' && oppSeat, tv.mode === 'online' && tv.turn === opp); }
@@ -2267,7 +2309,7 @@ function drawOkey(t) {
     if (human) drawAvatarAt(c[0], c[1], c[2], MP.t.seats[seat].av, t, ok.mood[seat], c[3]);
     else { const L = BOT_LOOK[seat]; drawCatAt(c[0], c[1], c[2], c[3], L.v, L.hat, t, ok.mood[seat], L.body); }
   }
-  const bl = Math.floor(t / 280) % 2; drawLayer(getLayers('ok')[bl], 1);
+  const bl = 0; drawLayer(getLayers('ok')[bl], 1);
   setWorld(1);
   const now = t, TW = 70, TH = 100;
   const drawT = (tile, face, x, y, sc = 1, rot = 0, alpha = 1) => { ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = alpha; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(-TW * sc / 2 + 5, -TH * sc / 2 + 6, TW * sc, TH * sc); ctx.drawImage(tileSpr(face ? tile : 'back'), -TW * sc / 2, -TH * sc / 2, TW * sc, TH * sc); ctx.restore(); ctx.globalAlpha = 1; };
@@ -3533,7 +3575,7 @@ function drawBarbut(t) {
   const C = LY.tv.cat, opp = 1 - (bb.mode === 'online' ? Math.max(0, MP.seat) : 0), oppSeat = MP.t && MP.t.seats[opp];
   const person = () => { if (bb.mode === 'online' && oppSeat) drawAvatarAt(C.x, C.y, C.s, oppSeat.av, t, bb.mood === 1); else drawCatAt(C.x, C.y, C.s, 0, 3, 'kalpak', t, bb.mood === 1, '#3a2a4a'); };
   if (!LY.tv.catFront) person();
-  drawLayer(getLayers('bb')[Math.floor(t / 280) % 2], 1);
+  drawLayer(getLayers('bb')[0], 1);
   if (LY.tv.catFront) person();
   setWorld(1);
   if (bb.mode === 'online') drawSeatLabel(C.x, C.y + (LY.tv.catFront ? 175 : -95), oppSeat ? bbName(opp) : 'Rakip bekleniyor…', oppSeat, bb.turn === opp);
@@ -3696,7 +3738,7 @@ function drawPisti(t) {
   const L = PSL(), C = L.cat, me = ps.mode === 'ai' ? 0 : Math.max(0, MP.seat), opp = 1 - me, oppSeat = MP.t && MP.t.seats[opp];
   const person = () => { if (ps.mode === 'online' && oppSeat) drawAvatarAt(C.x, C.y, C.s, oppSeat.av, t, ps.mood === 1); else drawCatAt(C.x, C.y, C.s, 0, 2, 'mavifes', t, ps.mood === 1, '#2a6b5a'); };
   if (!LAND) person();
-  drawLayer(getLayers('ps')[Math.floor(t / 280) % 2], 1);
+  drawLayer(getLayers('ps')[0], 1);
   if (LAND) person();
   setWorld(1);
   const card = (c, x, y, sc = 1, rot = 0, face = true, a = 1) => { const spr = face ? cardSprite(c.r + c.s, k => drawCardFace(k, c.r, c.s)) : cardSprite('back' + AV.back, drawCardBack); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-60 * sc + 7, -85 * sc + 8, 120 * sc, 170 * sc); ctx.drawImage(spr, -60 * sc, -85 * sc, 120 * sc, 170 * sc); ctx.restore(); ctx.globalAlpha = 1; };
@@ -4114,7 +4156,7 @@ function drawBatak(t) {
   const L = BTL(), me = bt.me, seatOf = v => (me + v) % 4;
   const person = v => { const s = seatOf(v), [x, y, sc, rot] = L.cats[v], st = btOnline() && !bt.bots[s] && MP.t && MP.t.seats[s]; if (st) drawAvatarAt(x, y, sc, st.av, t, bt.mood[s] === 1, rot); else { const K = BT_CATS[s]; drawCatAt(x, y, sc, rot, K.v, K.hat, t, bt.mood[s] === 1, K.body); } };
   person(2);
-  drawLayer(getLayers('bt')[Math.floor(t / 280) % 2], 1);
+  drawLayer(getLayers('bt')[0], 1);
   person(1); person(3);
   setWorld(1);
   const card = (c, x, y, sc = 1, rot = 0, face = true, a = 1) => { const spr = face ? cardSprite(c.r + c.s, k => drawCardFace(k, c.r, c.s)) : cardSprite('back' + AV.back, drawCardBack); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-60 * sc + 7, -85 * sc + 8, 120 * sc, 170 * sc); ctx.drawImage(spr, -60 * sc, -85 * sc, 120 * sc, 170 * sc); ctx.restore(); ctx.globalAlpha = 1; };
@@ -4306,7 +4348,7 @@ function tbBall(x, y, r, n, big) {
 }
 function drawTombala(t) {
   const L = TBLay();
-  drawLayer(getLayers('tb')[Math.floor(t / 280) % 2], 1); setWorld(1);
+  drawLayer(getLayers('tb')[0], 1); setWorld(1);
   // torba
   seed(1750); const B = L.bag, bag = sub([[B.x - 90, B.y - 40], [B.x - 40, B.y - 100], [B.x + 40, B.y - 100], [B.x + 90, B.y - 40], [B.x + 110, B.y + 70], [B.x, B.y + 110], [B.x - 110, B.y + 70]], 12, true);
   ctx.save(); if (tb.state === 'play' && t - tb.curT < 400) { ctx.translate(B.x, B.y); ctx.rotate(Math.sin(t / 30) * .05); ctx.translate(-B.x, -B.y); }
@@ -4332,7 +4374,7 @@ function drawTombala(t) {
   // düğmeler
   const S_ = L.status;
   if (tb.mode === 'online') { if (tb.state !== 'play' && MP.t && MP.t.host === MP.uid) { const g = TBB.tbGo, dy = btnDraw('tbGo', '#cf4b32', null, t, 40, TBB); inkText(ctx, tb.state === 'over' ? 'YENİ' : 'BAŞLA', g.x, g.y + dy, 44, '#fbf1da', { ow: 7 }); } statusTag(S_.x - (LAND ? 0 : 120), S_.y + (LAND ? 0 : 110), tb.state === 'play' ? 'Herkes aynı torbadan · kart ' + tb.bet + ' akçe' : MP.t && MP.t.host === MP.uid ? 'Masa ' + MP.code + ' · istediğinde başlat' : 'Ev sahibinin başlatması bekleniyor', LAND ? S_.w : 520); }
-  else if (tb.state === 'play') { const dy = btnDraw('tbFast', tb.fast ? '#cf4b32' : '#2aa3a0', null, t, 40, TBB); inkText(ctx, tb.fast ? 'HIZLI' : 'NORMAL', TBB.tbFast.x, TBB.tbFast.y + dy, 30, '#fbf1da', { ow: 5 }); statusTag(S_.x - (LAND ? 0 : 120), S_.y + (LAND ? 0 : 110), 'Numaralar kendiliğinden kapanır · kart başı ' + tb.bet + ' akçe', LAND ? S_.w : 520); }
+  else if (tb.state === 'play') { const dy = btnDraw('tbFast', tb.fast ? '#cf4b32' : '#2aa3a0', null, t, 40, TBB); inkText(ctx, tb.fast ? 'HIZLI' : 'NORMAL', TBB.tbFast.x, TBB.tbFast.y + dy, 30, '#fbf1da', { ow: 5 }); statusTag(S_.x - (LAND ? 0 : 140), S_.y + (LAND ? 0 : 110), 'Kart başı ' + tb.bet + ' akçe', LAND ? S_.w : 520); }
   else {
     betRow(TBB, ['tbMinus', 'tbPlus', 'tbGo'], t, tb.state === 'over' ? 'YENİ' : 'BAŞLA');
     const dy = btnDraw('tbCards', '#8e44ad', null, t, 40, TBB); inkText(ctx, tb.ncard + ' kart', TBB.tbCards.x, TBB.tbCards.y + dy, 32, '#fbf1da', { ow: 5 });
@@ -4440,7 +4482,7 @@ function rlDown(w) {
 }
 function drawRulet(t) {
   rlUpdate(t);
-  drawLayer(getLayers('rl')[Math.floor(t / 280) % 2], 1);
+  drawLayer(getLayers('rl')[0], 1);
   setWorld(1);
   const L = RLL(), sp = rlWheelSpr[BOIL % 2], d = L.wr * 2 * 1.035;
   if (sp) { ctx.save(); ctx.translate(L.wc.x, L.wc.y); ctx.rotate(rl.wheelA); ctx.drawImage(sp, -d / 2, -d / 2, d, d); ctx.restore(); }
@@ -4479,7 +4521,7 @@ function drawRulet(t) {
 let last = performance.now(), started = false;
 function frame(t) {
   const dt = Math.min(50, t - last); last = t;
-  BOIL = Math.floor(t / 140) % 3;
+  BOIL = 0;
   // kamera
   const k = 1 - Math.pow(.004, dt / 1000 * 1.2);
   cam.x = lerp(cam.x, cam.tx, k); cam.y = lerp(cam.y, cam.ty, k); cam.z = lerp(cam.z, cam.tz, k);
@@ -4487,8 +4529,8 @@ function frame(t) {
   gyro.x = lerp(gyro.x, gyro.tx, .08); gyro.y = lerp(gyro.y, gyro.ty, .08); ptr.x = lerp(ptr.x, ptr.tx, .06); ptr.y = lerp(ptr.y, ptr.ty, .06);
   shake *= Math.pow(.02, dt / 1000);
   for (const o of [gyro, ptr]) for (const k in o) if (!Number.isFinite(o[k])) o[k] = 0;
-  off.x = Math.sin(t * .00061) * 5 + Math.sin(t * .00023) * 3 + gyro.x + ptr.x + (Math.random() - .5) * shake;
-  off.y = Math.sin(t * .00093) * 4 + gyro.y + ptr.y + (Math.random() - .5) * shake + Math.sin(lever.a) * 9;
+  off.x = Math.sin(t * .00061) * 5 + Math.sin(t * .00023) * 3 + gyro.x + ptr.x + 0 * shake;
+  off.y = Math.sin(t * .00093) * 4 + gyro.y + ptr.y + Math.sin(lever.a) * 9;
   // kol fiziği
   if (lever.auto) {
     const u = (t - lever.auto) / 520;
@@ -4506,7 +4548,7 @@ function frame(t) {
 
   ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.fillStyle = '#120806'; ctx.fillRect(0, 0, cv.width, cv.height);
   if (!started) { requestAnimationFrame(frame); return; }
-  const bl = Math.floor(t / 280) % 2;
+  const bl = 0;
   drawLayer(getLayers('bg')[bl], .35);
   drawLanterns(t);
   updateTrans(t);

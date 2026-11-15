@@ -60,6 +60,8 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - Akçe, çanta ve karakter claude.ai'de bulut kaydına yazılır (başka cihazdan devam edilir); **Sıralama** sekmesi en zengin oyuncuları gösterir.
 - Her oyunda **?** düğmesi kuralları, hoparlör düğmesi sesi açıp kapatır.
 
+Salon: büyük oyun kartları, Tümü / Kart / Masa / Şans sekmeleri, parmakla kaydırma. Oyun içi yazılar telefonda en az ~15 piksel görünür. Çizgi titremesi ve ekran sarsıntısı kapalı.
+
 Sahneler arası geçişte eski sahnelerin çizim önbelleği boşaltılır (telefonda bellek tasarrufu).
 
 Telefon **dikey ve yatay** tutulabilir: her sahnenin yatay düzeni ayrıdır (yatayda tavla tahtası standart yatay dizilime döner), oyun ortasında çevirince kaldığı yerden devam eder. Çentikli ekranlarda güvenli alan dikkate alınır.
