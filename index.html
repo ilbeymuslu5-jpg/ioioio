@@ -634,11 +634,25 @@ function drawBackground(c) {
   // Canva tablosu (sol üst)
   seed(4);
   const fx = 40, fy = 20, fw = 160, fh = 284;
-  if (paintingOK) {
+  { // el çizimi tablo: gece Boğaz manzarası (vektör, her çözünürlükte keskin)
     c.save(); trace(c, rr(fx, fy, fw, fh, 4, 20), true, 0); c.clip();
-    if ('filter' in c) c.filter = 'saturate(1.1) contrast(1.05)';
-    c.drawImage(painting, fx, fy, fw, fh); c.filter = 'none'; c.restore();
-  } else wash(c, rr(fx, fy, fw, fh, 4), '#3a1218');
+    const g = c.createLinearGradient(0, fy, 0, fy + fh); g.addColorStop(0, '#1a1438'); g.addColorStop(.45, '#5a2a52'); g.addColorStop(.62, '#c8603a'); g.addColorStop(.63, '#16243e'); g.addColorStop(1, '#0c1626'); c.fillStyle = g; c.fillRect(fx, fy, fw, fh);
+    c.fillStyle = '#fff1c8'; for (let i = 0; i < 26; i++) { c.globalAlpha = .4 + rng() * .6; c.beginPath(); c.arc(fx + rng() * fw, fy + rng() * fh * .4, .6 + rng() * 1.1, 0, 7); c.fill(); } c.globalAlpha = 1;
+    c.fillStyle = '#ffe9a8'; c.beginPath(); c.arc(fx + fw * .74, fy + fh * .16, 15, 0, 7); c.fill(); c.fillStyle = '#241a44'; c.beginPath(); c.arc(fx + fw * .74 + 7, fy + fh * .16 - 3, 13, 0, 7); c.fill();
+    const hy = fy + fh * .625; c.fillStyle = '#140c1e';
+    const sky = [[fx, hy], [fx, hy - 16], [fx + 14, hy - 20], [fx + 22, hy - 16]]; c.beginPath(); c.moveTo(fx, hy);
+    c.lineTo(fx, hy - 14); c.lineTo(fx + 18, hy - 18); c.lineTo(fx + 30, hy - 14);
+    c.lineTo(fx + 36, hy - 14); c.lineTo(fx + 36, hy - 70); c.lineTo(fx + 38, hy - 82); c.lineTo(fx + 40, hy - 70); c.lineTo(fx + 40, hy - 26);
+    c.quadraticCurveTo(fx + 52, hy - 34, fx + 58, hy - 40); c.quadraticCurveTo(fx + 80, hy - 78, fx + 102, hy - 40); c.quadraticCurveTo(fx + 108, hy - 34, fx + 120, hy - 26);
+    c.lineTo(fx + 120, hy - 70); c.lineTo(fx + 122, hy - 82); c.lineTo(fx + 124, hy - 70); c.lineTo(fx + 124, hy - 14);
+    c.lineTo(fx + 140, hy - 18); c.lineTo(fx + fw, hy - 10); c.lineTo(fx + fw, hy); c.closePath(); c.fill();
+    c.fillStyle = '#ffd27a'; for (let i = 0; i < 16; i++) { c.globalAlpha = .7; c.fillRect(fx + 44 + (i % 8) * 9, hy - 22 + Math.floor(i / 8) * 8, 2.4, 3); } c.globalAlpha = 1;
+    for (let i = 0; i < 9; i++) { c.globalAlpha = .5 - i * .045; c.fillStyle = '#ffb46a'; c.fillRect(fx + fw * .74 - 16 + rng() * 6, hy + 8 + i * 9, 26 - i * 1.5, 2.6); } c.globalAlpha = 1;
+    c.strokeStyle = 'rgba(160,200,255,.28)'; c.lineWidth = 1.4; for (let i = 0; i < 9; i++) { const y = hy + 14 + i * 10, x = fx + rng() * (fw - 40); c.beginPath(); c.moveTo(x, y); c.quadraticCurveTo(x + 12, y - 3, x + 26, y); c.stroke(); }
+    const bx = fx + 44, by = hy + 44; c.fillStyle = '#0a0a12'; c.beginPath(); c.moveTo(bx - 20, by); c.quadraticCurveTo(bx, by + 12, bx + 22, by); c.closePath(); c.fill(); c.strokeStyle = '#0a0a12'; c.lineWidth = 1.6; c.beginPath(); c.moveTo(bx, by); c.lineTo(bx, by - 26); c.stroke(); c.fillStyle = '#e9dcc0'; c.beginPath(); c.moveTo(bx + 1, by - 26); c.lineTo(bx + 16, by - 6); c.lineTo(bx + 1, by - 4); c.closePath(); c.fill();
+    c.strokeStyle = '#e9dcc0'; c.lineWidth = 1.2; for (const [gx, gy] of [[fx + 30, fy + 70], [fx + 62, fy + 54], [fx + 108, fy + 84]]) { c.beginPath(); c.moveTo(gx - 6, gy); c.quadraticCurveTo(gx - 3, gy - 5, gx, gy); c.quadraticCurveTo(gx + 3, gy - 5, gx + 6, gy); c.stroke(); }
+    c.restore();
+  }
   const fr = rr(fx - 14, fy - 14, fw + 28, fh + 28, 8, 24); ink(c, fr, true, 18, '#b8862b', 1.5); ink(c, fr, true, 3, INK, 1.5); ink(c, rr(fx - 2, fy - 2, fw + 4, fh + 4, 4, 20), true, 2.5, INK, 1);
   for (const [x, y] of [[fx - 14, fy - 14], [fx + fw + 14, fy - 14], [fx - 14, fy + fh + 14], [fx + fw + 14, fy + fh + 14]]) { const s = star4(x, y, 16); wash(c, s, '#f2cf74', 1); ink(c, s, true, 1.6); }
   // İznik tabakları
