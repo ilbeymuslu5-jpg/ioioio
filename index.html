@@ -1271,6 +1271,7 @@ function drawLobby(t) {
   inkText(ctx, LOBBYMODE === 'multi' ? 'Çok oyunculu · bir oyuna dokun, eşleş' : 'Hangi oyunu oynayalım?', LX, L.subY, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
   if (!LAND) { const pl = rr(LX - 180, L.coinY - 34, 360, 68, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3); inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), LX, L.coinY + 2, 42, INK, { outline: false }); }
   else { const pl = rr(LX - 180, 260, 360, 68, 14, 20); wash(ctx, pl, '#b8862b', 1.5); ink(ctx, pl, true, 3); inkText(ctx, 'AKÇE  ' + Math.round(dispBal).toLocaleString('tr-TR'), LX, 296, 42, INK, { outline: false }); }
+  { const me = myAvatarSprite(); if (me) { if (LAND) ctx.drawImage(me, LX - 370, 196, 170, 170); else ctx.drawImage(me, 30, 150, 200, 200); } }
   chipRects().forEach(r => { seed(55 + r.x); const on = LOB.cat === r.k, q = rr(r.x - r.w / 2, r.y - r.h / 2, r.w, r.h, 32, 14); wash(ctx, q, on ? '#f2cf74' : 'rgba(30,16,8,.75)', 1); ink(ctx, q, true, on ? 3.5 : 2.5, on ? INK : '#b8862b', 1); inkText(ctx, r.n, r.x, r.y + 2, 40, on ? INK : '#f4e8cc', { outline: false, font: '"Caveat"', weight: 700, fit: true }); });
   // kaydırılan kartlar
   const v = visRect(0);
@@ -1309,29 +1310,26 @@ const MODEBTN = { single: { x: 500, y: 760, w: 760, h: 400 }, multi: { x: 500, y
 function drawModeSelect(t) {
   setWorld(1); seed(50);
   const LX = LY.lx, M2 = MODEBTN;
-  if (LAND) { Object.assign(M2.single, { x: 640, y: 620, w: 640, h: 420 }); Object.assign(M2.multi, { x: 1360, y: 620, w: 640, h: 420 }); }
-  else { Object.assign(M2.single, { x: 500, y: 700, w: 780, h: 380 }); Object.assign(M2.multi, { x: 500, y: 1130, w: 780, h: 380 }); }
-  inkText(ctx, 'Nazar Sarayı', LX, 140, 120, '#f2cf74', { ow: 12 });
-  inkText(ctx, 'Nasıl oynamak istersin?', LX, 240, 46, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
-  const on = Math.max(0, MP.peers.length - 1);
-  [['single', 'Tek Oyunculu', 'Kedilere karşı, kendi hızında', 'Reis, Paşa, Tarçın ve diğerleri seni bekliyor'], ['multi', 'Çok Oyunculu', 'Gerçek rakiplerle eşleş', MP.ok ? (on ? on + ' kişi çevrimiçi · oyuna dokun, rastgele masaya bağlan' : 'Oyuna dokun, rastgele masaya bağlan') : 'Oyun claude.ai\'de paylaşıldığında açılır']].forEach(([k, title, sub, sub2], i) => {
-    const b = M2[k], sway = Math.sin(t * .0011 + i * 1.7) * .01, hov = press['mode' + k] && t - press['mode' + k] < 200 ? .96 : 1;
-    ctx.save(); ctx.translate(b.x, b.y); ctx.rotate(sway); ctx.scale(hov, hov); seed(80 + i);
-    ctx.fillStyle = 'rgba(0,0,0,.35)'; trace(ctx, rr(-b.w / 2 + 12, -b.h / 2 + 16, b.w, b.h, 18, 30), true, 2); ctx.fill();
-    const fr = rr(-b.w / 2, -b.h / 2, b.w, b.h, 18, 30); wash(ctx, fr, k === 'single' ? '#7a1e28' : '#1f4e9c', 2); ink(ctx, fr, true, 4);
-    const pp = rr(-b.w / 2 + 20, -b.h / 2 + 20, b.w - 40, b.h - 40, 10, 30); wash(ctx, pp, '#f4e8cc', 2); ink(ctx, pp, true, 2.5, '#b8862b', 1.2);
-    for (const [x, y] of [[-b.w / 2 + 20, -b.h / 2 + 20], [b.w / 2 - 20, -b.h / 2 + 20], [-b.w / 2 + 20, b.h / 2 - 20], [b.w / 2 - 20, b.h / 2 - 20]]) { const st = star4(x, y, 16); wash(ctx, st, '#f2cf74', 1); ink(ctx, st, true, 1.6); }
-    const ix = -b.w / 2 + 150;
-    if (k === 'single') { drawAvatarMini(ix - 30, 0, 170, AV); ctx.save(); ctx.translate(ix + 40, 30); ctx.scale(.55, .55); ctx.translate(-100, -120); drawKedi(ctx, (t % 3100) < 150, false, 1); drawKasket(ctx); ctx.restore(); }
-    else { drawAvatarMini(ix - 40, -10, 150, AV); inkText(ctx, 'vs', ix + 20, 20, 44, '#cf4b32', { ow: 5 }); drawAvatarMini(ix + 80, -10, 150, { fur: 3, eye: 1, hat: 'kasket', acc: 'none', robe: 1 }); }
-    const tx = -b.w / 2 + 300;
-    inkText(ctx, title, tx, -70, 66, k === 'single' ? '#cf4b32' : '#1f4e9c', { ow: 7, align: 'left' });
-    inkText(ctx, sub, tx, -6, 36, INK, { outline: false, font: '"Caveat"', weight: 700, align: 'left' });
-    let fs = 26; ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(sub2).width, room = b.w / 2 - tx - 40; if (mw > room) fs *= room / mw;
-    inkText(ctx, sub2, tx, 46, fs, '#6a5a48', { outline: false, font: '"Caveat"', weight: 700, align: 'left' });
-    if (k === 'multi') { ctx.fillStyle = on ? '#4fd17a' : '#8a7a5a'; ctx.beginPath(); ctx.arc(tx - 22, 46, 10, 0, 7); ctx.fill(); }
-    const kk = .5 + .5 * Math.sin(t * .005 + i * 2), pb = rr(b.w / 2 - 210, b.h / 2 - 110, 170, 64, 30, 16); wash(ctx, pb, k === 'single' ? '#cf4b32' : '#1f4e9c', 1.5); ink(ctx, pb, true, 3);
-    inkText(ctx, 'Seç ›', b.w / 2 - 125 + kk * 3, b.h / 2 - 77, 40, '#fbf1da', { ow: 5 });
+  if (LAND) { Object.assign(M2.single, { x: 600, y: 640, w: 720, h: 560 }); Object.assign(M2.multi, { x: 1400, y: 640, w: 720, h: 560 }); }
+  else { Object.assign(M2.single, { x: 500, y: 640, w: 860, h: 560 }); Object.assign(M2.multi, { x: 500, y: 1260, w: 860, h: 560 }); }
+  inkText(ctx, 'Nazar Sarayı', LX, 130, LAND ? 104 : 116, '#f2cf74', { ow: 12 });
+  inkText(ctx, 'Nasıl oynamak istersin?', LX, 232, 52, '#f4e8cc', { outline: INK, ow: 6, font: '"Caveat"', weight: 700 });
+  const on = Math.max(0, MP.peers.length - 1), me = myAvatarSprite();
+  [['single', 'Tek Oyunculu', 'Kedilere karşı, kendi hızında'], ['multi', 'Çok Oyunculu', MP.ok ? (on ? on + ' kişi çevrimiçi · rakip bul' : 'Gerçek rakiplerle eşleş') : 'Oyun paylaşılınca açılır']].forEach(([k, title, sub2], i) => {
+    const b = M2[k], pr = press['mode' + k] && t - press['mode' + k] < 200 ? .96 : 1, col = k === 'single' ? '#7a1e28' : '#1f4e9c', w = b.w, h = b.h;
+    ctx.save(); ctx.translate(b.x, b.y); ctx.scale(pr, pr); seed(80 + i);
+    ctx.fillStyle = 'rgba(0,0,0,.4)'; trace(ctx, rr(-w / 2 + 10, -h / 2 + 14, w, h, 30, 30), true, 1); ctx.fill();
+    const fr = rr(-w / 2, -h / 2, w, h, 30, 30); wash(ctx, fr, col, 2); ink(ctx, fr, true, 4);
+    const artH = h * .56, pp = rr(-w / 2 + 16, -h / 2 + 16, w - 32, artH, 20, 30); wash(ctx, pp, '#f4e8cc', 2); hatch(ctx, pp, .25, 12, '#b8862b', .12); ink(ctx, pp, true, 2.5, '#b8862b', 1.2);
+    ctx.save(); trace(ctx, pp, true, 0); ctx.clip();
+    const ay = -h / 2 + 16 + artH, az = artH * 1.02;
+    if (me) ctx.drawImage(me, -w * .3 - az / 2, ay - az, az, az);
+    if (k === 'single') { [[1, 'kasket', .06, 0], [3, 'fez', .26, 1], [2, 'mavifes', .42, 2]].forEach(([fur, hat, fx, q]) => drawAvatarMini(w * fx, ay - artH * .42 + Math.sin(t * .003 + q) * 6, artH * .62, { fur, eye: q, hat, acc: 'none' })); inkText(ctx, 'vs', -w * .1, ay - artH * .42, 60, '#cf4b32', { ow: 6 }); }
+    else { inkText(ctx, 'vs', -w * .05, ay - artH * .45, 64, '#1f4e9c', { ow: 6 }); const peers = MP.peers.filter(p => !p.isMe && p.presence && p.presence.av).slice(0, 2).map(p => p.presence.av); const avs = peers.length ? peers : [{ fur: 3, eye: 1, hat: 'silindir', acc: 'gozluk' }, { fur: 2, eye: 2, hat: 'hasir', acc: 'none' }]; avs.forEach((av, q) => drawAvatarMini(w * (.16 + q * .2), ay - artH * .42 + Math.sin(t * .003 + q * 2) * 6, artH * .62, av)); ctx.fillStyle = on ? '#4fd17a' : '#8a7a5a'; ctx.beginPath(); ctx.arc(w / 2 - 50, -h / 2 + 50, 14, 0, 7); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 3; ctx.stroke(); }
+    ctx.restore();
+    inkText(ctx, title, 0, h / 2 - h * .29, LAND ? 70 : 80, '#fbf1da', { ow: 8, fit: true });
+    let fs = LAND ? 44 : 50; ctx.font = `700 ${fs}px "Caveat", cursive`; const mw = ctx.measureText(sub2).width; if (mw > w - 50) fs *= (w - 50) / mw;
+    inkText(ctx, sub2, 0, h / 2 - h * .11, fs, '#fff1c8', { outline: INK, ow: 5, font: '"Caveat"', weight: 700, fit: true });
     ctx.restore();
   });
 }
@@ -2522,7 +2520,7 @@ function iconURL(kind, key, px = 96) {
   const k = kind + ':' + (typeof key === 'string' ? key : JSON.stringify(key)) + ':' + px;
   if (iconCache[k]) return iconCache[k];
   const box = kind === 'av' ? 300 : 200, cvs = makeCanvas(px, px), c = cvs.getContext('2d');
-  c.scale(px / box, px / box); if (kind === 'av') c.translate(50, 0);
+  c.scale(px / box, px / box); if (kind === 'av') { c.translate(64, 44); c.scale(.86, .86); }
   const o = BOIL; BOIL = 0;
   if (kind === 'av') drawAvatar(c, key); else if (kind === 'item') drawItemIcon(c, key); else if (kind === 'hat') hatIcon(c, key); else if (kind === 'acc') { c.translate(-100, -260); c.scale(2, 2); drawAcc(c, key); } else if (kind === 'fur') { c.translate(15, 5); c.scale(.85, .85); drawKedi(c, false, false, Object.assign({}, FURS[key], { e: EYES[AV.eye] })); } else if (kind === 'back') { c.translate(45, 15); c.scale(.92, .98); drawCardBackStyle(c, key); }
   BOIL = o;
@@ -2531,7 +2529,7 @@ function iconURL(kind, key, px = 96) {
 let avSprite = null, avSpriteKey = '';
 function myAvatarSprite() {
   const key = JSON.stringify(AV) + S + DPR;
-  if (key !== avSpriteKey) { const px = Math.ceil(300 * Math.max(.35, S) * DPR), cvs = makeCanvas(px, px), c = cvs.getContext('2d'); c.scale(px / 300, px / 300); c.translate(50, 0); const o = BOIL; BOIL = 0; drawAvatar(c, AV); BOIL = o; avSprite = cvs; avSpriteKey = key; }
+  if (key !== avSpriteKey) { const px = Math.ceil(300 * Math.max(.35, S) * DPR), cvs = makeCanvas(px, px), c = cvs.getContext('2d'); c.scale(px / 300, px / 300); c.translate(64, 44); c.scale(.86, .86); const o = BOIL; BOIL = 0; drawAvatar(c, AV); BOIL = o; avSprite = cvs; avSpriteKey = key; }
   return avSprite;
 }
 function setAV(patch) { const zc = 'zar' in patch && patch.zar !== AV.zar; Object.assign(AV, patch); if (zc && W) buildTvSprites(); store.set('av', AV); mpPresence(); cloudDirty(); }
