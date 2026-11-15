@@ -17,7 +17,7 @@
 html,body{margin:0;height:100%;background:var(--bg);overflow:hidden;touch-action:none;overscroll-behavior:none}
 canvas{display:block;position:fixed;inset:0;width:100%;height:100%}
 .modal{position:fixed;inset:0;z-index:5;display:none;align-items:center;justify-content:center;padding:16px;background:rgba(12,4,2,.7)}
-.modal.show{display:flex}
+.modal.show{display:flex;animation:mfade .18s ease-out}.modal.show>.sheet{animation:mpop .26s cubic-bezier(.2,1.3,.4,1)}@keyframes mfade{from{background:rgba(12,4,2,0)}}@keyframes mpop{from{transform:translateY(40px) scale(.94);opacity:0}}.sheet button{transition:transform .08s}.sheet button:active{transform:scale(.93)}.sheet .item,.sheet .opt{animation:mpop .3s both}@media (prefers-reduced-motion:reduce){.modal.show,.modal.show>.sheet,.sheet .item,.sheet .opt{animation:none}}
 .sheet{position:relative;width:100%;max-width:420px;max-height:88vh;overflow:auto;padding:22px 20px 18px;color:var(--ink);
   background:var(--paper);border-radius:6px 14px 8px 12px;box-shadow:0 18px 50px rgba(0,0,0,.6);transform:rotate(-1deg);
   font-family:"Caveat",cursive;font-weight:700;font-size:21px;line-height:1.15}
@@ -1859,7 +1859,7 @@ function drawKasket(c) {
   const brim = sub([[38, 74], [100, 72], [162, 78], [152, 94], [96, 88], [42, 88]], 10, true); wash(c, brim, '#4e4034', 1); ink(c, brim, true, 2.6);
 }
 function drawCatAt(x, y, sc, rot, v, hat, t, happy, body = '#7a1e28') {
-  setWorld(.8); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.scale(sc, sc * (1 + Math.sin(t * .002 + v) * .012)); ctx.translate(-100, -120);
+  setWorld(.8); ctx.save(); ctx.translate(x, y - (happy ? Math.abs(Math.sin(t / 170)) * 16 * sc : 0)); ctx.rotate(rot + (happy ? Math.sin(t / 170) * .04 : 0)); ctx.scale(sc, sc * (1 + Math.sin(t * .002 + v) * .012)); ctx.translate(-100, -120);
   seed(32 + v); const bd = sub([[52, 160], [148, 160], [210, 300], [-10, 300]], 14, true); wash(ctx, bd, body, 2); ink(ctx, bd, true, 3.5);
   ink(ctx, [[60, 162], [100, 205], [140, 162]], false, 4, '#d9a441', 1);
   drawKedi(ctx, (t + v * 700) % 3300 < 150, happy, v);
@@ -2848,7 +2848,7 @@ async function mpLeave() {
 }
 // ---------- avatar çizimi (dünya koordinatında) ----------
 function drawAvatarAt(x, y, sc, av, t, happy, rot = 0) {
-  if (!av) return; setWorld(.8); ctx.save(); ctx.translate(x, y); ctx.rotate(rot || 0); ctx.scale(sc, sc * (1 + Math.sin(t * .002 + x) * .012)); ctx.translate(-100, -120);
+  if (!av) return; setWorld(.8); ctx.save(); ctx.translate(x, y - (happy ? Math.abs(Math.sin(t / 170)) * 16 * sc : 0)); ctx.rotate((rot || 0) + (happy ? Math.sin(t / 170) * .04 : 0)); ctx.scale(sc, sc * (1 + Math.sin(t * .002 + x) * .012)); ctx.translate(-100, -120);
   const o = BOIL; drawAvatar(ctx, av, (t + x * 7) % 3300 < 150, happy); BOIL = o; ctx.restore(); setWorld(1);
 }
 const miniCache = new Map();
