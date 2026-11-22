@@ -61,6 +61,37 @@ button.big{display:block;width:100%;font:400 24px "Caveat Brush",cursive;backgro
 .join{display:flex;gap:6px}.join input{flex:1;font:700 22px "Caveat",cursive;letter-spacing:3px;text-transform:uppercase;border:2px solid var(--ink);border-radius:10px;padding:4px 8px;background:#fffaf0;min-width:0}
 .tables{display:flex;flex-direction:column;gap:6px}
 .trow{display:grid;grid-template-columns:auto 1fr auto;gap:8px;align-items:center;background:#efe3c4;border-radius:10px;padding:6px 8px;font-size:17px}
+
+/* ---- GUI v2: dokunma hedefleri, alt sayfa, düzenli satırlar ---- */
+.acts button,.join button,.trow button,.bets button{font:700 19px "Caveat",cursive;min-height:40px;padding:4px 14px;border-radius:12px;box-shadow:0 2px 0 rgba(43,26,18,.55)}
+.acts button:active,.trow button:active,.bets button:active{box-shadow:none;transform:translateY(2px)}
+.bets{gap:6px}.bets button.on{box-shadow:0 0 0 2px var(--ink) inset,0 2px 0 rgba(43,26,18,.55)}
+.trow{display:flex;align-items:center;gap:10px;padding:8px 10px;margin:6px 0;background:#efe3c4;border:2px solid rgba(43,26,18,.18);border-radius:14px;min-height:56px}
+.trow>span{flex:1;min-width:0}.trow>b{flex:none}
+.trow.done{background:#f6e2a6;border-color:#d9a441}.trow.claimed{opacity:.6}
+.pbar{height:10px;border-radius:6px;background:rgba(43,26,18,.15);overflow:hidden;margin-top:4px}.pbar i{display:block;height:100%;background:linear-gradient(90deg,#2aa3a0,#4fd17a);border-radius:6px}
+.trow button.go{background:var(--coral);font-size:20px}
+.shandle{display:none;width:56px;height:6px;border-radius:3px;background:rgba(43,26,18,.35);margin:-8px auto 10px}
+.seg{display:flex;background:#e2d2ab;border:2px solid var(--ink);border-radius:16px;padding:3px;gap:3px;margin:0 52px 12px 0}
+.seg button{flex:1;font:400 22px "Caveat Brush",cursive;background:transparent;color:var(--ink);border:0;border-radius:12px;padding:6px 4px;min-height:44px;cursor:pointer}
+.seg button.on{background:var(--coral);color:var(--paper);box-shadow:0 2px 0 rgba(43,26,18,.5)}
+.sh2{margin:4px 56px 12px 4px;font:400 34px "Caveat Brush",cursive;color:#7a1e28;line-height:44px}
+.set{display:flex;align-items:center;gap:12px;padding:10px 12px;margin:6px 0;background:#efe3c4;border-radius:14px;border:2px solid rgba(43,26,18,.18);min-height:62px}
+.set span{flex:1}.set small{display:block;font-size:16px;opacity:.75;font-weight:700}
+.tg{position:relative;width:64px;height:36px;border-radius:18px;background:#b9a98a;border:2px solid var(--ink);cursor:pointer;flex:none;transition:background .15s}
+.tg::after{content:'';position:absolute;top:2px;left:2px;width:28px;height:28px;border-radius:50%;background:#fbf8f2;border:2px solid var(--ink);box-sizing:border-box;transition:left .15s}
+.tg.on{background:#2aa3a0}.tg.on::after{left:30px}
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:12px;margin:8px 0}
+.chip{position:relative;aspect-ratio:1;border-radius:50%;border:3px solid var(--ink);cursor:pointer;font:400 30px "Caveat Brush",cursive;color:#fff;display:flex;flex-direction:column;align-items:center;justify-content:center;background:radial-gradient(circle,var(--c) 0 52%,#fbf8f2 53% 58%,var(--c) 59%);box-shadow:0 4px 0 rgba(43,26,18,.5);text-shadow:0 2px 0 rgba(0,0,0,.45)}
+.chip small{font:700 15px "Caveat",cursive;opacity:.9}.chip.on{outline:4px solid #f2cf74;outline-offset:3px}.chip.lock{filter:grayscale(.8) brightness(.8);cursor:not-allowed}
+.chip:active{transform:translateY(3px);box-shadow:0 1px 0 rgba(43,26,18,.5)}
+@media (max-aspect-ratio:1/1){
+  #sheet{align-items:flex-end;padding:0}
+  #sheet .sheet{max-width:none;width:100%;border-radius:24px 24px 0 0;max-height:90vh;padding:18px 16px calc(18px + env(safe-area-inset-bottom));outline-offset:-6px}
+  #sheet.show>.sheet{animation:sup .28s cubic-bezier(.2,1.1,.4,1)}
+  .shandle{display:block}
+}
+@keyframes sup{from{transform:translateY(100%)}}
 </style>
 </head>
 <body>
@@ -77,6 +108,7 @@ button.big{display:block;width:100%;font:400 24px "Caveat Brush",cursive;backgro
 </div></div>
 
 <div class="modal" id="ask" style="z-index:8"><div class="sheet" style="max-width:380px;text-align:center"><p id="askText" style="font-size:22px"></p><div style="display:flex;gap:8px;justify-content:center"><button class="big" id="askYes" style="width:auto;padding:8px 22px"></button><button class="big" id="askNo" style="width:auto;padding:8px 22px;background:#e8d9b5;color:var(--ink)"></button></div></div></div>
+<div class="modal" id="betpick"><div class="sheet" style="max-width:380px;text-align:center"><div class="sh2" style="margin:0 0 4px;text-align:center">Bahsini seç</div><div class="hint" id="betBal"></div><div class="chips" id="betChips"></div><button class="big" style="background:#8a7a5a" onclick="this.closest('.modal').classList.remove('show')">Kapat</button></div></div>
 <div class="modal" id="sheet"><div class="sheet"><button class="x" id="sheetX" aria-label="Kapat">✕</button><div id="sheetBody"></div></div></div>
 <script>
 (() => {
@@ -173,9 +205,9 @@ function hatch(c, clipPts, ang, gap, col = INK, a = .25, w = 1.3) {
   for (let y = -R; y < R; y += gap) { c.moveTo(-R + J(5), y + J(1)); c.lineTo(R + J(5), y + J(2.5)); }
   c.stroke(); c.restore();
 }
-const MINTXT = 15;
+var MINTXT = 15;
 function inkText(c, txt, x, y, size, fill, opts = {}) {
-  if (typeof ctx !== 'undefined' && c === ctx && !opts.fit) { const m = c.getTransform(), sc = Math.hypot(m.a, m.b) / (DPR || 1); if (sc > 0 && size * sc < MINTXT) { const k = MINTXT / (size * sc); size *= k; if (opts.ow) opts = Object.assign({}, opts, { ow: opts.ow * k }); } }
+  if (typeof ctx !== 'undefined' && c === ctx && !opts.fit) { const m = c.getTransform(), sc = Math.hypot(m.a, m.b) / (DPR || 1), mn = typeof BIGTXT !== 'undefined' && BIGTXT ? 19 : MINTXT; if (sc > 0 && size * sc < mn) { const k = mn / (size * sc); size *= k; if (opts.ow) opts = Object.assign({}, opts, { ow: opts.ow * k }); } }
   const font = opts.font || '"Caveat Brush"';
   c.font = `${opts.weight || ''} ${size}px ${font}, "Comic Sans MS", cursive`;
   c.textAlign = opts.align || 'center'; c.textBaseline = 'middle'; c.lineJoin = 'round';
@@ -449,7 +481,8 @@ function pluck(freq, delay = 0, vol = .1) {
 const HICAZ = [293.7, 311.1, 370, 392, 440, 466.2, 523.3, 587.3, 622.3, 740];
 function melody(seq, step = .13) { seq.forEach((n, i) => pluck(HICAZ[n], i * step)); }
 // ---------- arka plan müziği (hicaz, prosedürel) ----------
-let MUSIC = store.get('music', true), musBar = 0, SWAY = store.get('sway', true);
+let MUSIC = store.get('music', true), musBar = 0, SWAY = store.get('sway', true), VIB = store.get('vib', true), BIGTXT = store.get('bigtxt', false);
+const buzz = ms => { if (VIB && navigator.vibrate) try { navigator.vibrate(ms); } catch { } };
 const MUS_PHR = [[0, 2, 3, 4, 3, 2, 1, 0], [4, 5, 4, 3, 2, 3, 2, 1], [7, 6, 5, 4, 5, 4, 3, 2], [2, 3, 4, 2, 1, 0, 1, 0], [4, 4, 5, 7, 6, 5, 4, 3], [3, 2, 1, 2, 3, 2, 1, 0]];
 function musicTick() {
   if (!MUSIC || muted || document.hidden || !AC || AC.state !== 'running') return;
@@ -957,9 +990,29 @@ function drawMotes(dt, t) {
 }
 // ---------- kurdele afişler ----------
 function banner(text, sub, opts = {}) { if (opts.big && (!opts.col || opts.col === '#cf4b32')) spawnConfetti(opts.dur > 3000 ? 110 : 70); banners.push({ text, sub, t0: performance.now(), dur: opts.dur || 2200, big: !!opts.big, top: !!opts.top, y: opts.y || 0, col: opts.col || '#cf4b32' }); }
+function drawToasts(t) {
+  const list = banners.filter(b => !b.big).slice(-2); if (!list.length) return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  let y = BACK.y + BACK.h + 12 + (MP.code && scene !== 'lobby' ? 96 : 0);
+  for (let i = list.length - 1; i >= 0; i--) {
+    const b = list[i], age = t - b.t0, ein = clamp(age / 260, 0, 1), out = clamp((b.dur - age) / 280, 0, 1), e = 1 - Math.pow(1 - ein, 3);
+    ctx.font = '26px "Caveat Brush", cursive'; const tw = ctx.measureText(b.text).width; ctx.font = '700 21px "Caveat", cursive'; const sw = b.sub ? ctx.measureText(b.sub).width : 0;
+    const w = Math.min(W - 24 - SAFE.l - SAFE.r, Math.max(tw, sw) + 64), h = b.sub ? 62 : 44, x = W / 2 - w / 2;
+    ctx.save(); ctx.globalAlpha = out * ein; ctx.translate(0, (1 - e) * -24);
+    ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.roundRect(x, y + 3, w, h, 16); ctx.fill();
+    ctx.fillStyle = '#f7ecd2'; ctx.beginPath(); ctx.roundRect(x, y, w, h, 16); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2.2; ctx.stroke();
+    ctx.fillStyle = b.col; ctx.beginPath(); ctx.roundRect(x + 8, y + 8, 7, h - 16, 4); ctx.fill();
+    let fs = 26; ctx.font = `${fs}px "Caveat Brush", cursive`; if (tw > w - 40) fs *= (w - 40) / tw;
+    inkText(ctx, b.text, W / 2 + 6, y + (b.sub ? 21 : h / 2 + 1), fs, b.col === '#cf4b32' ? '#b8321f' : b.col, { outline: false, fit: true });
+    if (b.sub) { let f2 = 21; if (sw > w - 40) f2 *= (w - 40) / sw; inkText(ctx, b.sub, W / 2 + 6, y + 45, f2, INK, { outline: false, font: '"Caveat"', weight: 700, fit: true }); }
+    ctx.restore(); y += (h + 8) * e;
+  }
+  ctx.globalAlpha = 1;
+}
 function drawBanners(t) {
   banners = banners.filter(b => t - b.t0 < b.dur);
-  const b = banners[banners.length - 1]; if (!b) return;
+  drawToasts(t);
+  const b = banners.filter(b => b.big).pop(); if (!b) return;
   const age = t - b.t0, sc = easeOutBack(clamp(age / 380, 0, 1)), out = clamp((b.dur - age) / 300, 0, 1);
   const y = b.top ? H * .16 : b.y ? H * b.y : scene === 'slot' ? toScreen(500, RY + RH / 2).y : H * .42, w = Math.min(W * .88, b.big ? 460 : 380), h = b.big ? 108 : 78;
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0); ctx.translate(W / 2, y); ctx.scale(sc, sc); ctx.rotate(-.025); ctx.globalAlpha = out;
@@ -1037,7 +1090,7 @@ function updateReels(t) {
     const u = clamp((t - r.t0) / r.dur, 0, 1);
     r.prevP = r.p; r.p = reelPos(r, u); r.vel = (r.prevP - r.p) / 16;
     const fi = Math.floor(r.p); if (fi !== r.lastI) { r.lastI = fi; if (t - tickT > 45) { tickT = t; tone('square', 1300 + c * 90, .02, .012); } }
-    if (!r.thunk && u >= .86) { r.thunk = true; r.landT = t; thud(.28, 320 - c * 20); shake = Math.max(shake, 3); if (navigator.vibrate) navigator.vibrate(12); if (r.strip.slice(1, 4).includes(SCAT)) tone('sine', 880 + c * 110, .3, .06); }
+    if (!r.thunk && u >= .86) { r.thunk = true; r.landT = t; thud(.28, 320 - c * 20); shake = Math.max(shake, 3); buzz(12); if (r.strip.slice(1, 4).includes(SCAT)) tone('sine', 880 + c * 110, .3, .06); }
     if (u >= 1) { r.p = r.end; r.spinning = false; r.vel = 0; }
   });
   if (state === 'spinning' && !any) finish();
@@ -1103,6 +1156,7 @@ let ptrId = null;
 function hitBtn(w) { for (const k in BTN) { const b = BTN[k]; if (Math.hypot(w.x - b.x, w.y - b.y) < b.r + 14) return k; } return null; }
 cv.addEventListener('pointerdown', e => {
   audio(); askGyro();
+  { const now = performance.now(); for (const b of banners) if (b.big && now - b.t0 > 500 && b.dur - (now - b.t0) > 300) b.dur = now - b.t0 + 280; }
   const w = toWorld(e.clientX, e.clientY);
   if (!trans.done) return;
   if (emoHit(e.clientX, e.clientY) || hudHit(e.clientX, e.clientY)) return;
@@ -1141,7 +1195,7 @@ cv.addEventListener('pointermove', e => {
   if (!lever.drag || e.pointerId !== ptrId) return;
   const w = toWorld(e.clientX, e.clientY);
   const na = clamp(lever.startA + (w.y - lever.startY) / LEVER_L * 1.5, 0, Math.PI * .92);
-  if (Math.floor(na * 5) !== Math.floor(lever.a * 5) && na > lever.a) { tone('square', 300 + na * 200, .02, .03); if (navigator.vibrate) navigator.vibrate(5); }
+  if (Math.floor(na * 5) !== Math.floor(lever.a * 5) && na > lever.a) { tone('square', 300 + na * 200, .02, .03); buzz(5); }
   lever.a = na;
   if (!lever.fired && lever.a > 2.1) { lever.fired = true; spin(); }
 });
@@ -1155,7 +1209,12 @@ addEventListener('keydown', e => {
   if (scene === 'bj') { if (e.code === 'Space' || e.code === 'Enter') { e.preventDefault(); bjDeal(); } if (e.key === 'h' || e.key === 'ç') bjHit(); if (e.key === 's' || e.key === 'd') bjStand(); if (e.key === 'b') bjSplit(); }
 });
 document.getElementById('sheetX').onclick = closeSheet;
+document.getElementById('betpick').addEventListener('click', e => { if (e.target.id === 'betpick') e.target.classList.remove('show'); });
 document.getElementById('sheet').addEventListener('click', e => { if (e.target.id === 'sheet') closeSheet(); });
+{ const sh = document.querySelector('#sheet .sheet'); let y0 = null, dy = 0;
+  sh.addEventListener('touchstart', e => { y0 = sh.scrollTop <= 0 && innerWidth <= innerHeight ? e.touches[0].clientY : null; dy = 0; }, { passive: true });
+  sh.addEventListener('touchmove', e => { if (y0 === null) return; dy = e.touches[0].clientY - y0; if (dy > 0 && sh.scrollTop <= 0) { sh.style.transform = `translateY(${dy}px)`; sh.style.transition = 'none'; } }, { passive: true });
+  sh.addEventListener('touchend', () => { if (y0 === null) return; sh.style.transition = 'transform .2s'; if (dy > 110) { sh.style.transform = 'translateY(100%)'; setTimeout(() => { closeSheet(); sh.style.transform = ''; sh.style.transition = ''; }, 190); } else sh.style.transform = ''; y0 = null; }); }
 document.getElementById('payClose').onclick = () => document.getElementById('pay').classList.remove('show');
 let gyroAsked = false;
 function askGyro() {
@@ -1213,7 +1272,7 @@ function updateTrans(t) {
     if (scene === 'barbut' && bb.mode !== 'online' && (bb.state === 'bet' || bb.state === 'over')) { bb.state = 'bet'; bb.call = ''; bb.hist = []; banner('Barbut', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'batak' && bt.mode !== 'online' && !['bid', 'trump', 'play'].includes(bt.state)) { bt.state = 'bet'; bt.pts = null; banner('Batak', 'Bahsini seç, DAĞIT\'a bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'tombala' && tb.mode !== 'online' && tb.state !== 'play') { tb.state = 'bet'; tb.cards = []; tb.cur = null; tb.drawn = []; tb.wins = []; tb.stage = 0; banner('Tombala', 'Kart sayını ve bahsini seç', { dur: 2200, col: '#1f4e9c', y: .3 }); }
-    { const seen = store.get('seenScenes', {}); if (scene !== 'lobby' && !seen[scene] && RULES[scene]) { seen[scene] = 1; store.set('seenScenes', seen); setTimeout(() => { if (scene === trans.to) banner('Kurallar için ? düğmesi', null, { dur: 2200, col: '#2a7a5a', top: true }); }, 2600); } }
+    { const seen = store.get('seenScenes', {}); if (scene !== 'lobby' && !seen[scene] && RULES[scene]) { seen[scene] = 1; store.set('seenScenes', seen); setTimeout(() => { if (scene === trans.to) (press.rulesHint = performance.now()); }, 2600); } }
     if (scene === 'yaris' && yr.state !== 'run') { yr.state = 'bet'; yr.pick = -1; banner('Kedi Yarışı', 'Kedini seç, bahsini koy', { dur: 2200, col: '#1f4e9c', top: true }); }
     if (scene === 'domino' && dm.state !== 'play') { dm.state = 'bet'; dm.chain = []; dm.hands = [[], []]; banner('Domino', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'rulet') banner('Rulet', 'Tahtaya fiş koy, ÇEVİR\'e bas', { dur: 2200, col: '#1f4e9c', top: true });
@@ -1670,8 +1729,7 @@ function drawBJ(t) {
   const betting = bj.state === 'bet' || bj.state === 'result';
   if (bj.mode === 'online') { }
   else if (betting) {
-    btnDraw('bjMinus', '#2aa3a0', '−', t, 62, BJB); btnDraw('bjPlus', '#2aa3a0', '+', t, 58, BJB);
-    inkText(ctx, 'bahis ' + BETS[betIdx], (BJB.bjMinus.x + BJB.bjPlus.x) / 2, BJB.bjMinus.y + 85, 38, '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 });
+    BJB.bjMinus.id = 'bjMinus'; BJB.bjPlus.id = 'bjPlus'; drawBetChip(BJB.bjMinus, BJB.bjPlus, t);
     const dy = btnDraw('bjDeal', '#cf4b32', null, t, 40, BJB); inkText(ctx, bj.state === 'result' ? 'YENİ EL' : 'DAĞIT', BJB.bjDeal.x, BJB.bjDeal.y + dy, bj.state === 'result' ? 44 : 52, '#fbf1da', { ow: 7 });
     ink(ctx, ell(BJB.bjDeal.x, BJB.bjDeal.y + dy, 108, 100, 30), true, 4, '#f2cf74', 1.5);
   } else {
@@ -1701,8 +1759,7 @@ function bjDown(w) {
     const betting = bj.state === 'bet' || bj.state === 'result';
     if (betting !== ['bjMinus', 'bjPlus', 'bjDeal'].includes(k)) continue;
     press[k] = performance.now(); tone('triangle', 520, .05, .05);
-    if (k === 'bjMinus') { betIdx = Math.max(0, betIdx - 1); store.set('bet', betIdx); }
-    else if (k === 'bjPlus') { betIdx = betUp(); store.set('bet', betIdx); }
+    if (k === 'bjMinus' || k === 'bjPlus') openBetPicker();
     else if (k === 'bjDeal') bjDeal();
     else if (k === 'bjHit') bjHit();
     else if (k === 'bjStand') bjStand();
@@ -1866,10 +1923,16 @@ function drawCatAt(x, y, sc, rot, v, hat, t, happy, body = '#7a1e28') {
   if (hat) drawHat(ctx, hat);
   ctx.restore();
 }
+function balChipW() { ctx.font = '26px "Caveat Brush", cursive'; return Math.max(132, Math.min(200, ctx.measureText(Math.round(dispBal).toLocaleString('tr-TR')).width + 92)); }
+function drawCoinIcon(x, y, r) { ctx.fillStyle = '#e8b84a'; ctx.beginPath(); ctx.arc(x, y, r, 0, 7); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke(); ctx.strokeStyle = '#9a6a16'; ctx.lineWidth = 1.6; ctx.beginPath(); ctx.arc(x, y, r * .62, 0, 7); ctx.stroke(); ctx.fillStyle = '#fff6c8'; ctx.beginPath(); ctx.arc(x - r * .35, y - r * .4, r * .2, 0, 7); ctx.fill(); }
 function drawCornerBal() {
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(67);
-  const w = 150, x = W - w - 12 - SAFE.r, y = BACK.y, p = rr(x, y, w, 48, 10, 14); wash(ctx, p, '#b8862b', 1); ink(ctx, p, true, 2.5, INK, 1);
-  inkText(ctx, Math.round(dispBal).toLocaleString('tr-TR') + ' akçe', x + w / 2, y + 25, 26, INK, { outline: false });
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const w = balChipW(), h = BACK.h, x = W - w - 12 - SAFE.r, y = BACK.y, lv = levelOf(XP);
+  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.roundRect(x, y + 3, w, h, h / 2); ctx.fill();
+  ctx.fillStyle = '#f2d488'; ctx.beginPath(); ctx.roundRect(x, y, w, h, h / 2); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke();
+  drawCoinIcon(x + 24, y + h / 2, 13);
+  inkText(ctx, Math.round(dispBal).toLocaleString('tr-TR'), x + 44, y + h / 2 + 2, 26, INK, { outline: false, align: 'left', fit: true });
+  ctx.fillStyle = '#8e44ad'; ctx.beginPath(); ctx.roundRect(x + w - 38, y + 9, 30, h - 18, 8); ctx.fill(); inkText(ctx, String(lv), x + w - 23, y + h / 2 + 1, 18, '#fbf1da', { outline: false, fit: true });
 }
 function statusTag(x, y, txt, w = 360) {
   if (spect() && /^(Sıra sende|Sıran|Sen )/.test(String(txt))) txt = 'İzliyorsun · sıra: ' + (mpTurnUid() ? mpName(mpTurnUid()) : '…');
@@ -1879,17 +1942,39 @@ function statusTag(x, y, txt, w = 360) {
   const lh = fs * 1.05, hh = Math.max(60 * hs, lines.length * lh + 22), p = rr(x - w / 2, y - hh / 2, w, hh, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5);
   lines.forEach((ln, k) => inkText(ctx, ln, x, y + 2 + (k - (lines.length - 1) / 2) * lh, fs, INK, { outline: false, font: '"Caveat"', weight: 700, fit: true }));
 }
+const CHIP_COL = ['#2a7a5a', '#1f4e9c', '#cf4b32', '#22222e', '#8e44ad', '#d98a1c', '#b8862b', '#0f6a6a', '#7a1e28'];
+function drawBetChip(a, b, t, label = 'BAHİS') {
+  const x = (a.x + b.x) / 2, y = a.y, r = Math.max(58, Math.min(76, (b.x - a.x) / 2 + 6)), v = BETS[betIdx], col = CHIP_COL[betIdx % CHIP_COL.length];
+  const pr = (press[a.id || 'chipA'] && t - press[a.id || 'chipA'] < 160) || (press[b.id || 'chipB'] && t - press[b.id || 'chipB'] < 160), dy = pr ? 4 : 0;
+  ctx.fillStyle = 'rgba(0,0,0,.4)'; ctx.beginPath(); ctx.ellipse(x, y + 10, r, r * .94, 0, 0, 7); ctx.fill();
+  ctx.save(); ctx.translate(x, y + dy);
+  ctx.fillStyle = col; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.fill();
+  ctx.fillStyle = '#fbf8f2'; for (let i = 0; i < 8; i++) { const an = i / 8 * Math.PI * 2; ctx.save(); ctx.rotate(an); ctx.beginPath(); ctx.roundRect(r * .74, -r * .11, r * .24, r * .22, 3); ctx.fill(); ctx.restore(); }
+  ctx.strokeStyle = 'rgba(251,248,242,.85)'; ctx.lineWidth = 3; ctx.setLineDash([7, 6]); ctx.beginPath(); ctx.arc(0, 0, r * .66, 0, 7); ctx.stroke(); ctx.setLineDash([]);
+  ctx.fillStyle = shade(col, -.12).replace(/rgb\((\d+),(\d+),(\d+)\)/, (m, r1, g1, b1) => '#' + [r1, g1, b1].map(q => (+q).toString(16).padStart(2, '0')).join('')); ctx.beginPath(); ctx.arc(0, 0, r * .58, 0, 7); ctx.fill();
+  ctx.strokeStyle = INK; ctx.lineWidth = 3.5; ctx.beginPath(); ctx.arc(0, 0, r, 0, 7); ctx.stroke();
+  const txt = v >= 1000 ? (v / 1000).toLocaleString('tr-TR') + 'B' : String(v);
+  inkText(ctx, txt, 0, -4, r * (txt.length > 3 ? .52 : .66), '#fbf1da', { ow: 6 });
+  inkText(ctx, 'akçe', 0, r * .36, r * .26, '#fbf1da', { outline: false, font: '"Caveat"', weight: 700 });
+  ctx.restore();
+  const ty = y + r + 30; ctx.fillStyle = 'rgba(20,10,4,.6)'; ctx.beginPath(); ctx.roundRect(x - 74, ty - 20, 148, 40, 20); ctx.fill();
+  inkText(ctx, label + ' ▾', x, ty + 1, 28, '#f4e8cc', { outline: false, font: '"Caveat"', weight: 700 });
+}
+function openBetPicker() {
+  const m = document.getElementById('betpick'), g = document.getElementById('betChips'), lv = levelOf(XP); g.textContent = '';
+  BETS.forEach((v, i) => { const lock = lv < BET_LV[i], poor = balance < v; const c = el('button', { class: 'chip' + (i === betIdx ? ' on' : '') + (lock ? ' lock' : ''), style: '--c:' + CHIP_COL[i % CHIP_COL.length] + (poor && !lock ? ';opacity:.55' : ''), on: () => { if (lock) { tone('square', 200, .06, .04); return; } betIdx = i; store.set('bet', i); tone('triangle', 700 + i * 40, .06, .05); buzz(8); m.classList.remove('show'); } }, [document.createTextNode(v >= 1000 ? (v / 1000).toLocaleString('tr-TR') + 'B' : String(v)), el('small', { text: lock ? '🔒 Sv ' + BET_LV[i] : 'akçe' })]); g.appendChild(c); });
+  document.getElementById('betBal').textContent = 'Bakiyen: ' + balance.toLocaleString('tr-TR') + ' akçe';
+  m.classList.add('show'); tone('triangle', 620, .05, .04);
+}
 function betRow(set, ids, t, label) {
-  btnDraw(ids[0], '#2aa3a0', '−', t, 62, set); btnDraw(ids[1], '#2aa3a0', '+', t, 58, set);
-  const a = set[ids[0]], b = set[ids[1]];
-  inkText(ctx, 'bahis ' + BETS[betIdx], (a.x + b.x) / 2, a.y + 82, 38, '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 });
+  const a = set[ids[0]], b = set[ids[1]]; a.id = ids[0]; b.id = ids[1]; drawBetChip(a, b, t);
   const g = set[ids[2]], dy = btnDraw(ids[2], '#cf4b32', null, t, 40, set);
   inkText(ctx, label, g.x, g.y + dy, label.length > 7 ? 38 : 48, '#fbf1da', { ow: 7 });
   ink(ctx, ell(g.x, g.y + dy, g.r + 8, (g.r + 8) * .92, 30), true, 4, '#f2cf74', 1.5);
   { const u = (t % 1600) / 1600; ctx.globalAlpha = (1 - u) * .55; ctx.strokeStyle = '#f2cf74'; ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(g.x, g.y + dy, g.r + 8 + u * 34, (g.r + 8 + u * 34) * .92, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
 }
 function hitSet(set, w, ids) { for (const k of ids) { const b = set[k]; if (Math.hypot(w.x - b.x, w.y - b.y) < b.r + 14) { press[k] = performance.now(); tone('triangle', 520, .05, .05); return k; } } return null; }
-function betKey(k) { if (/Minus$/.test(k)) { betIdx = Math.max(0, betIdx - 1); store.set('bet', betIdx); return true; } if (/Plus$/.test(k)) { betIdx = betUp(); store.set('bet', betIdx); return true; } return false; }
+function betKey(k) { if (/Minus$|Plus$/.test(k)) { openBetPicker(); return true; } if (false) { betIdx = betUp(); store.set('bet', betIdx); return true; } return false; }
 function payBet() { const bet = BETS[betIdx]; if (balance < bet) { if (!dailyGift()) banner('Akçe yetmedi', 'Bahsi düşür, yarın hediye var', { y: .45 }); return 0; } setBalance(balance - bet); lastWin = 0; return bet; }
 
 // =============================================================
@@ -1999,7 +2084,7 @@ function tvAnimKey(s, to) { return to === 0 ? 'off' + s : to === 25 ? 'bar' + s 
 function tvApply(s, mv) {
   const p0 = posOf(tv.st, s, mv.from, true), r = doMove(tv.st, s, mv.from, mv.to);
   tv.st = r.st; tvAnim(s, p0, posOf(tv.st, s, mv.to, true), tvAnimKey(s, mv.to));
-  thud(.14, 700); if (r.hit) { thud(.3, 260, .12); shake = Math.max(shake, 7); tone('square', 180, .2, .04, .12); if (navigator.vibrate) navigator.vibrate(30); }
+  thud(.14, 700); if (r.hit) { thud(.3, 260, .12); shake = Math.max(shake, 7); tone('square', 180, .2, .04, .12); buzz(30); }
   return r.hit;
 }
 function tvPlayerMove(mv) {
@@ -2442,7 +2527,7 @@ function okRemote(d, prev, force) {
   ok.state = g.winner !== -2 ? 'over' : 'play'; ok.winner = g.winner;
   if (newRound) okDealBanner(ok.turn === ok.me);
   if (ok.state === 'over' && !wasOver) okEnd(g.winner, true);
-  if (ok.state === 'play' && ok.turn === ok.me && prevTurn !== ok.me && !newRound) { tone('sine', 660, .15, .05); if (navigator.vibrate) navigator.vibrate(20); }
+  if (ok.state === 'play' && ok.turn === ok.me && prevTurn !== ok.me && !newRound) { tone('sine', 660, .15, .05); buzz(20); }
   okMaybeRunBot();
 }
 function okMaybeRunBot() {
@@ -2624,15 +2709,16 @@ function ask(text, yes = 'Evet', no = 'Vazgeç') {
 const note = t => ask(t, 'Tamam', null);
 function el(tag, attrs = {}, kids = []) { const e = document.createElement(tag); for (const k in attrs) { if (k === 'text') e.textContent = attrs[k]; else if (k === 'on') e.onclick = attrs[k]; else if (k === 'style') e.style.cssText = attrs[k]; else e.setAttribute(k, attrs[k]); } (Array.isArray(kids) ? kids : [kids]).forEach(x => x && e.appendChild(x)); return e; }
 let sheetGroup = null;
-function openSheet(tab) { sheetTab = tab; sheetGroup = ['karakter', 'gorev', 'cok'].includes(tab) ? tab : null; renderSheet(); sheetEl.classList.add('show'); tone('triangle', 660, .06, .04); }
+function openSheet(tab) { sheetTab = tab; sheetGroup = ['karakter', 'gorev', 'cok', 'ayarlar'].includes(tab) ? tab : null; { const sh = document.querySelector('#sheet .sheet'); if (sh) sh.scrollTop = 0; } renderSheet(); sheetEl.classList.add('show'); tone('triangle', 660, .06, .04); }
 function closeSheet() { sheetEl.classList.remove('show'); if (typeof mpCloseLobbyList === 'function') mpCloseLobbyList(); }
 function renderSheet() {
   sheetBody.textContent = '';
-  const TN = { karakter: 'Karakter', canta: 'Çanta', koleksiyon: 'Koleksiyon', gorev: 'Görevler', carsi: 'Çarşı', kazi: 'Kazı Kazan', cok: 'Arkadaşlarla', sira: 'Sıralama', kurallar: 'Kurallar ve Ayarlar' };
-  const grp = [['karakter', 'canta', 'koleksiyon'], ['gorev', 'sira'], ['cok', 'sira'], ['carsi'], ['kazi'], ['kurallar']].find(g => g.includes(sheetTab) && (sheetGroup ? g[0] === sheetGroup : true)) || [sheetTab];
-  const tabs = grp.length > 1 ? el('div', { class: 'tabs' }, grp.map(k => el('button', { class: k === sheetTab ? 'on' : '', text: TN[k], on: () => { sheetTab = k; renderSheet(); } }))) : el('h2', { text: TN[sheetTab] || '', style: 'margin:2px 40px 8px 4px;font-family:\'Caveat Brush\',cursive;font-size:34px;color:#7a1e28' });
+  const TN = { karakter: 'Karakter', canta: 'Çanta', koleksiyon: 'Koleksiyon', gorev: 'Görevler', carsi: 'Çarşı', kazi: 'Kazı Kazan', cok: 'Arkadaşlarla', sira: 'Sıralama', kurallar: 'Kurallar', ayarlar: 'Ayarlar' };
+  const grp = [['karakter', 'canta', 'koleksiyon'], ['gorev', 'sira'], ['cok', 'sira'], ['carsi'], ['kazi'], ['ayarlar', 'kurallar']].find(g => g.includes(sheetTab) && (sheetGroup ? g[0] === sheetGroup : true)) || [sheetTab];
+  sheetBody.appendChild(el('div', { class: 'shandle' }));
+  const tabs = grp.length > 1 ? el('div', { class: 'seg' }, grp.map(k => el('button', { class: k === sheetTab ? 'on' : '', text: TN[k], on: () => { if (sheetTab !== k) { sheetTab = k; tone('triangle', 700, .04, .04); renderSheet(); document.querySelector('#sheet .sheet').scrollTop = 0; } } }))) : el('div', { class: 'sh2', text: TN[sheetTab] || '' });
   sheetBody.appendChild(tabs);
-  if (sheetTab === 'karakter') renderKarakter(); else if (sheetTab === 'canta') renderCanta(); else if (sheetTab === 'koleksiyon') renderKoleksiyon(); else if (sheetTab === 'sira') renderSira(); else if (sheetTab === 'gorev') renderGorev(); else if (sheetTab === 'carsi') renderCarsi(); else if (sheetTab === 'kurallar') renderKurallar(); else if (sheetTab === 'kazi') renderKazi(); else renderCok();
+  if (sheetTab === 'karakter') renderKarakter(); else if (sheetTab === 'canta') renderCanta(); else if (sheetTab === 'koleksiyon') renderKoleksiyon(); else if (sheetTab === 'sira') renderSira(); else if (sheetTab === 'gorev') renderGorev(); else if (sheetTab === 'carsi') renderCarsi(); else if (sheetTab === 'kurallar') renderKurallar(); else if (sheetTab === 'ayarlar') renderAyarlar(); else if (sheetTab === 'kazi') renderKazi(); else renderCok();
 }
 function optRow(title, opts) { return el('div', { class: 'optrow' }, [el('h3', { text: title }), el('div', { class: 'opts' }, opts)]); }
 function optBtn(img, label, on, sel) { return el('button', { class: 'opt' + (sel ? ' sel' : ''), title: label, on }, [img ? el('img', { src: img, alt: '' }) : el('span', { class: 'none', text: '✕' }), el('small', { text: label })]); }
@@ -3170,24 +3256,28 @@ function drawTurnTimer() {
 }
 
 // ---------- ses ve kurallar düğmeleri ----------
+const hasBalChip = () => scene !== 'slot' && scene !== 'lobby';
 function hudBtns() {
-  const hasBal = ['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak', 'tombala', 'yaris', 'domino'].includes(scene) || (scene === 'bj' && bj.mode === 'online'), y = BACK.y + 24, base = W - 12 - SAFE.r - (hasBal ? 150 : 0);
-  return { sound: { x: base - 26, y, r: 20 }, rules: { x: base - 72, y, r: 20 } };
+  const y = BACK.y + BACK.h / 2, base = W - 12 - SAFE.r - (hasBalChip() ? balChipW() + 8 : 0);
+  return { gear: { x: base - 24, y, r: 22 }, rules: { x: base - 76, y, r: 22 } };
 }
 function hudHit(x, y) {
-  if (scene === 'slot' || (scene === 'lobby' && !LOBBYMODE)) return false;
+  if (scene === 'slot') return false;
   const H = hudBtns();
-  if (Math.hypot(x - H.sound.x, y - H.sound.y) < 26) { muted = !muted; store.set('mute', muted); if (!muted) tone('triangle', 660, .08, .05); return true; }
-  if (Math.hypot(x - H.rules.x, y - H.rules.y) < 26) { rulesGame = scene === 'lobby' ? 'tavla' : scene; openSheet('kurallar'); return true; }
+  if (Math.hypot(x - H.gear.x, y - H.gear.y) < 28) { press.hudGear = performance.now(); tone('triangle', 660, .05, .04); openSheet('ayarlar'); return true; }
+  if (Math.hypot(x - H.rules.x, y - H.rules.y) < 28) { press.hudRules = performance.now(); rulesGame = RULES[scene] ? scene : 'tavla'; openSheet('kurallar'); return true; }
+  if (hasBalChip() && x > W - 12 - SAFE.r - balChipW() && y < BACK.y + BACK.h + 6) { openSheet('gorev'); return true; }
   return false;
 }
+function hudRound(b, pressed) { const dy = pressed ? 2 : 0; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.beginPath(); ctx.arc(b.x, b.y + 3, b.r, 0, 7); ctx.fill(); ctx.fillStyle = '#f4e8cc'; ctx.beginPath(); ctx.arc(b.x, b.y + dy, b.r, 0, 7); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2.5; ctx.stroke(); return dy; }
+function drawGear(x, y, r) { ctx.save(); ctx.translate(x, y); ctx.fillStyle = INK; ctx.beginPath(); for (let i = 0; i < 16; i++) { const a = i / 16 * Math.PI * 2, rr2 = i % 2 ? r * .72 : r; ctx.lineTo(Math.cos(a - .1) * rr2, Math.sin(a - .1) * rr2); ctx.lineTo(Math.cos(a + .1) * rr2, Math.sin(a + .1) * rr2); } ctx.closePath(); ctx.fill(); ctx.fillStyle = '#f4e8cc'; ctx.beginPath(); ctx.arc(0, 0, r * .36, 0, 7); ctx.fill(); ctx.restore(); }
 function drawHud() {
-  if (scene === 'slot' || (scene === 'lobby' && !LOBBYMODE)) return;
-  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const H = hudBtns(); seed(75);
-  for (const k of ['sound', 'rules']) { const b = H[k], c = ell(b.x, b.y, b.r, b.r, 16); wash(ctx, c, '#f4e8cc', 1); ink(ctx, c, true, 2.4, INK, .8); }
-  inkText(ctx, '?', H.rules.x, H.rules.y + 2, 28, INK, { outline: false });
-  const x = H.sound.x - 6, y = H.sound.y, sp = sub([[x - 8, y - 4], [x - 2, y - 4], [x + 5, y - 10], [x + 5, y + 10], [x - 2, y + 4], [x - 8, y + 4]], 4, true); wash(ctx, sp, INK, .4);
-  if (muted) { ink(ctx, [[x + 9, y - 6], [x + 16, y + 6]], false, 2.5); ink(ctx, [[x + 16, y - 6], [x + 9, y + 6]], false, 2.5); } else ink(ctx, [[x + 10, y - 6], [x + 13, y], [x + 10, y + 6]], false, 2.2);
+  if (scene === 'slot') return;
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0); const H = hudBtns(), now = performance.now();
+  if (now - (press.rulesHint || -1e9) < 5000) { const u = ((now - press.rulesHint) % 1000) / 1000; ctx.strokeStyle = '#f2cf74'; ctx.globalAlpha = 1 - u; ctx.lineWidth = 4; ctx.beginPath(); ctx.arc(H.rules.x, H.rules.y, H.rules.r + 4 + u * 18, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; const tx = H.rules.x, ty = H.rules.y + 46; ctx.fillStyle = '#f2cf74'; ctx.beginPath(); ctx.roundRect(tx - 52, ty - 15, 104, 30, 12); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2; ctx.stroke(); inkText(ctx, 'Kurallar', tx, ty + 1, 20, INK, { outline: false, fit: true }); }
+  let dy = hudRound(H.rules, now - (press.hudRules || 0) < 150); inkText(ctx, '?', H.rules.x, H.rules.y + 2 + dy, 30, INK, { outline: false, fit: true });
+  dy = hudRound(H.gear, now - (press.hudGear || 0) < 150); drawGear(H.gear.x, H.gear.y + dy, 13);
+  if (muted) { ctx.fillStyle = '#cf4b32'; ctx.beginPath(); ctx.arc(H.gear.x + 15, H.gear.y - 15, 6, 0, 7); ctx.fill(); }
 }
 let rulesGame = 'tavla';
 const RULES = {
@@ -3205,7 +3295,6 @@ const RULES = {
   tavla: ['Tavla', ['Amaç: 15 pulunu kendi evine (sağ alt çeyrek) getirip hepsini toplamak.', 'İki zar at; her zar ayrı bir hamledir. Çift gelirse dört hamle yaparsın.', 'Tek pul duran (açık) noktaya gelirsen kırarsın; kırılan pul bara çıkar ve önce rakibin evinden içeri girmelidir.', 'İki ya da daha fazla rakip pulu olan nokta kapalıdır.', 'Oynanabilen zarı oynamak zorundasın; zarlardan yalnız biri oynanabiliyorsa büyüğü oynanır.', 'Bütün pulların evdeyken toplamaya başlarsın. Rakip hiç pul toplayamadan bitirirsen MARS olur ve kazanç iki katına çıkar.']],
 };
 function renderKurallar() {
-  renderDiff();
   sheetBody.appendChild(el('div', { class: 'bets' }, Object.keys(RULES).map(k => el('button', { class: k === rulesGame ? 'on' : '', text: RULES[k][0].split(' (')[0], on: () => { rulesGame = k; renderSheet(); } }))));
   const [title, items] = RULES[rulesGame] || RULES.tavla;
   sheetBody.appendChild(el('h3', { text: title }));
@@ -3628,12 +3717,12 @@ function renderGorev() {
   const L = loginGift(), Q = questsToday(), lv = levelOf(XP), cur = xpFor(lv), nxt = xpFor(lv + 1);
   sheetBody.appendChild(el('div', { class: 'trow' }, [el('b', { text: 'Seviye ' + lv }), el('span', {}, [el('div', { style: 'height:14px;border:2px solid #2b1a12;border-radius:8px;background:#efe3c4;overflow:hidden' }, [el('div', { style: 'height:100%;background:#8e44ad;width:' + Math.round((XP - cur) / (nxt - cur) * 100) + '%' })])]), el('small', { text: (XP - cur) + '/' + (nxt - cur) + ' XP' })]));
   sheetBody.appendChild(el('h3', { text: 'Günlük hediye' }));
-  sheetBody.appendChild(el('div', { class: 'trow' }, [el('b', { text: L.date === today() ? '✓' : '🎁' }), el('span', { text: L.date === today() ? 'Bugünkü hediyeni aldın · seri: ' + L.streak + ' gün' : 'Her gün gel, seri büyüdükçe hediye artar (en çok 400)' }), L.date === today() ? null : el('button', { text: 'Al', on: () => { claimLogin(); renderSheet(); } })]));
+  sheetBody.appendChild(el('div', { class: 'trow' }, [el('b', { text: L.date === today() ? '✓' : '🎁' }), el('span', { text: L.date === today() ? 'Bugünkü hediyeni aldın · seri: ' + L.streak + ' gün' : 'Her gün gel, seri büyüdükçe hediye artar (en çok 400)' }), L.date === today() ? null : el('button', { class: 'go', text: 'Al', on: () => { claimLogin(); renderSheet(); } })]));
   sheetBody.appendChild(el('h3', { text: 'Bugünün görevleri' }));
   Q.q.forEach(q => {
     const d = QPOOL.find(x => x.id === q.id); if (!d) return; const done = q.p >= d.n;
-    sheetBody.appendChild(el('div', { class: 'trow', style: done && !q.claimed ? 'background:#f6dfa0' : '' }, [el('b', { text: Math.min(q.p, d.n) + '/' + d.n }), el('span', { text: d.t + ' · ' + d.r + ' akçe' }),
-      q.claimed ? el('small', { text: 'alındı' }) : el('button', { text: done ? 'Ödül' : '…', on: () => { if (!done || q.claimed) return; q.claimed = true; store.set('quest', Q); setBalance(balance + d.r); lastWin = d.r; addXP(10); banner('Ödül alındı', '+' + d.r + ' akçe', { dur: 1800, top: true, col: '#2a7a5a' }); coinPing(); renderSheet(); } })]));
+    sheetBody.appendChild(el('div', { class: 'trow' + (q.claimed ? ' claimed' : done ? ' done' : '') }, [el('span', {}, [el('div', { text: d.t }), el('small', { text: Math.min(q.p, d.n) + ' / ' + d.n + ' · ödül ' + d.r + ' akçe', style: 'opacity:.75' }), el('div', { class: 'pbar' }, [el('i', { style: 'width:' + Math.round(Math.min(1, q.p / d.n) * 100) + '%' })])]),
+      q.claimed ? el('b', { text: '✓', style: 'font-size:28px;color:#2a7a5a' }) : !done ? null : el('button', { class: 'go', text: 'Ödülü al', on: () => { if (!done || q.claimed) return; q.claimed = true; store.set('quest', Q); setBalance(balance + d.r); lastWin = d.r; addXP(10); banner('Ödül alındı', '+' + d.r + ' akçe', { dur: 1800, top: true, col: '#2a7a5a' }); coinPing(); renderSheet(); } })]));
   });
   renderAchs();
   sheetBody.appendChild(el('h3', { text: 'İstatistiklerin' }));
@@ -3674,17 +3763,33 @@ function achCheck() {
   }
 }
 const achReady = () => ACH.filter(a => ACHS[a.id] === 'open').length;
+let achAll = false;
 function renderAchs() {
   sheetBody.appendChild(el('h3', { text: 'Başarımlar · ' + ACH.filter(a => ACHS[a.id]).length + '/' + ACH.length }));
-  sheetBody.appendChild(el('div', { class: 'tables' }, ACH.map(a => {
+  const ord = a => ACHS[a.id] === 'open' ? 0 : !ACHS[a.id] ? 1 : 2, list = ACH.slice().sort((a, b) => ord(a) - ord(b)), shown = achAll ? list : list.slice(0, 5);
+  sheetBody.appendChild(el('div', { class: 'tables' }, shown.map(a => {
     const st = ACHS[a.id];
     return el('div', { class: 'trow', style: st === 'open' ? 'background:#e8d5f2' : st ? '' : 'opacity:.6' }, [el('b', { text: st ? '★' : '☆', style: 'color:#8e44ad;font-size:24px' }), el('span', { text: a.t + ' — ' + a.d + ' · ' + a.r + ' akçe' + (a.item ? ' + ' + ITEM[a.item].name : '') }),
       st === 'open' ? el('button', { text: 'Ödül', on: () => { ACHS[a.id] = 'claimed'; store.set('achs', ACHS); setBalance(balance + a.r); if (a.item) giveItem(a.item, 600); lastWin = a.r; addXP(20); banner('Ödül alındı', a.t + ' · +' + a.r + ' akçe', { dur: 1800, top: true, col: '#8e44ad' }); coinPing(); renderSheet(); } }) : el('small', { text: st ? 'alındı' : '' })]);
   })));
+  if (list.length > 5) sheetBody.appendChild(el('button', { class: 'big', style: 'background:#8a7a5a', text: achAll ? 'Daha az göster' : 'Tüm başarımlar (' + list.length + ')', on: () => { achAll = !achAll; renderSheet(); } }));
 }
 // ---------- zorluk ----------
 let DIFF = store.get('diff', 'usta');
 const easy = () => DIFF === 'kolay';
+function setRow(title, sub2, on, fn) { const t = el('button', { class: 'tg' + (on ? ' on' : ''), 'aria-label': title, on: () => { fn(); tone('triangle', on ? 500 : 760, .05, .05); renderSheet(); } }); return el('div', { class: 'set' }, [el('span', {}, [document.createTextNode(title), el('small', { text: sub2 })]), t]); }
+function segRow(title, opts, cur, fn) { return el('div', {}, [el('h3', { text: title }), el('div', { class: 'seg', style: 'margin-right:0' }, opts.map(([k, n]) => el('button', { class: cur === k ? 'on' : '', text: n, on: () => { fn(k); tone('triangle', 700, .04, .04); renderSheet(); } })))]); }
+function renderAyarlar() {
+  sheetBody.appendChild(el('h3', { text: 'Ses' }));
+  sheetBody.appendChild(setRow('Ses efektleri', 'Zar, kart, fiş sesleri', !muted, () => { muted = !muted; store.set('mute', muted); }));
+  sheetBody.appendChild(setRow('Müzik', 'Hicaz makamında arka plan ezgisi', MUSIC, () => { MUSIC = !MUSIC; store.set('music', MUSIC); }));
+  sheetBody.appendChild(setRow('Titreşim', 'Önemli anlarda telefon titrer', VIB, () => { VIB = !VIB; store.set('vib', VIB); if (VIB) buzz(30); }));
+  sheetBody.appendChild(segRow('Görüntü kalitesi', [['hi', 'Yüksek (2K)'], ['lo', 'Hızlı · az pil']], QUAL, k => { QUAL = k; store.set('qual', k); store.set('qualAuto', 1); resize(); }));
+  sheetBody.appendChild(setRow('Arka plan salınımı', 'Duvar ve fenerler hafifçe kıpırdar', SWAY, () => { SWAY = !SWAY; store.set('sway', SWAY); }));
+  sheetBody.appendChild(setRow('Büyük yazı', 'Oyun içi yazıları daha da büyüt', BIGTXT, () => { BIGTXT = !BIGTXT; store.set('bigtxt', BIGTXT); }));
+  sheetBody.appendChild(segRow('Kedilerin ustalığı', [['kolay', 'Kolay'], ['usta', 'Usta']], DIFF, k => { DIFF = k; store.set('diff', k); }));
+  sheetBody.appendChild(el('p', { class: 'hint', text: 'Kolay modda kediler ara sıra dalgın oynar. Usta modda kazanırsan biraz daha fazla XP alırsın.' }));
+}
 function renderDiff() {
   sheetBody.appendChild(el('h3', { text: 'Ses' }));
   sheetBody.appendChild(el('div', { class: 'bets' }, [el('button', { class: MUSIC ? 'on' : '', text: 'Müzik ' + (MUSIC ? 'açık' : 'kapalı'), on: () => { MUSIC = !MUSIC; store.set('music', MUSIC); renderSheet(); } }), el('button', { class: !muted ? 'on' : '', text: 'Efektler ' + (muted ? 'kapalı' : 'açık'), on: () => { muted = !muted; store.set('mute', muted); renderSheet(); } })]));
@@ -4922,8 +5027,7 @@ function drawRulet(t) {
   // düğmeler
   const spinning = rl.state === 'spin';
   ctx.globalAlpha = spinning ? .4 : 1;
-  btnDraw('rlMinus', '#2aa3a0', '−', t, 56, RLB); btnDraw('rlPlus', '#2aa3a0', '+', t, 52, RLB);
-  inkText(ctx, 'fiş ' + BETS[betIdx], (RLB.rlMinus.x + RLB.rlPlus.x) / 2, RLB.rlMinus.y + 76, 34, '#f4e8cc', { outline: INK, ow: 5, font: '"Caveat"', weight: 700 });
+  RLB.rlMinus.id = 'rlMinus'; RLB.rlPlus.id = 'rlPlus'; drawBetChip(RLB.rlMinus, RLB.rlPlus, t, 'FİŞ');
   const tot = rlTotal(); btnDraw('rlClear', '#f4e8cc', null, t, 40, RLB); inkText(ctx, tot && rl.state === 'bet' ? 'TOPLA' : 'TEKRAR', RLB.rlClear.x, RLB.rlClear.y + 2, tot && rl.state === 'bet' ? 30 : 26, INK, { outline: false });
   const g = RLB.rlSpin, dy = btnDraw('rlSpin', '#cf4b32', null, t, 40, RLB); inkText(ctx, rl.state === 'result' ? 'YENİ' : 'ÇEVİR', g.x, g.y + dy, 46, '#fbf1da', { ow: 7 }); ctx.globalAlpha = 1;
   const st = LAND ? { x: L.bx + L.cw * 6, y: L.by + L.ch * 5 + 40 } : { x: 500, y: 1460 };
@@ -4995,7 +5099,7 @@ function frame(t) {
   drawFloaters(t);
   drawBanners(t);
   drawItemFlash(t);
-  if (['tavla', 'okey', 'pisti', 'barbut', 'rulet', 'batak', 'tombala', 'yaris', 'domino'].includes(scene) || (scene === 'bj' && bj.mode === 'online')) drawCornerBal();
+  if (hasBalChip()) drawCornerBal();
   if (MP.code && scene !== 'lobby') { ctx.setTransform(DPR, 0, 0, DPR, 0, 0); seed(72); const w = 150, x = W / 2 - w / 2, y = BACK.y + 56, p = rr(x, y, w, 40, 10, 14); wash(ctx, p, '#2a7a5a', 1); ink(ctx, p, true, 2.5, INK, 1); inkText(ctx, 'Masa ' + MP.code, W / 2, y + 21, 24, '#fbf1da', { outline: false }); }
   drawBack(t);
   drawHud(); drawTurnTimer(); drawEmotes(t);
@@ -5015,7 +5119,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__iconURL = iconURL; window.__nazar = { dm, dmStart, dmPlace, dmCan, dmEnds, dmFits, dmDown, showProfile, giftSend, yr, yrStart, yrNewOdds, ITEMS, tvEndT: w => tvEnd(w), tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__iconURL = iconURL; window.__openBP = openBetPicker; window.__nazar = { dm, dmStart, dmPlace, dmCan, dmEnds, dmFits, dmDown, showProfile, giftSend, yr, yrStart, yrNewOdds, ITEMS, tvEndT: w => tvEnd(w), tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>
