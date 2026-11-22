@@ -28,7 +28,9 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 - **Kazı Kazan:** 50 / 250 / 1000 akçelik bilet, parmakla kazı; üç aynı resim ×1'den ×100'e kadar.
 
 ## Domino
-- 28 taş, 7'şer dağıtılır; uçlara uyan taşı koy, elini ilk bitiren kazanır. Uyan taş yoksa ortadan çek.
+- 28 taş, 7'şer dağıtılır; en büyük çifti olan başlar. Uçlara uyan taşı koy, elini ilk bitiren kazanır; kimse oynayamazsa az beneği kalan kazanır. Uyan taş yoksa pazardan çek.
+- Zincir masaya yılan gibi kıvrılır, çiftler çapraz durur. Taş iki uca da uyuyorsa parlayan uca dokunarak koyarsın.
+- Çok oyunculu: 2 kişi.
 
 ## Görüntü ve animasyon
 - **Dokular ve gölgeler:** kod ile üretilen yüksek çözünürlüklü ahşap, çuha lifi ve kâğıt dokuları; masalarda ortadan vuran ışık, kenarlara iç gölge, cilalı ahşap kenar ve zemine düşen yumuşak gölge; kart, taş, pul ve zarların altında bulanık gölge, üstlerinde ışık geçişi.
