@@ -644,7 +644,7 @@ function readSafe() {
 }
 function sceneView(sc) {
   if (!LAND) return { cx: 500, cy: 900, w: 1000, h: 1800 };
-  return ({ lobby: { cx: 1000, cy: 500, w: 2000, h: 900 }, pisti: { cx: 960, cy: 640, w: 1920, h: 980 }, batak: { cx: 960, cy: 640, w: 1920, h: 980 }, tombala: { cx: 960, cy: 640, w: 1920, h: 980 }, yaris: { cx: 960, cy: 640, w: 1920, h: 980 }, domino: { cx: 960, cy: 640, w: 1920, h: 980 }, barbut: { cx: 880, cy: 668, w: 2200, h: 1120 }, rulet: { cx: 1000, cy: 640, w: 2000, h: 1040 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 668, w: 2200, h: 1120 }, okey: { cx: 900, cy: 655, w: 1580, h: 1100 } })[sc];
+  return ({ lobby: { cx: 1000, cy: 500, w: 2000, h: 900 }, pisti: { cx: 960, cy: 640, w: 1920, h: 980 }, batak: { cx: 960, cy: 640, w: 1920, h: 980 }, tombala: { cx: 960, cy: 640, w: 1920, h: 980 }, yaris: { cx: 960, cy: 640, w: 1920, h: 980 }, domino: { cx: 960, cy: 640, w: 1920, h: 980 }, barbut: { cx: 880, cy: 668, w: 2200, h: 1120 }, rulet: { cx: 1000, cy: 640, w: 2000, h: 1040 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 668, w: 2200, h: 1120 }, okey: { cx: 900, cy: 672, w: 1600, h: 1140 } })[sc];
 }
 function setView(sc) {
   const v = sceneView(sc), nS = Math.min(W / v.w, H / v.h), changed = Math.abs(nS - S) > 1e-6;
@@ -660,12 +660,12 @@ function applyLayout() {
     P(BJB.bjMinus, -210, 1130); P(BJB.bjPlus, -60, 1130); P(BJB.bjDeal, 1180, 1130); P(BJB.bjHit, 1180, 640, 80); P(BJB.bjStand, 1180, 840, 80); P(BJB.bjDouble, 1180, 1040, 80); P(BJB.bjSplit, 1180, 1240, 80);
     Object.assign(LY.tv, { T: true, k: 1, bx: 900, by: 740, top: 250, catFront: true, cat: { x: 1760, y: 560, s: .8 }, status: { x: 50, y: 740, w: 340 } });
     Object.assign(LOBBTN.kar, { x: 230, y: 290, w: 330, h: 96 }); Object.assign(LOBBTN.carsi, { x: 230, y: 392, w: 330, h: 80 }); Object.assign(LOBBTN.canta, { x: 1770, y: 232, w: 300, h: 74 }); Object.assign(LOBBTN.gorev, { x: 1770, y: 316, w: 300, h: 74 }); Object.assign(LOBBTN.cok, { x: 1770, y: 400, w: 300, h: 74 });
-    P(PSB.psMinus, 1690, 1010); P(PSB.psPlus, 1830, 1010); P(PSB.psGo, 1760, 830); P(RLB.rlMinus, 1000, 1010); P(RLB.rlPlus, 1120, 1010); P(RLB.rlClear, 1300, 1010); P(RLB.rlSpin, 1600, 1010);
-    P(TVB.tvGo, 1760, 850); P(TVB.tvTour, 1570, 1050, 58); P(TVB.tvRoll, 1760, 850); P(TVB.tvUndo, 1760, 1060); P(TVB.tvMinus, 1690, 1050); P(TVB.tvPlus, 1830, 1050);
-    Object.assign(OKL, { floor: 900, table: [250, 230, 1300, 700], rack: [430, 940, 940, 262], ledges: [1055, 1167], sx0: 472, rowY: [1002, 1114], cats: [[900, 165, .85, 0], [1650, 560, .82, -.2], [150, 560, .82, .2]], think: { 1: [-110, -200], 2: [300, -20], 3: [110, -200] }, rev: [900, 470], status: [900, 770, 400] });
+    P(PSB.psMinus, 1530, 860); P(PSB.psPlus, 1600, 860); P(PSB.psGo, 1760, 830); P(RLB.rlMinus, 1000, 1010); P(RLB.rlPlus, 1120, 1010); P(RLB.rlClear, 1300, 1010); P(RLB.rlSpin, 1600, 1010);
+    P(TVB.tvGo, 1760, 850); P(TVB.tvTour, 1570, 1050, 58); P(TVB.tvRoll, 1760, 850); P(TVB.tvUndo, 1760, 1060); P(TVB.tvMinus, 1530, 860); P(TVB.tvPlus, 1600, 860);
+    Object.assign(OKL, { floor: 900, table: [250, 230, 1300, 700], rack: [340, 912, 1120, 306], ledges: [1050, 1190], sx0: 405, rowY: [985, 1125], cols: 12, sw: 90, ts: 1.2, cats: [[900, 165, .85, 0], [1650, 560, .82, -.2], [150, 560, .82, .2]], think: { 1: [-110, -200], 2: [300, -20], 3: [110, -200] }, rev: [900, 470], status: [900, 770, 400] });
     OK_D = [{ x: 1380, y: 800 }, { x: 1380, y: 360 }, { x: 420, y: 360 }, { x: 420, y: 800 }];
     OK_RACK = [null, { x: 1500, y: 580 }, { x: 900, y: 300 }, { x: 300, y: 580 }]; P(OK_PILE, 840, 580); P(OK_IND, 965, 580);
-    P(OKB.okMinus, 220, 1040); P(OKB.okPlus, 350, 1040); P(OKB.okGo, 1560, 1060); P(OKB.okSort, 330, 1070); P(OKB.okDisc, 1470, 1070);
+    P(OKB.okMinus, 220, 1040); P(OKB.okPlus, 350, 1040); P(OKB.okGo, 1560, 1060); P(OKB.okSort, 250, 1060); P(OKB.okDisc, 1550, 1060);
   } else {
     LY.lx = 500; SIGNS.forEach((s, i) => { s.k = .82; s.col = i % 2; s.row = Math.floor(i / 2); s.x = [262, 738][s.col]; s.y = 535 + s.row * 196; });
     P(BJB.bjMinus, 210, 1540); P(BJB.bjPlus, 360, 1540); P(BJB.bjDeal, 700, 1540); P(BJB.bjHit, 150, 1540, 76); P(BJB.bjStand, 383, 1540, 76); P(BJB.bjDouble, 617, 1540, 76); P(BJB.bjSplit, 850, 1540, 76);
@@ -673,7 +673,7 @@ function applyLayout() {
     ['kar', 'canta', 'carsi', 'gorev', 'cok'].forEach((k, n) => Object.assign(LOBBTN[k], { x: 104 + n * 198, y: 1722, w: 188, h: 136 }));
     P(TVB.tvGo, 730, 1330); P(TVB.tvTour, 500, 1330, 62); P(TVB.tvRoll, 730, 1330); P(TVB.tvUndo, 250, 1330); P(TVB.tvMinus, 190, 1330); P(TVB.tvPlus, 330, 1330);
     P(PSB.psMinus, 190, 1610); P(PSB.psPlus, 330, 1610); P(PSB.psGo, 730, 1610); P(RLB.rlMinus, 150, 1330); P(RLB.rlPlus, 270, 1330); P(RLB.rlClear, 440, 1330); P(RLB.rlSpin, 735, 1330);
-    Object.assign(OKL, { floor: 1380, table: [100, 290, 800, 1170], rack: [30, 1438, 940, 262], ledges: [1553, 1665], sx0: 82, rowY: [1500, 1612], cats: [[500, 175, .9, 0], [970, 760, .82, -.3], [30, 760, .82, .3]], think: { 1: [-130, -280], 2: [260, -60], 3: [130, -280] }, rev: [500, 760], status: [500, 1345, 400] });
+    Object.assign(OKL, { floor: 1380, table: [100, 290, 800, 1170], rack: [4, 1392, 992, 336], ledges: [1540, 1694], sx0: 63.5, rowY: [1470, 1624], cols: 10, sw: 97, ts: 1.3, cats: [[500, 175, .9, 0], [970, 760, .82, -.3], [30, 760, .82, .3]], think: { 1: [-130, -280], 2: [260, -60], 3: [130, -280] }, rev: [500, 760], status: [500, 1300, 420] });
     OK_D = [{ x: 830, y: 1215 }, { x: 830, y: 560 }, { x: 170, y: 560 }, { x: 170, y: 1215 }];
     OK_RACK = [null, { x: 880, y: 860 }, { x: 500, y: 425 }, { x: 120, y: 860 }]; P(OK_PILE, 440, 860); P(OK_IND, 565, 860);
     P(OKB.okMinus, 190, 1330); P(OKB.okPlus, 320, 1330); P(OKB.okGo, 720, 1320); P(OKB.okSort, 200, 1345); P(OKB.okDisc, 800, 1345);
@@ -833,12 +833,12 @@ const bulbs = [];
 })();
 
 function btnDraw(id, col, label, t, size = 40, set = BTN) {
-  const b = set[id], pr = press[id] && t - press[id] < 160, dy = pr ? 5 : 0;
-  seed(300 + id.length * 7 + b.x);
-  const base = ell(b.x, b.y + 8, b.r, b.r * .92, 26); wash(ctx, base, '#2a140a', 1.5);
-  const p = ell(b.x, b.y + dy, b.r, b.r * .92, 26); wash(ctx, p, pr ? shade(col, -.2).replace(/rgb\((\d+),(\d+),(\d+)\)/, (m, r, g, bb) => '#' + [r, g, bb].map(v => (+v).toString(16).padStart(2, '0')).join('')) : col, 1.5);
-  ctx.globalAlpha = .45; ctx.fillStyle = '#fff'; trace(ctx, ell(b.x - b.r * .3, b.y - b.r * .4 + dy, b.r * .35, b.r * .18, 14), true, 1); ctx.fill(); ctx.globalAlpha = 1;
-  ink(ctx, p, true, 3.5);
+  const b = set[id], pr = press[id] && t - press[id] < 160, dy = pr ? 6 : 0, r = b.r, ry = r * .92;
+  ctx.fillStyle = 'rgba(0,0,0,.38)'; ctx.beginPath(); ctx.ellipse(b.x + 2, b.y + 14, r * 1.02, ry * .98, 0, 0, 7); ctx.fill();
+  ctx.fillStyle = shade(col, -.45); ctx.beginPath(); ctx.ellipse(b.x, b.y + 8, r, ry, 0, 0, 7); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 3.5; ctx.stroke();
+  const g = ctx.createRadialGradient(b.x - r * .35, b.y - r * .45 + dy, r * .05, b.x, b.y + dy, r * 1.05); g.addColorStop(0, shade(col, pr ? .1 : .38)); g.addColorStop(.55, pr ? shade(col, -.1) : col); g.addColorStop(1, shade(col, -.28));
+  ctx.fillStyle = g; ctx.beginPath(); ctx.ellipse(b.x, b.y + dy, r, ry, 0, 0, 7); ctx.fill(); ctx.stroke();
+  if (!pr) { ctx.save(); ctx.globalAlpha = .5; const hg = ctx.createLinearGradient(0, b.y - ry + dy, 0, b.y - ry * .2 + dy); hg.addColorStop(0, 'rgba(255,255,255,.85)'); hg.addColorStop(1, 'rgba(255,255,255,0)'); ctx.fillStyle = hg; ctx.beginPath(); ctx.ellipse(b.x, b.y - ry * .55 + dy, r * .66, ry * .36, 0, 0, 7); ctx.fill(); ctx.restore(); }
   if (label) inkText(ctx, label, b.x, b.y + dy + 2, size, '#fbf1da', { ow: size * .16 });
   return dy;
 }
@@ -1354,7 +1354,7 @@ function updateTrans(t) {
     if (scene !== 'slot') { auto = false; cat.until = 0; cat.show = 0; }
     if (scene === 'bj' && bj.mode !== 'online') { bjReset(); banner('Hoş geldin!', 'Bahsini seç, DAĞIT\'a bas', { dur: 2400, col: '#1f4e9c', y: .45 }); }
     if (scene === 'tavla' && tv.mode !== 'online' && (tv.state === 'bet' || tv.state === 'over')) { tv.state = 'bet'; tv.st = tvInit(); tv.dice = []; tv.mood = 0; banner('Tavla', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2400, col: '#1f4e9c', y: .45 }); }
-    if (scene === 'okey' && ok.mode !== 'online' && (ok.state === 'bet' || ok.state === 'over')) { ok.state = 'bet'; ok.slots = new Array(24).fill(null); ok.disc = [[], [], [], []]; ok.ind = null; ok.winner = -2; banner('Okey', 'Bahsini seç, BAŞLA\'ya bas · kazanan 4 katını alır', { dur: 2600, col: '#1f4e9c', y: .45 }); }
+    if (scene === 'okey' && ok.mode !== 'online' && (ok.state === 'bet' || ok.state === 'over')) { ok.state = 'bet'; ok.slots = new Array(okNS()).fill(null); ok.disc = [[], [], [], []]; ok.ind = null; ok.winner = -2; banner('Okey', 'Bahsini seç, BAŞLA\'ya bas · kazanan 4 katını alır', { dur: 2600, col: '#1f4e9c', y: .45 }); }
     if (scene === 'pisti' && ps.mode !== 'online' && ps.state !== 'play') { ps.state = 'bet'; ps.scores = null; banner('Pişti', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'barbut' && bb.mode !== 'online' && (bb.state === 'bet' || bb.state === 'over')) { bb.state = 'bet'; bb.call = ''; bb.hist = []; banner('Barbut', 'Bahsini seç, BAŞLA\'ya bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
     if (scene === 'batak' && bt.mode !== 'online' && !['bid', 'trump', 'play'].includes(bt.state)) { bt.state = 'bet'; bt.pts = null; banner('Batak', 'Bahsini seç, DAĞIT\'a bas', { dur: 2200, col: '#1f4e9c', y: .3 }); }
@@ -1389,7 +1389,7 @@ async function leaveGame(x, y) {
   if (MP.code) mpLeave();
   if (scene === 'tavla' && tv.tour && tv.state !== 'bet' && tv.state !== 'over') { tv.tour = null; banner('Turnuvadan çekildin', null, { dur: 1500, top: true }); }
   if (scene === 'tavla' && tv.mode !== 'online' && tv.state !== 'bet' && tv.state !== 'over') { tv.state = 'bet'; tv.st = tvInit(); tv.dice = []; tv.made = []; }
-  if (scene === 'okey' && ok.mode !== 'online' && ok.state === 'play') { ok.state = 'bet'; ok.slots = new Array(24).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.fly = []; }
+  if (scene === 'okey' && ok.mode !== 'online' && ok.state === 'play') { ok.state = 'bet'; ok.slots = new Array(okNS()).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.fly = []; }
   if (scene === 'pisti' && ps.mode !== 'online' && ps.state === 'play') { ps.state = 'bet'; ps.hands = [[], []]; ps.pile = []; ps.cap = [[], []]; }
   if (scene === 'barbut' && bb.mode !== 'online' && bb.state !== 'bet' && bb.state !== 'over') { bb.state = 'bet'; bb.hist = []; bb.call = ''; }
   if (scene === 'domino' && dm.state === 'play') { dm.state = 'bet'; dm.chain = []; dm.hands = [[], []]; }
@@ -2046,7 +2046,7 @@ function statusTag(x, y, txt, w = 360) {
   seed(68); const hs = Math.min(1.7, Math.max(1, (MINTXT * 1.5) / (34 * Math.max(.01, S)))); let fs = 34 * hs, lines = [String(txt)];
   ctx.font = `700 ${fs}px "Caveat", cursive`;
   if (ctx.measureText(txt).width > w - 30) { const words = String(txt).split(' '); let best = null; for (let k = 1; k < words.length; k++) { const a = words.slice(0, k).join(' '), b = words.slice(k).join(' '), m = Math.max(ctx.measureText(a).width, ctx.measureText(b).width); if (!best || m < best.m) best = { m, a, b }; } if (best) { lines = [best.a, best.b]; if (best.m > w - 30) fs *= (w - 30) / best.m; } else fs *= (w - 30) / ctx.measureText(txt).width; }
-  const lh = fs * 1.05, hh = Math.max(60 * hs, lines.length * lh + 22), p = rr(x - w / 2, y - hh / 2, w, hh, 14, 16); wash(ctx, p, '#f4e8cc', 1); ink(ctx, p, true, 2.5);
+  const lh = fs * 1.05, hh = Math.max(60 * hs, lines.length * lh + 22); shadowRect(x - w / 2, y - hh / 2, w, hh, 22, .55, 8, 14); { const g = ctx.createLinearGradient(0, y - hh / 2, 0, y + hh / 2); g.addColorStop(0, '#fbf3df'); g.addColorStop(1, '#eadcb9'); ctx.fillStyle = g; ctx.beginPath(); ctx.roundRect(x - w / 2, y - hh / 2, w, hh, Math.min(28, hh / 2)); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 2.8; ctx.stroke(); ctx.strokeStyle = 'rgba(184,134,43,.7)'; ctx.lineWidth = 1.5; ctx.beginPath(); ctx.roundRect(x - w / 2 + 6, y - hh / 2 + 6, w - 12, hh - 12, Math.min(22, hh / 2 - 6)); ctx.stroke(); }
   lines.forEach((ln, k) => inkText(ctx, ln, x, y + 2 + (k - (lines.length - 1) / 2) * lh, fs, INK, { outline: false, font: '"Caveat"', weight: 700, fit: true }));
 }
 const CHIP_COL = ['#2a7a5a', '#1f4e9c', '#cf4b32', '#22222e', '#8e44ad', '#d98a1c', '#b8862b', '#0f6a6a', '#7a1e28'];
@@ -2080,7 +2080,7 @@ function betRow(set, ids, t, label) {
   ink(ctx, ell(g.x, g.y + dy, g.r + 8, (g.r + 8) * .92, 30), true, 4, '#f2cf74', 1.5);
   { const u = (t % 1600) / 1600; ctx.globalAlpha = (1 - u) * .55; ctx.strokeStyle = '#f2cf74'; ctx.lineWidth = 5; ctx.beginPath(); ctx.ellipse(g.x, g.y + dy, g.r + 8 + u * 34, (g.r + 8 + u * 34) * .92, 0, 0, 7); ctx.stroke(); ctx.globalAlpha = 1; }
 }
-function hitSet(set, w, ids) { for (const k of ids) { const b = set[k]; if (Math.hypot(w.x - b.x, w.y - b.y) < b.r + 14) { press[k] = performance.now(); tone('triangle', 520, .05, .05); return k; } } return null; }
+function hitSet(set, w, ids) { for (const k of ids) { const b = set[k]; if (Math.hypot(w.x - b.x, w.y - b.y) < b.r + 18) { press[k] = performance.now(); tone('triangle', 520, .05, .05); buzz(8); return k; } } return null; }
 function betKey(k) { if (/Minus$|Plus$/.test(k)) { openBetPicker(); return true; } if (false) { betIdx = betUp(); store.set('bet', betIdx); return true; } return false; }
 function payBet() { const bet = BETS[betIdx]; if (balance < bet) { if (!dailyGift()) banner('Akçe yetmedi', 'Bahsi düşür, yarın hediye var', { y: .45 }); return 0; } setBalance(balance - bet); lastWin = 0; return bet; }
 
@@ -2379,12 +2379,14 @@ const BOT_NAMES = ['Fındık', 'Tarçın', 'Pamuk', 'Duman'];
 const BOT_LOOK = [{ v: 0, hat: 'fez', body: '#7a1e28' }, { v: 3, hat: 'fez', body: '#6b2a4a' }, { v: 2, hat: null, body: '#2a3f6b' }, { v: 1, hat: 'kasket', body: '#4b5a3a' }];
 let OK_D = [{ x: 830, y: 1215 }, { x: 830, y: 560 }, { x: 170, y: 560 }, { x: 170, y: 1215 }];   // ekran konumuna göre (0 alt=ben, 1 sağ, 2 üst, 3 sol)
 let OK_RACK = [null, { x: 880, y: 860 }, { x: 500, y: 425 }, { x: 120, y: 860 }];
-const OKL = { floor: 1380, table: [100, 290, 800, 1170], rack: [30, 1438, 940, 262], ledges: [1553, 1665], sx0: 82, rowY: [1500, 1612], cats: [[500, 175, .9, 0], [970, 760, .82, -.3], [30, 760, .82, .3]], think: { 1: [-130, -280], 2: [260, -60], 3: [130, -280] }, rev: [500, 760], status: [500, 1345, 400] };
+const OKL = { floor: 1380, table: [100, 290, 800, 1170], rack: [4, 1392, 992, 336], ledges: [1540, 1694], sx0: 63.5, rowY: [1470, 1624], cols: 10, sw: 97, ts: 1.3, cats: [[500, 175, .9, 0], [970, 760, .82, -.3], [30, 760, .82, .3]], think: { 1: [-130, -280], 2: [260, -60], 3: [130, -280] }, rev: [500, 760], status: [500, 1300, 420] };
 const OK_PILE = { x: 440, y: 860 }, OK_IND = { x: 565, y: 860 };
 const OKB = { okMinus: { x: 190, y: 1330, r: 48 }, okPlus: { x: 320, y: 1330, r: 48 }, okGo: { x: 720, y: 1320, r: 84 }, okSort: { x: 200, y: 1345, r: 52 }, okDisc: { x: 800, y: 1345, r: 52 } };
-const ok = { mode: 'ai', me: 0, bots: [false, true, true, true], state: 'bet', pile: [], hands: [[], [], [], []], disc: [[], [], [], []], ind: null, turn: 0, phase: '', slots: new Array(24).fill(null), sel: -1, drag: null, fly: [], bet: 0, think: -1, winner: -2, mood: [0, 0, 0, 0], sortMode: 0, botBusy: false };
+const ok = { mode: 'ai', me: 0, bots: [false, true, true, true], state: 'bet', pile: [], hands: [[], [], [], []], disc: [[], [], [], []], ind: null, turn: 0, phase: '', slots: new Array(okNS()).fill(null), sel: -1, drag: null, fly: [], bet: 0, think: -1, winner: -2, mood: [0, 0, 0, 0], sortMode: 0, botBusy: false };
 let tileCache = {};
-const slotPos = i => ({ x: OKL.sx0 + (i % 12) * 76.4, y: OKL.rowY[i < 12 ? 0 : 1] });
+function okNS() { return OKL.cols * 2; }
+const slotPos = i => ({ x: OKL.sx0 + (i % OKL.cols) * OKL.sw, y: OKL.rowY[i < OKL.cols ? 0 : 1] });
+function okFitSlots() { const N = okNS(); if (ok.slots.length === N) return; const sel = ok.sel >= 0 ? ok.slots[ok.sel] : null, tiles = ok.slots.filter(Boolean); ok.slots = new Array(N).fill(null); tiles.slice(0, N).forEach((t, k) => ok.slots[k] = t); ok.sel = sel ? ok.slots.indexOf(sel) : -1; }
 const dpos = seat => (seat - ok.me + 4) % 4;
 function okName(seat) { if (seat === ok.me) return 'Sen'; if (ok.bots[seat]) return BOT_NAMES[seat]; const s = MP.t && MP.t.seats[seat]; return s ? mpName(s.uid) : BOT_NAMES[seat]; }
 function drawTileFace(c, t) {
@@ -2397,7 +2399,7 @@ function drawTileFace(c, t) {
 function drawTileBack(c) { seed(3500); const p = rr(3, 3, 64, 94, 10, 14); wash(c, p, '#e6d6b2', 1); ink(c, rr(12, 12, 46, 76, 6, 12), true, 2, '#2aa3a0', 1); ink(c, p, true, 2.6, INK, .8); const s = star4(35, 50, 12); wash(c, s, '#cf4b32', .5); }
 function tileSpr(t) {
   const key = (t === 'back' ? 'back' : t.fj ? 'fj' : t.c + '-' + t.n) + (BOIL % 2) + AV.tas;
-  if (!tileCache[key]) { const q = QUAL === 'hi' ? 2 : 1.5, w = Math.ceil(70 * S * DPR * q), h = Math.ceil(100 * S * DPR * q), k = makeCanvas(w, h), c = k.getContext('2d'); c.scale(w / 70, h / 100); const o = BOIL; BOIL = BOIL % 2; t === 'back' ? drawTileBack(c) : drawTileFace(c, t); finishPiece(c, rr(3, 3, 64, 94, 10, 14), 70, 100, false); BOIL = o; tileCache[key] = k; }
+  if (!tileCache[key]) { const q = (QUAL === "hi" ? 2 : 1.5) * 1.35, w = Math.ceil(70 * S * DPR * q), h = Math.ceil(100 * S * DPR * q), k = makeCanvas(w, h), c = k.getContext('2d'); c.scale(w / 70, h / 100); const o = BOIL; BOIL = BOIL % 2; t === 'back' ? drawTileBack(c) : drawTileFace(c, t); finishPiece(c, rr(3, 3, 64, 94, 10, 14), 70, 100, false); BOIL = o; tileCache[key] = k; }
   return tileCache[key];
 }
 function drawOkeyTable(c) {
@@ -2440,8 +2442,8 @@ function okArrange(byGroups) {
     for (const t of s) { const k = isJ(t) ? 9 : tcol(t); if (cur.length && k !== last) { blocks.push(cur); cur = []; } cur.push(t); last = k; }
     if (cur.length) blocks.push(cur);
   }
-  const slots = new Array(24).fill(null); let i = 0, fits = true;
-  for (const b of blocks) { if (i % 12 && i % 12 + b.length > 12 && i < 12) i = 12; for (const t of b) { if (i >= 24) { fits = false; break; } slots[i++] = t; } i++; }
+  const slots = new Array(okNS()).fill(null); let i = 0, fits = true;
+  const C = OKL.cols, NS = okNS(); for (const b of blocks) { if (i % C && i % C + b.length > C && i < C) i = C; for (const t of b) { if (i >= NS) { fits = false; break; } slots[i++] = t; } i++; }
   if (!fits) { slots.fill(null); hand.slice().sort(sortFn).forEach((t, k) => slots[k] = t); }
   ok.slots = slots; ok.sel = -1; tone('triangle', 640, .06, .03); tone('triangle', 820, .06, .03, .07);
 }
@@ -2451,7 +2453,7 @@ function okSyncSlots(hand) {    // çevrimiçi: ıstakadaki sırayı koru, eli e
   ok.slots = ok.slots.map(x => x && byId.has(x.id) ? Object.assign(byId.get(x.id), { arrive: x.arrive }) : null);
   const have = new Set(ok.slots.filter(Boolean).map(x => x.id));
   for (const t of hand) if (!have.has(t.id)) { const i = ok.slots.indexOf(null); if (i >= 0) ok.slots[i] = t; }
-  if (empty && hand.length) { okArrange(false); ok.slots.forEach((t, i) => { if (t) okFly(t, true, OK_PILE, slotPos(i), 380, 60 + i * 45); }); }
+  if (empty && hand.length) { okArrange(false); ok.slots.forEach((t, i) => { if (t) okFly(t, true, OK_PILE, slotPos(i), 380, 60 + i * 45, 1, OKL.ts); }); }
   if (ok.sel >= 0 && !ok.slots[ok.sel]) ok.sel = -1;
 }
 function okPush() {
@@ -2471,8 +2473,8 @@ function okStart() {
   if (ok.state !== 'bet' && ok.state !== 'over') return;
   const bet = payBet(); if (!bet) return;
   ok.bet = bet; ok.me = 0; okDeal([false, true, true, true], 0);
-  ok.slots = new Array(24).fill(null); ok.hands[0].forEach((t, k) => ok.slots[k] = t); okArrange(false);
-  ok.slots.forEach((t, i) => { if (t) okFly(t, true, OK_PILE, slotPos(i), 380, 60 + i * 45); });
+  ok.slots = new Array(okNS()).fill(null); ok.hands[0].forEach((t, k) => ok.slots[k] = t); okArrange(false);
+  ok.slots.forEach((t, i) => { if (t) okFly(t, true, OK_PILE, slotPos(i), 380, 60 + i * 45, 1, OKL.ts); });
   banners = []; okDealBanner(true);
   for (let i = 0; i < 8; i++) tone('triangle', 900 + Math.random() * 400, .03, .02, i * .08);
 }
@@ -2480,14 +2482,14 @@ function okDealBanner(meFirst) { banner('Gösterge: ' + OK_CNAME[ok.ind.c] + ' '
 function okTake(src) {
   if (ok.state !== 'play' || ok.turn !== ok.me || ok.phase !== 'draw') return;
   const prev = (ok.me + 3) % 4; let t; const slot = ok.slots.indexOf(null); if (slot < 0) return;
-  if (src === 'pile') { if (!ok.pile.length) return okEnd(-1); t = ok.pile.pop(); okFly(t, true, OK_PILE, slotPos(slot)); }
-  else { t = ok.disc[prev].pop(); if (!t) return; okFly(t, true, OK_D[3], slotPos(slot)); }
+  if (src === 'pile') { if (!ok.pile.length) return okEnd(-1); t = ok.pile.pop(); okFly(t, true, OK_PILE, slotPos(slot), 380, 0, 1, OKL.ts); }
+  else { t = ok.disc[prev].pop(); if (!t) return; okFly(t, true, OK_D[3], slotPos(slot), 380, 0, 1, OKL.ts); }
   ok.slots[slot] = t; ok.sel = slot; ok.phase = 'discard'; thud(.06, 2600); okPush();
 }
 function okDiscard(i) {
   if (ok.state !== 'play' || ok.turn !== ok.me || ok.phase !== 'discard') return;
   const t = ok.slots[i]; if (!t) return;
-  ok.slots[i] = null; ok.sel = -1; okFly(t, true, slotPos(i), OK_D[0]); ok.disc[ok.me].push(t); thud(.08, 2200);
+  ok.slots[i] = null; ok.sel = -1; okFly(t, true, slotPos(i), OK_D[0], 380, 0, OKL.ts, 1); ok.disc[ok.me].push(t); thud(.08, 2200);
   ok.hands[ok.me] = okHand();
   if (okIsWin(okHand())) { ok.winner = ok.me; ok.double = isJ(t); okPush(); return setTimeout(() => okEnd(ok.me), 420); }
   ok.turn = (ok.me + 1) % 4; ok.phase = 'draw'; okPush();
@@ -2527,7 +2529,7 @@ function okEnd(w, remote) {
   else if (once('refund')) { setBalance(balance + ok.bet); banner('Taşlar bitti', 'Berabere, bahis iade', { dur: 2600, col: '#2a7a5a', y: .42 }); }
   if (once('drop')) { rollDrop(); gameEvent('okey', 'play'); if (w === ok.me) gameEvent('okey', 'win'); }
 }
-function okNearestSlot(w) { let bi = -1, bd = 1e9; for (let i = 0; i < 24; i++) { const p = slotPos(i), d = Math.hypot(w.x - p.x, w.y - p.y); if (d < bd) { bd = d; bi = i; } } return bd < 90 ? bi : -1; }
+function okNearestSlot(w) { okFitSlots(); let bi = -1, bd = 1e9; for (let i = 0; i < ok.slots.length; i++) { const p = slotPos(i), dx = (w.x - p.x) / OKL.sw, dy = (w.y - p.y) / (100 * OKL.ts), d = Math.hypot(dx, dy * .9); if (d < bd) { bd = d; bi = i; } } return bd < 1.1 ? bi : -1; }
 function okCanStart() { return ok.mode !== 'online' || (MP.t && MP.t.host === MP.uid); }
 function okDown(w, e) {
   if (ok.state === 'bet' || ok.state === 'over') { const k = hitSet(OKB, w, ok.mode === 'ai' ? ['okMinus', 'okPlus', 'okGo'] : ['okGo']); if (k && !betKey(k) && okCanStart()) okStart(); return; }
@@ -2538,7 +2540,7 @@ function okDown(w, e) {
     if (Math.abs(w.x - OK_D[3].x) < 60 && Math.abs(w.y - OK_D[3].y) < 80 && ok.disc[(ok.me + 3) % 4].length) return okTake('disc');
   }
   const i = okNearestSlot(w);
-  if (i >= 0 && ok.slots[i] && Math.abs(w.y - slotPos(i).y) < 56 && Math.abs(w.x - slotPos(i).x) < 40) {
+  if (i >= 0 && ok.slots[i] && Math.abs(w.y - slotPos(i).y) < 70 * OKL.ts && Math.abs(w.x - slotPos(i).x) < OKL.sw * .55) {
     ok.drag = { i, x: w.x, y: w.y, sx: w.x, sy: w.y, moved: false, pid: e.pointerId }; try { cv.setPointerCapture(e.pointerId); } catch {}
   }
 }
@@ -2586,13 +2588,15 @@ function drawOkey(t) {
     if (top) drawT(top, true, D.x, D.y, 1, .04);
   }
   if (ok.state === 'play' && ok.turn === ok.me && ok.phase === 'discard') { const k = .5 + .5 * Math.sin(t / 160); ctx.strokeStyle = '#f2cf74'; ctx.globalAlpha = .3 + k * .5; ctx.setLineDash([12, 8]); ctx.lineWidth = 4; ctx.strokeRect(OK_D[0].x - 50, OK_D[0].y - 66, 100, 132); ctx.setLineDash([]); ctx.globalAlpha = 1; }
-  for (let i = 0; i < 24; i++) {
+  okFitSlots(); const TS = OKL.ts;
+  if (ok.drag && ok.drag.moved) { const j = okNearestSlot({ x: ok.drag.x, y: ok.drag.y }); if (j >= 0 && j !== ok.drag.i) { const q = slotPos(j); ctx.fillStyle = 'rgba(242,207,116,.28)'; ctx.beginPath(); ctx.roundRect(q.x - TW * TS / 2, q.y - TH * TS / 2, TW * TS, TH * TS, 10); ctx.fill(); ctx.strokeStyle = '#f2cf74'; ctx.lineWidth = 4; ctx.setLineDash([10, 6]); ctx.stroke(); ctx.setLineDash([]); } }
+  for (let i = 0; i < ok.slots.length; i++) {
     const tile = ok.slots[i]; if (!tile || tile.arrive > now || (ok.drag && ok.drag.moved && ok.drag.i === i)) continue;
-    const p = slotPos(i), up = ok.sel === i ? -16 : 0; drawT(tile, true, p.x, p.y + up, 1);
-    if (isJ(tile)) { const s = star4(p.x + 24, p.y + up - 38, 11); ctx.fillStyle = '#f2cf74'; ctx.beginPath(); s.forEach(([x, y], k) => k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.stroke(); }
-    if (ok.sel === i) { ctx.strokeStyle = '#f2cf74'; ctx.lineWidth = 5; ctx.strokeRect(p.x - 37, p.y + up - 52, 74, 104); }
+    const p = slotPos(i), up = ok.sel === i ? -30 : 0; drawT(tile, true, p.x, p.y + up, ok.sel === i ? TS * 1.06 : TS);
+    if (isJ(tile)) { const s = star4(p.x + 24 * TS, p.y + up - 38 * TS, 11 * TS); ctx.fillStyle = '#f2cf74'; ctx.beginPath(); s.forEach(([x, y], k) => k ? ctx.lineTo(x, y) : ctx.moveTo(x, y)); ctx.fill(); ctx.strokeStyle = INK; ctx.lineWidth = 1.5; ctx.stroke(); }
+    if (ok.sel === i) { const k2 = TS * 1.06, g = .6 + .4 * Math.sin(now / 160); ctx.strokeStyle = `rgba(242,207,116,${g})`; ctx.lineWidth = 6; ctx.beginPath(); ctx.roundRect(p.x - 37 * k2, p.y + up - 52 * k2, 74 * k2, 104 * k2, 12); ctx.stroke(); }
   }
-  if (ok.drag && ok.drag.moved) { const tile = ok.slots[ok.drag.i]; if (tile) drawT(tile, true, ok.drag.x, ok.drag.y - 20, 1.15, Math.sin(t / 120) * .04); }
+  if (ok.drag && ok.drag.moved) { const tile = ok.slots[ok.drag.i]; if (tile) drawT(tile, true, ok.drag.x, ok.drag.y - 40, OKL.ts * 1.2, Math.sin(t / 120) * .04); }
   ok.fly = ok.fly.filter(f => now < f.t0 + f.dur + 30);
   for (const f of ok.fly) { if (now < f.t0) continue; const u = clamp((now - f.t0) / f.dur, 0, 1), e = 1 - Math.pow(1 - u, 3); drawT(f.tile, f.face, lerp(f.x0, f.x1, e), lerp(f.y0, f.y1, e) - Math.sin(u * Math.PI) * 50, lerp(f.sc0, f.sc1, e), (1 - e) * .5); }
   const [sx, sy, sw] = OKL.status;
@@ -2613,17 +2617,17 @@ async function mpOkStart() {
   const t = MP.t; if (!t || t.host !== MP.uid) return;
   const bots = [0, 1, 2, 3].map(i => !t.seats[i]);
   const me = ok.me; okDeal(bots, Math.max(0, MP.seat));
-  ok.slots = new Array(24).fill(null);
+  ok.slots = new Array(okNS()).fill(null);
   await mpWrite(x => { x.status = 'play'; x.round = (x.round || 0) + 1; x.g = { pile: ok.pile.map(okClean), hands: ok.hands.map(h => h.map(okClean)), disc: [[], [], [], []], ind: okClean(ok.ind), okey: okCtx.okey, turn: ok.turn, phase: ok.phase, bots, winner: -2, starter: ok.starter }; });
   ok.me = me; okRemote(MP.t, null, true);
 }
 function okRemote(d, prev, force) {
   ok.mode = 'online'; ok.me = Math.max(0, MP.seat); ok.bet = d.bet;
   const g = d.g;
-  if (!g || d.status === 'open') { ok.state = 'bet'; ok.slots = new Array(24).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.winner = -2; ok.bots = [0, 1, 2, 3].map(i => !d.seats[i]); return; }
+  if (!g || d.status === 'open') { ok.state = 'bet'; ok.slots = new Array(okNS()).fill(null); ok.disc = [[], [], [], []]; ok.hands = [[], [], [], []]; ok.ind = null; ok.winner = -2; ok.bots = [0, 1, 2, 3].map(i => !d.seats[i]); return; }
   const pg = prev && prev.g, newRound = !pg || (prev.round !== d.round);
   if (MP.seat >= 0 && mpPayOnce('bet')) { setBalance(balance - d.bet); lastWin = 0; }
-  if (newRound) { ok.slots = new Array(24).fill(null); ok.fly = []; ok.mood = [0, 0, 0, 0]; }
+  if (newRound) { ok.slots = new Array(okNS()).fill(null); ok.fly = []; ok.mood = [0, 0, 0, 0]; }
   // rakiplerin attığı taşlar uçsun
   const oldTop = s => ok.disc[s] && ok.disc[s].length ? ok.disc[s][ok.disc[s].length - 1].id : null;
   const flights = [];
@@ -4362,7 +4366,7 @@ const BTB = { btMinus: { x: 190, y: 1640, r: 50 }, btPlus: { x: 330, y: 1640, r:
 const BT_SUITS = ['maca', 'kupa', 'karo', 'sinek'];
 function BTL() {
   if (LAND) {
-    P(BTB.btMinus, 1690, 1050); P(BTB.btPlus, 1830, 1050); P(BTB.btGo, 1760, 850, 90);
+    P(BTB.btMinus, 1530, 860); P(BTB.btPlus, 1600, 860); P(BTB.btGo, 1760, 850, 90);
     P(BTB.btPass, 1500, 790, 55); P(BTB.btBidM, 1630, 790, 45); P(BTB.btBidP, 1830, 790, 45); P(BTB.btBid, 1760, 960, 75);
     P(BTB.btS0, 1660, 790, 60); P(BTB.btS1, 1820, 790, 60); P(BTB.btS2, 1660, 950, 60); P(BTB.btS3, 1820, 950, 60);
     return { table: [380, 330, 1160, 530], trickC: { x: 960, y: 590 }, off: [[0, 110], [160, 0], [0, -110], [-160, 0]], seat: [{ x: 960, y: 960 }, { x: 1700, y: 520 }, { x: 960, y: 230 }, { x: 220, y: 520 }],
@@ -4372,7 +4376,7 @@ function BTL() {
   P(BTB.btPass, 150, 1640, 62); P(BTB.btBidM, 330, 1640, 50); P(BTB.btBidP, 530, 1640, 50); P(BTB.btBid, 780, 1640, 80);
   P(BTB.btS0, 200, 1640, 64); P(BTB.btS1, 400, 1640, 64); P(BTB.btS2, 600, 1640, 64); P(BTB.btS3, 800, 1640, 64);
   return { table: [60, 470, 880, 770], trickC: { x: 500, y: 860 }, off: [[0, 120], [150, 0], [0, -120], [-150, 0]], seat: [{ x: 500, y: 1430 }, { x: 930, y: 760 }, { x: 500, y: 300 }, { x: 70, y: 760 }],
-    cats: [null, [930, 760, .6, -.3], [500, 300, .75, 0], [70, 760, .6, .3]], lab: [null, [840, 930], [500, 450], [160, 930]], hand: { x: 500, y: 1440, sp: 0 }, status: { x: 500, y: 1290, w: 640 }, info: { x: 500, y: 520 } };
+    cats: [null, [930, 760, .6, -.3], [500, 300, .75, 0], [70, 760, .6, .3]], lab: [null, [840, 930], [500, 450], [160, 930]], hand: { x: 500, y: 1440, sp: 0 }, status: { x: 500, y: 1262, w: 640 }, info: { x: 500, y: 520 } };
 }
 const btV = s => (s - bt.me + 4) % 4;   // ekrandaki yer: 0 alt, 1 sağ, 2 üst, 3 sol
 const btVal = c => ({ A: 14, K: 13, Q: 12, J: 11 })[c.r] || +c.r;
@@ -4551,7 +4555,7 @@ function btRemote(d, prev) {
 function btAutoPlay() { if (['bid', 'trump', 'play'].includes(bt.state)) btAIAct(bt.turn); }
 function btCanStart() { return !btOnline() || (MP.t && MP.t.host === MP.uid); }
 // ---------- giriş ----------
-function btHandPos(i, n) { const L = BTL(), sp = L.hand.sp || Math.min(72, 860 / Math.max(1, n - 1)); return { x: L.hand.x + (i - (n - 1) / 2) * sp, y: L.hand.y, sp }; }
+function btHandPos(i, n) { const L = BTL(); if (!LAND && bt.state === 'play' && n > 7) { const r1 = Math.ceil(n / 2), row = i < r1 ? 0 : 1, k = row ? i - r1 : i, m = row ? n - r1 : r1, sp = 124; return { x: L.hand.x + (k - (m - 1) / 2) * sp, y: L.hand.y - 40 + row * 190, sp, sc: 1.12, last: k === m - 1 }; } const sp = L.hand.sp || Math.min(72, 860 / Math.max(1, n - 1)); return { x: L.hand.x + (i - (n - 1) / 2) * sp, y: L.hand.y, sp, sc: 1, last: i === n - 1 }; }
 function btDown(w) {
   BTL(); const me = bt.me;
   if (bt.state === 'bet' || bt.state === 'over') { if (!btCanStart()) return; const k = hitSet(BTB, w, btOnline() ? ['btGo'] : ['btMinus', 'btPlus', 'btGo']); if (k && !betKey(k)) btStart(); return; }
@@ -4566,8 +4570,8 @@ function btDown(w) {
   if (bt.state !== 'play' || btShowing()) return;
   const hand = bt.hands[me];
   for (let i = hand.length - 1; i >= 0; i--) {
-    const p = btHandPos(i, hand.length), wide = i === hand.length - 1 ? 60 : p.sp - 60;
-    if (w.x > p.x - 60 && w.x < p.x + wide && Math.abs(w.y - p.y) < 100) {
+    const p = btHandPos(i, hand.length), hw = 60 * p.sc, wide = p.last || p.sp >= hw * 2 ? hw : p.sp - hw;
+    if (w.x > p.x - hw && w.x < p.x + wide && Math.abs(w.y - p.y) < 95 * p.sc) {
       if (btLegal(hand, bt.trick, bt.trump, bt.broken).includes(hand[i])) btPlay(me, i);
       else { const led = bt.trick[0] && bt.trick[0].c.s; banner('Bu kart oynanamaz', !bt.trick.length ? 'Koz kırılmadan koz açılmaz' : hand.some(c => c.s === led) ? BT_SUITN[led] + ' atmalısın (yükseltmek zorunlu)' : 'Koz atmalısın', { dur: 1400, col: '#1f4e9c', top: true }); }
       return;
@@ -4613,8 +4617,8 @@ function drawBatak(t) {
     bt.fly = bt.fly.filter(f => now < f.t0 + f.dur + 20);
     bt.fly.forEach(f => { const u = clamp((now - f.t0) / f.dur, 0, 1), e = 1 - Math.pow(1 - u, 3); card(f.c, lerp(f.x0, f.x1, e), lerp(f.y0, f.y1, e) - Math.sin(u * Math.PI) * 50, lerp(.8, .9, e), (1 - e) * .5, true); });
     const hand = bt.hands[me] || [], my = bt.state === 'play' && btMine(bt.turn) && !showing, legal = my ? btLegal(hand, bt.trick, bt.trump, bt.broken) : hand;
-    hand.forEach((c, i) => { const p = btHandPos(i, hand.length), ok2 = legal.includes(c), u = clamp((t - (bt.dealT || 0) - i * 70) / 320, 0, 1); if (u <= 0) return; const e = 1 - Math.pow(1 - u, 3); card(c, lerp(L.trickC.x, p.x, e), lerp(L.trickC.y, p.y, e) - (my && ok2 ? 26 : 0) - Math.sin(u * Math.PI) * 40, lerp(.6, 1, e), (i - (hand.length - 1) / 2) * .025 + (1 - e) * 1.2, u > .5, my && !ok2 ? .55 : 1); });
-    if (bt.state !== 'bid' && bt.state !== 'trump') inkText(ctx, (btOnline() && MP.seat < 0 ? btName(me) : 'Senin') + ' el: ' + bt.tricks[me] + (bt.bidder === me ? ' / ' + bt.bid : ''), L.hand.x, L.hand.y + (LAND ? 115 : 120), 30, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
+    hand.forEach((c, i) => { const p = btHandPos(i, hand.length), ok2 = legal.includes(c), u = clamp((t - (bt.dealT || 0) - i * 70) / 320, 0, 1); if (u <= 0) return; const e = 1 - Math.pow(1 - u, 3); card(c, lerp(L.trickC.x, p.x, e), lerp(L.trickC.y, p.y, e) - (my && ok2 ? 26 : 0) - Math.sin(u * Math.PI) * 40, lerp(.6, p.sc, e), (i - (hand.length - 1) / 2) * .025 + (1 - e) * 1.2, u > .5, my && !ok2 ? .55 : 1); });
+    if (bt.state !== 'bid' && bt.state !== 'trump') inkText(ctx, (btOnline() && MP.seat < 0 ? btName(me) : 'Senin') + ' el: ' + bt.tricks[me] + (bt.bidder === me ? ' / ' + bt.bid : ''), L.hand.x, L.hand.y + (LAND ? 115 : bt.state === "play" && bt.hands[me].length > 7 ? 260 : 120), 30, '#f4e8cc', { outline: INK, ow: 4, font: '"Caveat"', weight: 700 });
   }
   const S_ = L.status;
   if (bt.state === 'bet' || bt.state === 'over') {
@@ -4644,7 +4648,7 @@ const TB_PRIZE = [1, 2, 4], TB_PNAME = ['Çinko', 'İkinci Çinko', 'TOMBALA'];
 const tb = { mode: 'ai', loop: 0, round: 0, state: 'bet', bet: 0, ncard: 1, cards: [], cats: [], bag: [], drawn: [], cur: null, curT: 0, stage: 0, timer: 0, fast: false, wins: [], drops: [], won: 0 };
 const TBB = { tbMinus: { x: 190, y: 1560, r: 50 }, tbPlus: { x: 330, y: 1560, r: 50 }, tbCards: { x: 520, y: 1560, r: 62 }, tbGo: { x: 770, y: 1560, r: 90 }, tbFast: { x: 770, y: 1560, r: 70 } };
 function TBLay() {
-  if (LAND) { P(TBB.tbMinus, 1690, 1050); P(TBB.tbPlus, 1830, 1050); P(TBB.tbCards, 1500, 1050, 58); P(TBB.tbGo, 1760, 850, 90); P(TBB.tbFast, 1760, 850, 70);
+  if (LAND) { P(TBB.tbMinus, 1725, 1000); P(TBB.tbPlus, 1795, 1000); P(TBB.tbCards, 1500, 1050, 58); P(TBB.tbGo, 1760, 850, 90); P(TBB.tbFast, 1760, 850, 70);
     return { cardX: 70, cardY: [340, 650], cw: 100, ch: 84, bag: { x: 1230, y: 390 }, ball: { x: 1500, y: 390 }, recent: { x: 1440, y: 540, gap: 74 }, cats: [[1150, 790], [1380, 790], [1610, 790]], prize: { x: 1440, y: 640 }, status: { x: 540, y: 1060, w: 700 } }; }
   P(TBB.tbMinus, 190, 1560); P(TBB.tbPlus, 330, 1560); P(TBB.tbCards, 520, 1560, 62); P(TBB.tbGo, 770, 1560, 90); P(TBB.tbFast, 770, 1560, 70);
   return { cardX: 40, cardY: [560, 860], cw: 102, ch: 84, bag: { x: 250, y: 320 }, ball: { x: 560, y: 320 }, recent: { x: 500, y: 470, gap: 100 }, cats: [[190, 1230], [500, 1230], [810, 1230]], prize: { x: 500, y: 1390 }, status: { x: 500, y: 1450, w: 700 } };
@@ -4828,7 +4832,7 @@ const YR_CATS = [
 const yr = { state: 'bet', pick: -1, bet: 0, odds: [2, 3, 4, 6, 10], p: [], winner: -1, t0: 0, T: [], a: [], order: [], hist: [] };
 const YRB = { yrMinus: { x: 190, y: 1560, r: 50 }, yrPlus: { x: 330, y: 1560, r: 50 }, yrGo: { x: 760, y: 1560, r: 90 } };
 function YRL() {
-  if (LAND) { P(YRB.yrMinus, 1690, 1050); P(YRB.yrPlus, 1830, 1050); P(YRB.yrGo, 1760, 850, 90); return { x0: 250, x1: 1420, y0: 345, lane: 136, status: { x: 1700, y: 420, w: 380 }, oddX: 110 }; }
+  if (LAND) { P(YRB.yrMinus, 1530, 860); P(YRB.yrPlus, 1600, 860); P(YRB.yrGo, 1760, 850, 90); return { x0: 250, x1: 1420, y0: 345, lane: 136, status: { x: 1700, y: 420, w: 380 }, oddX: 110 }; }
   P(YRB.yrMinus, 190, 1560); P(YRB.yrPlus, 330, 1560); P(YRB.yrGo, 760, 1560, 90); return { x0: 250, x1: 900, y0: 470, lane: 170, status: { x: 500, y: 1400, w: 760 }, oddX: 100 };
 }
 function yrNewOdds() {
@@ -4901,7 +4905,7 @@ function drawYaris(t) {
 const dm = { state: 'bet', bet: 0, hands: [[], []], bone: [], chain: [], turn: 0, pick: -1, busy: false, mood: 0, winner: -1, msg: '', lastT: 0 };
 const DMB = { dmMinus: { x: 190, y: 1650, r: 50 }, dmPlus: { x: 330, y: 1650, r: 50 }, dmGo: { x: 760, y: 1650, r: 86 }, dmDraw: { x: 840, y: 1660, r: 70 }, dmL: { x: 250, y: 1160, r: 70 }, dmR: { x: 750, y: 1160, r: 70 } };
 function DML() {
-  if (LAND) { P(DMB.dmMinus, 1690, 1050); P(DMB.dmPlus, 1830, 1050); P(DMB.dmGo, 1760, 850, 90); P(DMB.dmDraw, 1760, 850, 80); P(DMB.dmL, 420, 660, 62); P(DMB.dmR, 1500, 660, 62);
+  if (LAND) { P(DMB.dmMinus, 1530, 860); P(DMB.dmPlus, 1600, 860); P(DMB.dmGo, 1760, 850, 90); P(DMB.dmDraw, 1760, 850, 80); P(DMB.dmL, 420, 660, 62); P(DMB.dmR, 1500, 660, 62);
     return { table: [300, 250, 1320, 480], cx: 960, y0: 330, rowH: 100, per: 13, tw: 92, hand: { x: 900, y: 900, sp: 100, per: 14, w: 1300 }, cat: [1760, 520, .75], status: { x: 190, y: 800, w: 340 }, opp: { x: 960, y: 210 } }; }
   P(DMB.dmMinus, 190, 1650); P(DMB.dmPlus, 330, 1650); P(DMB.dmGo, 760, 1650, 86); P(DMB.dmDraw, 840, 1660, 70); P(DMB.dmL, 250, 1110, 70); P(DMB.dmR, 750, 1110, 70);
   return { table: [50, 470, 900, 720], cx: 500, y0: 570, rowH: 112, per: 9, tw: 94, hand: { x: 500, y: 1330, sp: 108, per: 8, w: 880 }, cat: [500, 300, .8], status: { x: 400, y: 1560, w: 700 }, opp: { x: 500, y: 510 } };
@@ -5139,7 +5143,7 @@ function drawRulet(t) {
   RLB.rlMinus.id = 'rlMinus'; RLB.rlPlus.id = 'rlPlus'; drawBetChip(RLB.rlMinus, RLB.rlPlus, t, 'FİŞ');
   const tot = rlTotal(); btnDraw('rlClear', '#f4e8cc', null, t, 40, RLB); inkText(ctx, tot && rl.state === 'bet' ? 'TOPLA' : 'TEKRAR', RLB.rlClear.x, RLB.rlClear.y + 2, tot && rl.state === 'bet' ? 30 : 26, INK, { outline: false });
   const g = RLB.rlSpin, dy = btnDraw('rlSpin', '#cf4b32', null, t, 40, RLB); inkText(ctx, rl.state === 'result' ? 'YENİ' : 'ÇEVİR', g.x, g.y + dy, 46, '#fbf1da', { ow: 7 }); ctx.globalAlpha = 1;
-  const st = LAND ? { x: L.bx + L.cw * 6, y: L.by + L.ch * 5 + 40 } : { x: 500, y: 1460 };
+  const st = LAND ? { x: L.bx + L.cw * 6, y: L.by + L.ch * 5 + 40 } : { x: 500, y: 1540 };
   statusTag(st.x, st.y, spinning ? 'Top dönüyor…' : rl.state === 'result' ? 'Sonuç: ' + rl.result : tot ? 'Masada ' + tot.toLocaleString('tr-TR') + ' akçe · ÇEVİR' : 'Tahtaya dokunup fiş koy', 520);
 }
 
@@ -5228,7 +5232,7 @@ fontsReady.catch(() => {}).then(() => {
   dailyGift();
 });
 // test kancası
-window.__iconURL = iconURL; window.__openBP = openBetPicker; window.__nazar = { dm, dmStart, dmPlace, dmCan, dmEnds, dmFits, dmDown, showProfile, giftSend, yr, yrStart, yrNewOdds, ITEMS, tvEndT: w => tvEnd(w), tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
+window.__iconURL = iconURL; window.__btScreen = (i, n) => { const q = btHandPos(i, n); return toScreen(q.x, q.y); }; window.__okScreen = i => { const q = slotPos(i); return toScreen(q.x, q.y); }; window.__openBP = openBetPicker; window.__nazar = { dm, dmStart, dmPlace, dmCan, dmEnds, dmFits, dmDown, showProfile, giftSend, yr, yrStart, yrNewOdds, ITEMS, tvEndT: w => tvEnd(w), tb, tbStart, tbCard, tbDraw, tbOver, get betIdx() { return betIdx; }, betKey, addXP, inviteSend, inviteRecv, get peers() { return MP.peers; }, set peers(v) { MP.peers = v; }, WEEK: () => WEEK, weekPrize, weekRoll, setWEEK: w => { WEEK = w; }, btAIAct, setAV, KZ, kzBuy, kzReveal, kzNew, bt, btStart, btBidAct, btSetTrump, btPlay, btLegal, btAICard, btAIBid, btEstimate, ACHS: () => ACHS, EXT: () => EXT, extEvent, achCheck, mpWatch, teaSend, spect, setDiff: k => { DIFF = k; }, seatSub, ps, bb, rl, psPlay, psAIChoice, psStart, bbStart, bbRoll, rlPlace, rlSpin, openChest, questsToday, get XP() { return XP; }, get STATS() { return STATS; }, rlPayout, bjSplit, bjCanSplit, okAutoPlay, tvAutoPlay, emoSend, get emoToasts() { return emoToasts; }, cloudSave, mpTurnWatch, mpQuick, pickMode, get LOBBYMODE() { return LOBBYMODE; }, get scene() { return scene; }, bj, tv, ok, MP, giveItem, tvRoll, tvOptions, tvPlayerMove, okTake, okDiscard, okHand, bjoAct, bjoDeal, mpCreate, mpJoin, mpLeave, tvStart, okStart, openSheet, get INV() { return INV; }, get AV() { return AV; },  go, toWorld, bjDeal, get trans() { return trans; }, get state() { return state; }, get balance() { return balance; }, spin: () => pullLever(), force: (fn) => { const o = Math.random; Math.random = fn; setTimeout(() => Math.random = o, 30); } };
 })();
 </script>
 </body>

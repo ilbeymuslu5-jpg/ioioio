@@ -32,6 +32,7 @@ Oyunlar arasında sol üstteki **‹ Salon** ile dönülür; akçe bakiyesi orta
 
 ## Görüntü ve animasyon
 - **Dokular ve gölgeler:** kod ile üretilen yüksek çözünürlüklü ahşap, çuha lifi ve kâğıt dokuları; masalarda ortadan vuran ışık, kenarlara iç gölge, cilalı ahşap kenar ve zemine düşen yumuşak gölge; kart, taş, pul ve zarların altında bulanık gölge, üstlerinde ışık geçişi.
+- **Büyük taşlar:** Okey ıstakası dikeyde 2×10, yatayda 2×12 yuva; taşlar %20–30 büyük, dokunma alanı taş boyutunda, sürüklerken bırakılacak yuva parlıyor. Batak'ta kart atarken el iki sıraya bölünür.
 - **Arayüz:** her oyunda aynı üst çubuk (Salon, Kurallar, Ayarlar, bakiye + seviye); bahis için büyük fiş, dokununca tüm bahisleri gösteren seçici; masayı kapatmayan üst bildirimler; telefonda alttan kayan, aşağı çekince kapanan paneller; tek bir Ayarlar sayfası (ses, müzik, titreşim, kalite, büyük yazı, zorluk).
 - **Yüksek kalite (2K):** çizim çözünürlüğü ekranın uzun kenarında 2560 piksele kadar çıkar, arka plan daha keskin çizilir. Cihaz zorlanırsa oyun kendiliğinden hızlı moda geçer; Kurallar ve Ayarlar'dan değiştirilebilir.
 - Animasyonlar: salonda oyun kartlarının sırayla belirmesi, büyük kazançta konfeti, bakiye değişince uçan +/− sayılar, ana düğmede halka, Batak'ta kart dağıtma, havada süzülen ışık zerreleri.
