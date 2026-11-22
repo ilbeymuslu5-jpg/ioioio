@@ -116,7 +116,7 @@ button.big{display:block;width:100%;font:400 24px "Caveat Brush",cursive;backgro
 // =============================================================
 //  NAZAR SARAYI — el çizimi, birinci şahıs slot oyunu
 // =============================================================
-const cv = document.getElementById('c'), ctx = cv.getContext('2d');
+const cv = document.getElementById('c'); let ctx = cv.getContext('2d');
 const INK = '#2b1a12';
 const store = {
   get(k, d) { try { const v = localStorage.getItem('nazar2_' + k); return v == null ? d : JSON.parse(v); } catch { return d; } },
@@ -500,12 +500,98 @@ const coinPing = (d = 0) => tone('triangle', 1800 + Math.random() * 900, .18, .0
 //  EKRAN / KATMANLAR
 // =============================================================
 let W = 0, H = 0, DPR = 1, S = 1, M = 100, QUAL = store.get('qual', 'hi'), slowT = 0;
-let symSprites = [], wheelSprites = [], lanternSprites = [], bgLayers = [], fgLayers = [], bjLayers = [], tvLayers = [], okLayers = [], vignette = null, grainPat = null, glowSpr = null;
+let grainCv = null, symSprites = [], wheelSprites = [], lanternSprites = [], bgLayers = [], fgLayers = [], bjLayers = [], tvLayers = [], okLayers = [], vignette = null, grainPat = null, glowSpr = null;
 const painting = new Image(); let paintingOK = false;
 painting.onload = () => { paintingOK = true; };
 painting.src = 'assets/bg.png';
 
 function makeCanvas(w, h) { const k = document.createElement('canvas'); k.width = Math.max(1, Math.ceil(w)); k.height = Math.max(1, Math.ceil(h)); return k; }
+// =============================================================
+//  DOKU KÜTÜPHANESİ (kod ile üretilir, döşenebilir) ve GÖLGE YARDIMCILARI
+// =============================================================
+const TEX = {};
+function vnoise(P) { // periyodik değer gürültüsü: P hücre
+  const h = new Float32Array(P * P); for (let i = 0; i < h.length; i++) h[i] = Math.random();
+  return (x, y) => { const xi = Math.floor(x), yi = Math.floor(y), fx = x - xi, fy = y - yi, sx = fx * fx * (3 - 2 * fx), sy = fy * fy * (3 - 2 * fy), g = (a, b) => h[((b % P + P) % P) * P + ((a % P + P) % P)];
+    const a = g(xi, yi), b = g(xi + 1, yi), c2 = g(xi, yi + 1), d = g(xi + 1, yi + 1); return a + (b - a) * sx + (c2 - a) * sy + (a - b - c2 + d) * sx * sy; };
+}
+function makeTex(N, fn) { const k = makeCanvas(N, N), c = k.getContext('2d'), im = c.createImageData(N, N), d = im.data; for (let y = 0; y < N; y++) for (let x = 0; x < N; x++) { const [r, g, b, a = 255] = fn(x, y), i = (y * N + x) * 4; d[i] = r; d[i + 1] = g; d[i + 2] = b; d[i + 3] = a; } c.putImageData(im, 0, 0); return k; }
+function buildTextures() {
+  if (TEX.ok) return; const N = 512;
+  // ahşap: boyuna damar, halka kıvrımları, düğümler (multiply için açık tonlu)
+  const n1 = vnoise(8), n2 = vnoise(32), n3 = vnoise(128), n4 = vnoise(16);
+  TEX.wood = makeTex(N, (x, y) => {
+    const u = x / N, v = y / N, warp = n1(u * 8, v * 8) * .9 + n4(u * 16, v * 16) * .25;
+    const ring = Math.sin((u * 30 + warp * 1.1) * Math.PI) * .7 + Math.sin((u * 71 + warp * .6) * Math.PI) * .3, fine = n3(u * 128, v * 128 * .08) * .5 + n2(u * 32, v * 32 * .12) * .5;
+    const plank = Math.abs(((u * 4) % 1) - .5) < .006 ? .55 : 1;
+    let L = (.70 + ring * .09 + (fine - .5) * .28) * plank; L = clamp(L, 0, 1);
+    return [255 * L, 228 * L, 200 * L];
+  });
+  // çuha: ince lif ve hafif bulut
+  const f1 = vnoise(256), f2 = vnoise(64), f3 = vnoise(12);
+  TEX.felt = makeTex(N, (x, y) => { const u = x / N, v = y / N, L = clamp(.80 + (f1(u * 256, v * 256) - .5) * .30 + (f2(u * 64, v * 64) - .5) * .14 + (f3(u * 12, v * 12) - .5) * .12, 0, 1); return [255 * L, 255 * L, 255 * L]; });
+  // kâğıt: lekeler ve tane
+  const p1 = vnoise(200), p2 = vnoise(10);
+  TEX.paper = makeTex(256, (x, y) => { const u = x / 256, v = y / 256, L = clamp(.90 + (p1(u * 200, v * 200) - .5) * .12 + (p2(u * 10, v * 10) - .5) * .10, 0, 1); return [255 * L, 248 * L, 236 * L]; });
+  // ince lif çizgileri (çuhanın üstüne parlaklık)
+  TEX.ok = true;
+}
+function texPat(c, name, scale = 1, rot = 0) { buildTextures(); const p = c.createPattern(TEX[name], 'repeat'); try { if (p.setTransform) p.setTransform(new DOMMatrix().rotate(rot).scale(scale)); } catch { } return p; }
+const pxScale = c => { const m = c.getTransform(); return Math.hypot(m.a, m.b) || 1; };
+function bboxOf(pts) { let x0 = 1e9, y0 = 1e9, x1 = -1e9, y1 = -1e9; for (const [x, y] of pts) { x0 = Math.min(x0, x); y0 = Math.min(y0, y); x1 = Math.max(x1, x); y1 = Math.max(y1, y); } return { x0, y0, x1, y1, cx: (x0 + x1) / 2, cy: (y0 + y1) / 2, w: x1 - x0, h: y1 - y0 }; }
+function texOver(c, pts, name, o = {}) {
+  const b = bboxOf(pts); c.save(); trace(c, pts, true, 0); c.clip(); c.globalCompositeOperation = o.mode || 'multiply'; c.globalAlpha = o.alpha == null ? .6 : o.alpha; c.fillStyle = texPat(c, name, o.scale || 1, o.rot || 0); c.fillRect(b.x0 - 4, b.y0 - 4, b.w + 8, b.h + 8); c.restore();
+}
+// yüzeyin altına yumuşak gölge (çizimden ÖNCE çağır)
+function dropShadow(c, pts, blur = 40, dy = 22, a = .6) {
+  if (QUAL !== 'hi') { c.save(); c.globalAlpha = a * .6; c.fillStyle = '#000'; c.translate(0, dy); trace(c, pts, true, 0); c.fill(); c.restore(); return; }
+  const k = pxScale(c); c.save(); c.shadowColor = `rgba(0,0,0,${a})`; c.shadowBlur = blur * k; c.shadowOffsetY = dy * k; c.fillStyle = '#1a0c05'; trace(c, pts, true, 0); c.fill(); c.restore();
+}
+// kapalı şeklin içine kenardan düşen gölge
+function innerShadow(c, pts, blur = 30, a = .6, dy = 6) {
+  const b = bboxOf(pts), k = pxScale(c); c.save(); trace(c, pts, true, 0); c.clip();
+  c.shadowColor = `rgba(0,0,0,${a})`; c.shadowBlur = blur * k; c.shadowOffsetY = dy * k; c.fillStyle = '#000';
+  c.beginPath(); c.rect(b.x0 - 400, b.y0 - 400, b.w + 800, b.h + 800); trace(c, pts, true, 0, true); c.fill('evenodd'); c.restore();
+}
+function feltShade(c, pts) {
+  const b = bboxOf(pts);
+  texOver(c, pts, 'felt', { alpha: .75, scale: 1.1 });
+  c.save(); trace(c, pts, true, 0); c.clip();
+  const lx = b.cx, ly = b.y0 + b.h * .38, R = Math.max(b.w, b.h) * .75;
+  let g = c.createRadialGradient(lx, ly, 10, lx, ly, R); g.addColorStop(0, 'rgba(255,236,190,.30)'); g.addColorStop(.55, 'rgba(255,236,190,.06)'); g.addColorStop(1, 'rgba(255,236,190,0)');
+  c.globalCompositeOperation = 'soft-light'; c.fillStyle = g; c.fillRect(b.x0, b.y0, b.w, b.h);
+  g = c.createRadialGradient(lx, ly, R * .45, lx, ly, R * 1.05); g.addColorStop(0, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.42)');
+  c.globalCompositeOperation = 'multiply'; c.fillStyle = g; c.fillRect(b.x0, b.y0, b.w, b.h); c.restore();
+  if (QUAL === 'hi') innerShadow(c, pts, 26, .7, 8);
+}
+function rimShade(c, pts, horiz = true) {
+  const b = bboxOf(pts);
+  texOver(c, pts, 'wood', { alpha: .85, scale: 1.2, rot: horiz ? 90 : 0 });
+  c.save(); trace(c, pts, true, 0); c.clip();
+  const g = c.createLinearGradient(0, b.y0, 0, b.y1); g.addColorStop(0, 'rgba(255,220,170,.35)'); g.addColorStop(.12, 'rgba(255,220,170,.05)'); g.addColorStop(.85, 'rgba(0,0,0,.05)'); g.addColorStop(1, 'rgba(0,0,0,.35)');
+  c.globalCompositeOperation = 'overlay'; c.fillStyle = g; c.fillRect(b.x0, b.y0, b.w, b.h); c.restore();
+  // cilalı kenar parlaması
+  c.save(); c.globalCompositeOperation = 'screen'; c.globalAlpha = .28; c.strokeStyle = '#ffd9a0'; c.lineWidth = 3; c.translate(0, 3); trace(c, pts, true, 0); c.stroke(); c.restore();
+}
+function floorShade(c, pts, cx, cy) {
+  const b = bboxOf(pts);
+  texOver(c, pts, 'wood', { alpha: .9, scale: 1.6, rot: 0 });
+  c.save(); trace(c, pts, true, 0); c.clip();
+  let g = c.createLinearGradient(0, b.y0, 0, b.y0 + 900); g.addColorStop(0, 'rgba(0,0,0,.5)'); g.addColorStop(.35, 'rgba(0,0,0,.12)'); g.addColorStop(1, 'rgba(0,0,0,0)');
+  c.globalCompositeOperation = 'multiply'; c.fillStyle = g; c.fillRect(b.x0, b.y0, b.w, b.h);
+  g = c.createRadialGradient(cx, cy, 40, cx, cy, 900); g.addColorStop(0, 'rgba(255,196,120,.32)'); g.addColorStop(1, 'rgba(255,196,120,0)');
+  c.globalCompositeOperation = 'soft-light'; c.fillStyle = g; c.fillRect(b.x0, b.y0, b.w, b.h); c.restore();
+}
+// kart/taş/pul altına bulanık gölge sprite'ı (önbellekli)
+const SHADOWS = new Map();
+// gölge: (x,y,w,h) dikdörtgenin altına, ofsetli ve bulanık — yerel koordinatlarda
+function shadowRect(x, y, w, h, r = 12, a = .55, off = 8, blur = 14) { const s = shadowSpr(120, 120, r * 120 / Math.max(1, Math.min(w, h)), 14), pad = 28, kx = w / 120, ky = h / 120, sb = blur / 14; ctx.save(); ctx.globalAlpha *= a; ctx.drawImage(s, x - pad * kx * sb + off * .6, y - pad * ky * sb + off, w + 2 * pad * kx * sb, h + 2 * pad * ky * sb); ctx.restore(); }
+function shadowSpr(w, h, r, blur) {
+  r = Math.round(r); const key = w + 'x' + h + 'r' + r + 'b' + blur; let k = SHADOWS.get(key); if (k) return k;
+  const pad = blur * 2; k = makeCanvas(w + pad * 2, h + pad * 2); const c = k.getContext('2d'); c.shadowColor = 'rgba(0,0,0,1)'; c.shadowBlur = blur; c.shadowOffsetX = 2000; c.fillStyle = '#000';
+  c.beginPath(); c.roundRect(pad - 2000, pad, w, h, r); c.fill(); SHADOWS.set(key, k); return k;
+}
+function softShadow(x, y, w, h, r = 12, a = .5, blur = 14) { const s = shadowSpr(Math.round(w), Math.round(h), r, blur), pad = blur * 2; ctx.save(); ctx.globalAlpha *= a; ctx.drawImage(s, x - pad, y - pad); ctx.restore(); }
 function spriteOf(px, fn, b, box = 200) {
   const k = makeCanvas(px, px), c = k.getContext('2d'); c.scale(px / box, px / box);
   const o = BOIL; BOIL = b; fn(c); BOIL = o; return k;
@@ -525,13 +611,14 @@ function buildSprites() {
   for (let i = 0; i < 256 * 256; i++) { const v = 128 + (Math.random() - .5) * 70; id.data[i * 4] = id.data[i * 4 + 1] = id.data[i * 4 + 2] = v; id.data[i * 4 + 3] = 255; }
   gc.putImageData(id, 0, 0); gc.globalAlpha = .12; gc.strokeStyle = '#fff'; gc.lineWidth = 1;
   for (let i = 0; i < 70; i++) { gc.beginPath(); const x = Math.random() * 256, y = Math.random() * 256; gc.moveTo(x, y); gc.quadraticCurveTo(x + Math.random() * 30 - 15, y + Math.random() * 30 - 15, x + Math.random() * 40 - 20, y + Math.random() * 40 - 20); gc.stroke(); }
-  grainPat = ctx.createPattern(gk, 'repeat');
+  grainPat = ctx.createPattern(gk, 'repeat'); grainCv = gk;
 }
 function renderLayer(fn, blur, dim) {
   const R = dim ? Math.min(DPR, QUAL === 'hi' ? 2 : 1) : DPR;
   const k = makeCanvas((W + 2 * M) * R, (H + 2 * M) * R), c = k.getContext('2d');
   c.setTransform(R * S, 0, 0, R * S, R * (M + W / 2 - CAM0.x * S), R * (M + H / 2 - CAM0.y * S));
   fn(c);
+  if (QUAL === 'hi' && grainCv) { const tk = makeCanvas(k.width, k.height), tc = tk.getContext('2d'), gp = tc.createPattern(grainCv, 'repeat'); try { gp.setTransform(new DOMMatrix().scale(Math.max(1, R / 1.5))); } catch { } tc.fillStyle = gp; tc.fillRect(0, 0, tk.width, tk.height); tc.globalCompositeOperation = 'destination-in'; tc.drawImage(k, 0, 0); c.save(); c.setTransform(1, 0, 0, 1, 0, 0); c.globalCompositeOperation = 'overlay'; c.globalAlpha = dim ? .18 : .26; c.drawImage(tk, 0, 0); c.restore(); tk.width = tk.height = 0; }
   if (dim) { c.setTransform(1, 0, 0, 1, 0, 0); c.globalAlpha = 1; c.globalCompositeOperation = 'source-atop'; c.fillStyle = 'rgba(12,4,2,.58)'; c.fillRect(0, 0, k.width, k.height); c.globalCompositeOperation = 'source-over'; }
   if (blur && 'filter' in c) {
     const k2 = makeCanvas(k.width, k.height), c2 = k2.getContext('2d'); c2.filter = `blur(${(blur * R).toFixed(1)}px)`; c2.drawImage(k, 0, 0); return k2;
@@ -557,7 +644,7 @@ function readSafe() {
 }
 function sceneView(sc) {
   if (!LAND) return { cx: 500, cy: 900, w: 1000, h: 1800 };
-  return ({ lobby: { cx: 1000, cy: 500, w: 2000, h: 900 }, pisti: { cx: 960, cy: 640, w: 1920, h: 980 }, batak: { cx: 960, cy: 640, w: 1920, h: 980 }, tombala: { cx: 960, cy: 640, w: 1920, h: 980 }, yaris: { cx: 960, cy: 640, w: 1920, h: 980 }, domino: { cx: 960, cy: 640, w: 1920, h: 980 }, barbut: { cx: 880, cy: 712, w: 2020, h: 1030 }, rulet: { cx: 1000, cy: 640, w: 2000, h: 1040 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 712, w: 2020, h: 1030 }, okey: { cx: 900, cy: 655, w: 1580, h: 1100 } })[sc];
+  return ({ lobby: { cx: 1000, cy: 500, w: 2000, h: 900 }, pisti: { cx: 960, cy: 640, w: 1920, h: 980 }, batak: { cx: 960, cy: 640, w: 1920, h: 980 }, tombala: { cx: 960, cy: 640, w: 1920, h: 980 }, yaris: { cx: 960, cy: 640, w: 1920, h: 980 }, domino: { cx: 960, cy: 640, w: 1920, h: 980 }, barbut: { cx: 880, cy: 668, w: 2200, h: 1120 }, rulet: { cx: 1000, cy: 640, w: 2000, h: 1040 }, slot: { cx: 500, cy: 965, w: 1060, h: 1140 }, bj: { cx: 425, cy: 775, w: 1760, h: 1230 }, tavla: { cx: 880, cy: 668, w: 2200, h: 1120 }, okey: { cx: 900, cy: 655, w: 1580, h: 1100 } })[sc];
 }
 function setView(sc) {
   const v = sceneView(sc), nS = Math.min(W / v.w, H / v.h), changed = Math.abs(nS - S) > 1e-6;
@@ -699,7 +786,7 @@ function drawTable(c) {
   const v = visRect(300);
   seed(7);
   const top = sub([[v.x0, 1500], [v.x1, 1500], [v.x1, v.y1 + 400], [v.x0, v.y1 + 400]], 60, true);
-  wash(c, top, '#5b321a', 3);
+  wash(c, top, '#5b321a', 3); floorShade(c, top, 500, 1720);
   for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 46, 1502], [500 + i * 210, v.y1 + 400]], false, 2, '#2c160a', 3);
   for (let i = 0; i < 60; i++) { const x = v.x0 + rng() * (v.x1 - v.x0), y = 1520 + rng() * 700; ink(c, [[x, y], [x + 30 + rng() * 60, y + J(6)], [x + 80 + rng() * 80, y + J(8)]], false, 1.4, '#3d200d', 2); }
   const g = c.createRadialGradient(500, 1520, 50, 500, 1560, 700); g.addColorStop(0, 'rgba(255,190,110,.32)'); g.addColorStop(1, 'rgba(255,190,110,0)'); c.fillStyle = g; c.fillRect(v.x0, 1500, v.x1 - v.x0, 900);
@@ -1341,12 +1428,25 @@ function lobbyTiles() {
 function lobbyMaxScroll() { const L = LOBL(), n = lobbyList().length, rows = Math.ceil(n / L.cols); return Math.max(0, L.gap + rows * (L.th + L.gap) - (L.bot - L.top)); }
 function chipRects() { const L = LOBL(), w = LAND ? 220 : 210, g = 16, x0 = L.lx - (LOB_CATS.length * w + (LOB_CATS.length - 1) * g) / 2 + w / 2; return LOB_CATS.map(([k, n], i) => ({ k, n, x: x0 + i * (w + g), y: L.chipY, w, h: 64 })); }
 function chipAt(w) { return chipRects().find(r => Math.abs(w.x - r.x) < r.w / 2 && Math.abs(w.y - r.y) < r.h / 2 + 6); }
+const tileCacheL = new Map();
+function cachedTile(o, t) {
+  const key = [o.s.id, o.w, o.h, LOBBYMODE, featGame() === o.s.id, o.s.id === 'carsi' && dwheelReady(), S.toFixed(4), DPR, QUAL].join('|');
+  let e = tileCacheL.get(key);
+  if (!e) {
+    const pad = 26, k = S * DPR * 1.1, cvs = makeCanvas(Math.ceil((o.w + pad * 2) * k), Math.ceil((o.h + pad * 2) * k)), g = cvs.getContext('2d');
+    g.setTransform(k, 0, 0, k, (o.w / 2 + pad) * k, (o.h / 2 + pad) * k);
+    const saved = ctx; ctx = g; try { drawGameTile(Object.assign({}, o, { x: 0, y: 0 }), 0); } finally { ctx = saved; }
+    e = { cvs, pad }; tileCacheL.set(key, e); if (tileCacheL.size > 48) tileCacheL.delete(tileCacheL.keys().next().value);
+  }
+  const pr = press['sign' + o.i] && t - press['sign' + o.i] < 180 ? .96 : 1;
+  ctx.save(); ctx.translate(o.x, o.y); ctx.scale(pr, pr); ctx.drawImage(e.cvs, -o.w / 2 - e.pad, -o.h / 2 - e.pad, o.w + 2 * e.pad, o.h + 2 * e.pad); ctx.restore();
+}
 function drawGameTile(o, t) {
   const { s, x, y, w, h } = o, multi = LOBBYMODE === 'multi', online = ONLINE_GAMES.includes(s.id), cat = GAME_CAT[s.id], col = CAT_COL[cat] || '#7a1e28';
   const pr = press['sign' + o.i] && t - press['sign' + o.i] < 180 ? .96 : 1;
   ctx.save(); ctx.translate(x, y); ctx.scale(pr, pr); seed(60 + o.i);
-  ctx.fillStyle = 'rgba(0,0,0,.4)'; trace(ctx, rr(-w / 2 + 8, -h / 2 + 12, w, h, 26, 24), true, 1); ctx.fill();
-  const fr = rr(-w / 2, -h / 2, w, h, 26, 24); wash(ctx, fr, col, 1.5); ink(ctx, fr, true, 4);
+  shadowRect(-w / 2, -h / 2, w, h, 26, .75, 14, 20);
+  const fr = rr(-w / 2, -h / 2, w, h, 26, 24); wash(ctx, fr, col, 1.5); texOver(ctx, fr, 'felt', { alpha: .45 }); { ctx.save(); trace(ctx, fr, true, 0); ctx.clip(); const gg = ctx.createLinearGradient(0, -h / 2, 0, h / 2); gg.addColorStop(0, 'rgba(255,255,255,.18)'); gg.addColorStop(1, 'rgba(0,0,0,.22)'); ctx.fillStyle = gg; ctx.fillRect(-w / 2, -h / 2, w, h); ctx.restore(); } ink(ctx, fr, true, 4);
   const artH = h * .5, pp = rr(-w / 2 + 14, -h / 2 + 14, w - 28, artH, 18, 24); wash(ctx, pp, '#f4e8cc', 1.5); hatch(ctx, pp, .25, 12, '#b8862b', .12); ink(ctx, pp, true, 2.5, '#b8862b', 1);
   ctx.save(); trace(ctx, pp, true, 0); ctx.clip();
   const sc = Math.min((w - 60) / 380, (artH - 24) / 150); ctx.translate(0, -h / 2 + 14 + artH / 2); ctx.scale(sc, sc); ctx.translate(0, -235); drawSignArt(s.id, t, o.i); ctx.restore();
@@ -1375,7 +1475,7 @@ function drawLobby(t) {
   const v = visRect(0);
   ctx.save(); ctx.beginPath(); ctx.rect(v.x0, L.top, v.x1 - v.x0, L.bot - L.top); ctx.clip();
   if (!LOB.inT) LOB.inT = t;
-  lobbyTiles().forEach((o, k) => { if (o.y + o.h / 2 < L.top - 10 || o.y - o.h / 2 > L.bot + 10) return; const u = clamp((t - LOB.inT - k * 55) / 380, 0, 1); if (u <= 0) return; if (u < 1) { const e = easeOutBack(u); ctx.save(); ctx.globalAlpha = u; ctx.translate(o.x, o.y + (1 - e) * 90); ctx.scale(.86 + .14 * e, .86 + .14 * e); ctx.translate(-o.x, -o.y); drawGameTile(o, t); ctx.restore(); ctx.globalAlpha = 1; } else drawGameTile(o, t); });
+  lobbyTiles().forEach((o, k) => { if (o.y + o.h / 2 < L.top - 10 || o.y - o.h / 2 > L.bot + 10) return; const u = clamp((t - LOB.inT - k * 55) / 380, 0, 1); if (u <= 0) return; if (u < 1) { const e = easeOutBack(u); ctx.save(); ctx.globalAlpha = u; ctx.translate(o.x, o.y + (1 - e) * 90); ctx.scale(.86 + .14 * e, .86 + .14 * e); ctx.translate(-o.x, -o.y); cachedTile(o, t); ctx.restore(); ctx.globalAlpha = 1; } else cachedTile(o, t); });
   ctx.restore();
   // kaydırma ipucu
   if (mx > 0) { const fr = clamp(LOB.sy / mx, 0, 1), th = Math.max(80, (L.bot - L.top) * (L.bot - L.top) / (L.bot - L.top + mx)), y = L.top + fr * (L.bot - L.top - th), x = v.x1 - 14; ctx.fillStyle = 'rgba(242,207,116,.55)'; ctx.fillRect(x - 5, y, 10, th);
@@ -1510,11 +1610,18 @@ function drawCardFace(c, r, s) {
   else drawSuit(c, s, 60, 85, 44);
 }
 function drawCardBack(c) { drawCardBackStyle(c, AV.back); }
+function finishPiece(c, pts, w, h, paper = true) {
+  c.save(); trace(c, pts, true, 0); c.clip();
+  if (paper) { c.globalCompositeOperation = 'multiply'; c.globalAlpha = .55; c.fillStyle = texPat(c, 'paper', .5); c.fillRect(0, 0, w, h); }
+  const g = c.createLinearGradient(0, 0, w * .35, h); g.addColorStop(0, 'rgba(255,255,255,.30)'); g.addColorStop(.45, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,.16)');
+  c.globalCompositeOperation = 'source-over'; c.globalAlpha = 1; c.fillStyle = g; c.fillRect(0, 0, w, h); c.restore();
+  c.save(); c.globalAlpha = .5; c.strokeStyle = '#fff'; c.lineWidth = 1.4; c.beginPath(); c.roundRect(6, 6, w - 12, h - 12, 9); c.stroke(); c.restore();
+}
 function cardSprite(key, fn) {
   const b = BOIL % 2, k = key + b;
   if (!cardCache[k]) {
-    const w = Math.ceil(120 * S * DPR * 1.5), h = Math.ceil(170 * S * DPR * 1.5), cv2 = makeCanvas(w, h), c = cv2.getContext('2d');
-    c.scale(w / 120, h / 170); const o = BOIL; BOIL = b; fn(c); BOIL = o; cardCache[k] = cv2;
+    const q = QUAL === 'hi' ? 2 : 1.5, w = Math.ceil(120 * S * DPR * q), h = Math.ceil(170 * S * DPR * q), cv2 = makeCanvas(w, h), c = cv2.getContext('2d');
+    c.scale(w / 120, h / 170); const o = BOIL; BOIL = b; fn(c); finishPiece(c, rr(3, 3, 114, 164, 12, 18), 120, 170); BOIL = o; cardCache[k] = cv2;
   }
   return cardCache[k];
 }
@@ -1635,10 +1742,10 @@ function bjResolve() {
 function drawBJTable(c) {
   const v = visRect(300);
   seed(31);
-  wash(c, sub([[30, 530], [970, 530], [v.x1 + 700, v.y1 + 500], [v.x0 - 700, v.y1 + 500]], 60, true), '#4a2412', 3);
+  { const rl2 = sub([[30, 530], [970, 530], [v.x1 + 700, v.y1 + 500], [v.x0 - 700, v.y1 + 500]], 60, true); wash(c, rl2, '#4a2412', 3); rimShade(c, rl2); }
   hatch(c, sub([[30, 530], [970, 530], [985, 566], [15, 566]], 30, true), .2, 6, INK, .35);
   const felt = sub([[70, 566], [930, 566], [v.x1 + 640, v.y1 + 500], [v.x0 - 640, v.y1 + 500]], 60, true);
-  wash(c, felt, feltColor('#1d5a40'), 3); hatch(c, felt, .35, 13, '#0b2b1d', .16);
+  wash(c, felt, feltColor('#1d5a40'), 3); feltShade(c, felt); hatch(c, felt, .35, 13, '#0b2b1d', .16);
   const g = c.createRadialGradient(500, 1050, 60, 500, 1100, 820); g.addColorStop(0, 'rgba(255,220,150,.22)'); g.addColorStop(1, 'rgba(0,0,0,.25)'); c.fillStyle = g; c.fillRect(v.x0, 560, v.x1 - v.x0, v.y1 - 560 + 400);
   ink(c, [[70, 566], [930, 566]], false, 4, '#1a0c05', 2);
   const arc = Array.from({ length: 30 }, (_, i) => { const a = .18 + i / 29 * (Math.PI - .36); return [500 + Math.cos(a) * 470, 640 + Math.sin(a) * 360]; });
@@ -1700,7 +1807,7 @@ function bjDrawCard(cd, t, alpha = 1) {
     if (cd.flipT) { const v = clamp((t - cd.flipT) / 380, 0, 1); sx = Math.abs(Math.cos(v * Math.PI)); face = v > .5; }
     const spr = face ? cardSprite(cd.r + cd.s, c => drawCardFace(c, cd.r, cd.s)) : cardSprite('back' + AV.back, drawCardBack);
     ctx.save(); ctx.translate(cd.x, cd.y); ctx.rotate(rot); ctx.globalAlpha = alpha;
-    ctx.fillStyle = 'rgba(5,15,10,.45)'; ctx.fillRect(-60 * sc * sx + 8, -85 * sc + 10, 120 * sc * sx, 170 * sc);
+    shadowRect(-60 * sc * sx, -85 * sc, 120 * sc * sx, 170 * sc, 12 * sc, .62, 11 * sc, 16 * sc);
     ctx.drawImage(spr, -60 * sc * sx, -85 * sc, 120 * sc * sx, 170 * sc); ctx.restore(); ctx.globalAlpha = 1;
   }
 }
@@ -2004,12 +2111,14 @@ function drawCheckerFace(c, side) {
   const o = ell(50, 50, 44, 44, 26); wash(c, o, side ? '#5a1a22' : '#f7eed8', 1.5); ink(c, o, true, 4.5);
   ink(c, ell(50, 50, 30, 30, 20), true, 2.6, side ? '#e2b04e' : '#b8862b', 1);
   const s = star4(50, 50, 12); wash(c, s, side ? '#e2b04e' : '#cf4b32', 1); ink(c, s, true, 1.4, INK, .5);
+  { const g = c.createRadialGradient(36, 34, 4, 50, 50, 46); g.addColorStop(0, 'rgba(255,255,255,.45)'); g.addColorStop(.5, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,.35)'); c.fillStyle = g; c.beginPath(); c.arc(50, 50, 44, 0, 7); c.fill(); }
   c.globalAlpha = .55; c.strokeStyle = '#fff'; c.lineWidth = 4; c.beginPath(); c.arc(50, 50, 36, 3.6, 4.6); c.stroke(); c.globalAlpha = 1;
 }
 function drawDieFace(c, v) {
   seed(160 + v); const Z = dieStyle(), p = rr(6, 6, 88, 88, 16, 12); wash(c, p, Z ? Z.bg : '#fbf6ea', 1); hatch(c, rr(6, 60, 88, 34, 12), .3, 6, INK, .18); ink(c, p, true, 3.5);
   const P = { 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] }[v];
-  for (const [dx, dy] of P) { c.fillStyle = Z ? (v === 1 ? Z.one : Z.pip) : v === 1 ? '#c0392b' : INK; trace(c, ell(50 + dx * 24, 50 + dy * 24, 8, 8, 10), true, .6); c.fill(); }
+  for (const [dx, dy] of P) { c.fillStyle = Z ? (v === 1 ? Z.one : Z.pip) : v === 1 ? '#c0392b' : INK; trace(c, ell(50 + dx * 24, 50 + dy * 24, 8, 8, 10), true, .6); c.fill(); c.fillStyle = 'rgba(255,255,255,.35)'; c.beginPath(); c.arc(50 + dx * 24 - 2, 50 + dy * 24 - 3, 2.6, 0, 7); c.fill(); }
+  c.save(); trace(c, p, true, 0); c.clip(); const g = c.createLinearGradient(6, 6, 94, 94); g.addColorStop(0, 'rgba(255,255,255,.45)'); g.addColorStop(.4, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(0,0,0,.22)'); c.fillStyle = g; c.fillRect(0, 0, 100, 100); c.restore();
 }
 function buildTvSprites() {
   const k = (LY.tv && LY.tv.k) || 1, px = Math.ceil(80 * k * S * DPR * 1.4);
@@ -2022,15 +2131,15 @@ function tvLocal(w) { const L = LY.tv, k = L.k || 1; return { x: (w.y - L.by) / 
 function drawTavlaTable(c) {
   const v = visRect(300), top = LY.tv.top;
   seed(110);
-  wash(c, sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#5b321a', 3);
+  { const fl = sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true); wash(c, fl, '#5b321a', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (top) + 420); }
   for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 50, top + 2], [500 + i * 150, v.y1 + 300]], false, 2, '#2c160a', 3);
   ink(c, [[v.x0, top], [v.x1, top]], false, 4, '#1a0c05', 2);
   c.save(); tvT(c);
   c.fillStyle = 'rgba(10,4,2,.5)'; c.beginPath(); c.ellipse(512, 1515, 480, 34, 0, 0, 7); c.fill();
   seed(120);
-  const outer = rr(40, 300, 920, 1200, 22, 30); wash(c, outer, '#6b3a17', 2); hatch(c, outer, .3, 9, INK, .22); ink(c, outer, true, 4.5);
+  const outer = rr(40, 300, 920, 1200, 22, 30); dropShadow(c, outer, 46, 24, .75); wash(c, outer, '#6b3a17', 2); rimShade(c, outer, false); hatch(c, outer, .3, 9, INK, .22); ink(c, outer, true, 4.5);
   for (let i = 0; i < 26; i++) { const y = 330 + i * 44; for (const x of [58, 942, 500]) { if (x === 500 && y > 860 && y < 940) continue; const d = sub([[x, y - 7], [x + 6, y], [x, y + 7], [x - 6, y]], 3, true); wash(c, d, '#f3efe6', .5); } }
-  for (const [x, w] of [[76, 378], [546, 378]]) { const f = rr(x, 336, w, 1128, 8, 30); wash(c, f, '#efe3c4', 2); ink(c, f, true, 3); }
+  for (const [x, w] of [[76, 378], [546, 378]]) { const f = rr(x, 336, w, 1128, 8, 30); wash(c, f, '#efe3c4', 2); texOver(c, f, 'paper', { alpha: .8 }); innerShadow(c, f, 22, .55, 6); ink(c, f, true, 3); }
   for (let a = 1; a <= 24; a++) {   // soluk üçgenler: pullar öne çıksın
     seed(200 + a); const { bx, dir } = ptBase(a), y = ptY(a);
     const tri = sub([[bx, y - 42], [bx + dir * 362, y], [bx, y + 42]], 14, true);
@@ -2175,7 +2284,7 @@ function drawTavla(t) {
   if (tv.mode === 'online' || tv.mode === 'local2') { const nm = tv.mode === 'online' ? (oppSeat ? tvName(opp) : 'Rakip bekleniyor…') : 'Aynı cihazda 2 kişi'; drawSeatLabel(C.x, C.y + (LY.tv.catFront ? 175 : -95), nm, tv.mode === 'online' && oppSeat, tv.mode === 'online' && tv.turn === opp); }
   ctx.save(); tvT(ctx);
   const b2 = BOIL % 2, cs = 80, an = tv.anim && t - tv.anim.t0 < 380 ? tv.anim : null;
-  const put = (s, p) => { ctx.fillStyle = 'rgba(20,8,2,.35)'; ctx.beginPath(); ctx.ellipse(p.x + 5, p.y + 6, cs / 2, cs / 2, 0, 0, 7); ctx.fill(); ctx.drawImage(checkerSpr[s][b2], p.x - cs / 2, p.y - cs / 2, cs, cs); };
+  const put = (s, p) => { shadowRect(p.x - cs / 2, p.y - cs / 2, cs, cs, cs / 2, .6, cs * .1, cs * .14); ctx.drawImage(checkerSpr[s][b2], p.x - cs / 2, p.y - cs / 2, cs, cs); };
   const side = tv.turn, mine = tvMine(side);
   const opts = tv.state === 'move' && mine ? tvOptions() : [], froms = new Set(opts.map(o => o.from));
   for (let a = 1; a <= 24; a++) {
@@ -2209,7 +2318,7 @@ function drawTavla(t) {
       let val = v, rot = (i % 2 ? .2 : -.15), dx = 0, dy = 0;
       if (rolling) { const u = (t - tv.rollT) / 700; val = 1 + Math.floor((t / 60 + i * 3) % 6); rot = (1 - u) * 9 * (i % 2 ? 1 : -1); dy = -Math.abs(Math.sin(u * Math.PI * 3)) * 70 * (1 - u); dx = Math.sin(u * 9 + i) * 20 * (1 - u); }
       ctx.save(); ctx.translate(x + dx, y + dy); ctx.rotate(rot); ctx.globalAlpha = faded ? .3 : 1;
-      ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-30, -24, 66, 66);
+      shadowRect(-34, -34, 68, 68, 12, .65, 10, 14);
       ctx.drawImage(dieSpr[val][BOIL % 2], -36, -36, 72, 72); ctx.restore(); ctx.globalAlpha = 1;
     };
     if (tv.diceSide === -1) { drawD(tv.dice[0], 500, tv.view === 0 ? 1190 : 610, 0, false); drawD(tv.dice[1], 500, tv.view === 0 ? 610 : 1190, 1, false); }
@@ -2288,17 +2397,17 @@ function drawTileFace(c, t) {
 function drawTileBack(c) { seed(3500); const p = rr(3, 3, 64, 94, 10, 14); wash(c, p, '#e6d6b2', 1); ink(c, rr(12, 12, 46, 76, 6, 12), true, 2, '#2aa3a0', 1); ink(c, p, true, 2.6, INK, .8); const s = star4(35, 50, 12); wash(c, s, '#cf4b32', .5); }
 function tileSpr(t) {
   const key = (t === 'back' ? 'back' : t.fj ? 'fj' : t.c + '-' + t.n) + (BOIL % 2) + AV.tas;
-  if (!tileCache[key]) { const w = Math.ceil(70 * S * DPR * 1.5), h = Math.ceil(100 * S * DPR * 1.5), k = makeCanvas(w, h), c = k.getContext('2d'); c.scale(w / 70, h / 100); const o = BOIL; BOIL = BOIL % 2; t === 'back' ? drawTileBack(c) : drawTileFace(c, t); BOIL = o; tileCache[key] = k; }
+  if (!tileCache[key]) { const q = QUAL === 'hi' ? 2 : 1.5, w = Math.ceil(70 * S * DPR * q), h = Math.ceil(100 * S * DPR * q), k = makeCanvas(w, h), c = k.getContext('2d'); c.scale(w / 70, h / 100); const o = BOIL; BOIL = BOIL % 2; t === 'back' ? drawTileBack(c) : drawTileFace(c, t); finishPiece(c, rr(3, 3, 64, 94, 10, 14), 70, 100, false); BOIL = o; tileCache[key] = k; }
   return tileCache[key];
 }
 function drawOkeyTable(c) {
   const v = visRect(300); seed(129);
   const F = OKL.floor, [tx, ty, tw, th] = OKL.table, [rx, ry, rw, rh] = OKL.rack, cx = tx + tw / 2, cy = ty + th / 2;
-  wash(c, sub([[v.x0 - 200, F], [v.x1 + 200, F], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#5b321a', 3);
+  { const fl = sub([[v.x0 - 200, F], [v.x1 + 200, F], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true); wash(c, fl, '#5b321a', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (F) + 420); }
   for (let i = -24; i <= 24; i++) ink(c, [[cx + i * 50, F + 2], [cx + i * 150, v.y1 + 300]], false, 2, '#2c160a', 3);
   seed(130);
-  const rim = rr(tx, ty, tw, th, 50, 30); wash(c, rim, '#5b321a', 2); hatch(c, rim, .3, 9, INK, .25); ink(c, rim, true, 4);
-  const felt = rr(tx + 28, ty + 28, tw - 56, th - 56, 38, 30); wash(c, felt, feltColor('#24585e'), 2.5); hatch(c, felt, .35, 13, '#0f2f33', .15); ink(c, felt, true, 3);
+  const rim = rr(tx, ty, tw, th, 50, 30); dropShadow(c, rim, 50, 26, .7); wash(c, rim, '#5b321a', 2); rimShade(c, rim); hatch(c, rim, .3, 9, INK, .25); ink(c, rim, true, 4);
+  const felt = rr(tx + 28, ty + 28, tw - 56, th - 56, 38, 30); wash(c, felt, feltColor('#24585e'), 2.5); feltShade(c, felt); hatch(c, felt, .35, 13, '#0f2f33', .15); ink(c, felt, true, 3);
   const g = c.createRadialGradient(cx, cy, 40, cx, cy, Math.max(tw, th) * .55); g.addColorStop(0, 'rgba(255,220,150,.2)'); g.addColorStop(1, 'rgba(0,0,0,.2)'); c.fillStyle = g; c.fillRect(tx + 28, ty + 28, tw - 56, th - 56);
   ink(c, rr(tx + 60, ty + 60, tw - 120, th - 120, 28, 30), true, 2.5, '#d9a441', 1.5);
   for (const [x, y] of [[tx + 90, ty + 90], [tx + tw - 90, ty + 90], [tx + 90, ty + th - 90], [tx + tw - 90, ty + th - 90]]) { const s = star4(x, y, 16); wash(c, s, '#f2cf74', 1); ink(c, s, true, 1.6); }
@@ -2452,7 +2561,7 @@ function drawOkey(t) {
   const bl = 0; drawLayer(getLayers('ok')[bl], 1);
   setWorld(1);
   const now = t, TW = 70, TH = 100;
-  const drawT = (tile, face, x, y, sc = 1, rot = 0, alpha = 1) => { ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = alpha; ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(-TW * sc / 2 + 5, -TH * sc / 2 + 6, TW * sc, TH * sc); ctx.drawImage(tileSpr(face ? tile : 'back'), -TW * sc / 2, -TH * sc / 2, TW * sc, TH * sc); ctx.restore(); ctx.globalAlpha = 1; };
+  const drawT = (tile, face, x, y, sc = 1, rot = 0, alpha = 1) => { ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = alpha; shadowRect(-TW * sc / 2, -TH * sc / 2, TW * sc, TH * sc, 8 * sc, .55, 7 * sc, 10 * sc); ctx.drawImage(tileSpr(face ? tile : 'back'), -TW * sc / 2, -TH * sc / 2, TW * sc, TH * sc); ctx.restore(); ctx.globalAlpha = 1; };
   for (let seat = 0; seat < 4; seat++) {
     if (seat === ok.me) continue; const dp = dpos(seat), R = OK_RACK[dp];
     const n = ok.state === 'play' || ok.state === 'over' ? ok.hands[seat].filter(x => !(x.arrive > now)).length : 0;
@@ -3848,11 +3957,11 @@ function bbMine(s) { return bb.mode === 'ai' ? s === 0 : s === MP.seat; }
 function bbName(s) { if (bb.mode === 'ai') return s === 0 ? 'Sen' : 'Kabadayı'; const st = MP.t && MP.t.seats[s]; return st ? mpName(st.uid) : 'Boş'; }
 function drawBarbutTable(c) {
   const v = visRect(300), top = LY.tv.top, C = bbCenter(); seed(140);
-  wash(c, sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#5b321a', 3);
+  { const fl = sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true); wash(c, fl, '#5b321a', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (top) + 420); }
   for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 50, top + 2], [500 + i * 150, v.y1 + 300]], false, 2, '#2c160a', 3);
   ink(c, [[v.x0, top], [v.x1, top]], false, 4, '#1a0c05', 2);
-  const rim = ell(C.x, C.y, 430, 300, 48); wash(c, rim, '#4a2412', 2); ink(c, rim, true, 4);
-  const felt = ell(C.x, C.y, 400, 272, 48); wash(c, felt, feltColor('#1d5a40'), 3); hatch(c, felt, .35, 13, '#0b2b1d', .15); ink(c, felt, true, 3);
+  const rim = ell(C.x, C.y, 430, 300, 48); dropShadow(c, rim, 50, 26, .7); wash(c, rim, '#4a2412', 2); rimShade(c, rim); ink(c, rim, true, 4);
+  const felt = ell(C.x, C.y, 400, 272, 48); wash(c, felt, feltColor('#1d5a40'), 3); feltShade(c, felt); hatch(c, felt, .35, 13, '#0b2b1d', .15); ink(c, felt, true, 3);
   ink(c, ell(C.x, C.y, 360, 236, 48), true, 2.5, '#d9a441', 1.5);
   inkText(c, 'BARBUT', C.x, C.y - 160, 54, '#f2cf74', { ow: 6 });
   inkText(c, '66 · 55 · 44 · 33 · 65 kazandırır — 11 · 22 · 12 kaybettirir', C.x, C.y + 222, 26, '#e9d9a8', { outline: false, font: '"Caveat"', weight: 700 });
@@ -3908,7 +4017,7 @@ function drawBarbut(t) {
   [0, 1].forEach(i => {
     let v = bb.dice[i], x = Z.x + (i ? 80 : -80), y = Z.y, rot = i ? .25 : -.2;
     if (rolling) { const u = (t - bb.rollT) / 900; v = 1 + Math.floor((t / 55 + i * 3) % 6); rot = (1 - u) * 11 * (i ? 1 : -1); y -= Math.abs(Math.sin(u * Math.PI * 3)) * 110 * (1 - u); x += Math.sin(u * 8 + i) * 50 * (1 - u); }
-    ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-48, -40, 104, 104);
+    ctx.save(); ctx.translate(x, y); ctx.rotate(rot); shadowRect(-52, -52, 104, 104, 16, .65, 14, 18);
     if (dieSpr[v]) ctx.drawImage(dieSpr[v][BOIL % 2], -55, -55, 110, 110); ctx.restore();
   });
   if (bb.call && !rolling) { const hot = bb.call !== 'Geçer'; inkText(ctx, bb.call, Z.x, Z.y - 100, hot ? 64 : 48, hot ? (bb.call[0] === 'K' && bb.call.includes('ybet') ? '#1f4e9c' : '#cf4b32') : '#f4e8cc', { ow: 6 }); }
@@ -3964,12 +4073,12 @@ function psScore() {
 }
 function drawPistiTable(c) {
   const v = visRect(300), top = LY.tv.top, L = PSL(); seed(150);
-  wash(c, sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#5b321a', 3);
+  { const fl = sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true); wash(c, fl, '#5b321a', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (top) + 420); }
   for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 50, top + 2], [500 + i * 150, v.y1 + 300]], false, 2, '#2c160a', 3);
   ink(c, [[v.x0, top], [v.x1, top]], false, 4, '#1a0c05', 2);
   const tw = LAND ? 1260 : 920, th = LAND ? 900 : 1060, tx = L.pile.x - tw / 2, ty = L.pile.y - th / 2 + (LAND ? 30 : 30);
-  const rim = rr(tx, ty, tw, th, 60, 30); wash(c, rim, '#4a2412', 2); ink(c, rim, true, 4);
-  const felt = rr(tx + 26, ty + 26, tw - 52, th - 52, 46, 30); wash(c, felt, feltColor('#6a1b24'), 3); hatch(c, felt, .35, 13, '#2a0a0e', .16); ink(c, felt, true, 3);
+  const rim = rr(tx, ty, tw, th, 60, 30); dropShadow(c, rim, 50, 26, .7); wash(c, rim, '#4a2412', 2); rimShade(c, rim); ink(c, rim, true, 4);
+  const felt = rr(tx + 26, ty + 26, tw - 52, th - 52, 46, 30); wash(c, felt, feltColor('#6a1b24'), 3); feltShade(c, felt); hatch(c, felt, .35, 13, '#2a0a0e', .16); ink(c, felt, true, 3);
   ink(c, rr(tx + 56, ty + 56, tw - 112, th - 112, 32, 30), true, 2.5, '#d9a441', 1.5);
   for (const [x, y] of [[tx + 90, ty + 90], [tx + tw - 90, ty + 90], [tx + 90, ty + th - 90], [tx + tw - 90, ty + th - 90]]) { const st = star4(x, y, 16); wash(c, st, '#f2cf74', 1); ink(c, st, true, 1.6); }
   inkText(c, 'PİŞTİ', L.pile.x, L.pile.y - 175, 52, '#f2cf74', { ow: 6 });
@@ -4066,7 +4175,7 @@ function drawPisti(t) {
   drawLayer(getLayers('ps')[0], 1);
   if (LAND) person();
   setWorld(1);
-  const card = (c, x, y, sc = 1, rot = 0, face = true, a = 1) => { const spr = face ? cardSprite(c.r + c.s, k => drawCardFace(k, c.r, c.s)) : cardSprite('back' + AV.back, drawCardBack); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-60 * sc + 7, -85 * sc + 8, 120 * sc, 170 * sc); ctx.drawImage(spr, -60 * sc, -85 * sc, 120 * sc, 170 * sc); ctx.restore(); ctx.globalAlpha = 1; };
+  const card = (c, x, y, sc = 1, rot = 0, face = true, a = 1) => { const spr = face ? cardSprite(c.r + c.s, k => drawCardFace(k, c.r, c.s)) : cardSprite('back' + AV.back, drawCardBack); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = a; shadowRect(-60 * sc, -85 * sc, 120 * sc, 170 * sc, 12 * sc, .6, 10 * sc, 16 * sc); ctx.drawImage(spr, -60 * sc, -85 * sc, 120 * sc, 170 * sc); ctx.restore(); ctx.globalAlpha = 1; };
   if (ps.mode === 'online') drawSeatLabel(C.x, C.y + (LAND ? 175 : -95), oppSeat ? psName(opp) : 'Rakip bekleniyor…', oppSeat, ps.turn === opp);
   if (ps.state !== 'bet') {
     // deste
@@ -4468,11 +4577,11 @@ function btDown(w) {
 // ---------- çizim ----------
 function drawBatakTable(c) {
   const v = visRect(300), L = BTL(), top = L.table[1] - 60; seed(170);
-  wash(c, sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#4a2a16', 3);
+  { const fl = sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true); wash(c, fl, '#4a2a16', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (top) + 420); }
   for (let i = -24; i <= 24; i++) ink(c, [[L.trickC.x + i * 50, top + 2], [L.trickC.x + i * 150, v.y1 + 300]], false, 2, '#24120a', 3);
   ink(c, [[v.x0, top], [v.x1, top]], false, 4, '#1a0c05', 2);
-  const [tx, ty, tw, th] = L.table, rim = rr(tx, ty, tw, th, 70, 30); wash(c, rim, '#3a1c0c', 2); ink(c, rim, true, 4);
-  const felt = rr(tx + 26, ty + 26, tw - 52, th - 52, 54, 30); wash(c, felt, feltColor('#1d5a3c'), 3); hatch(c, felt, .35, 13, '#0a2416', .16); ink(c, felt, true, 3);
+  const [tx, ty, tw, th] = L.table, rim = rr(tx, ty, tw, th, 70, 30); dropShadow(c, rim, 50, 26, .7); wash(c, rim, '#3a1c0c', 2); rimShade(c, rim); ink(c, rim, true, 4);
+  const felt = rr(tx + 26, ty + 26, tw - 52, th - 52, 54, 30); wash(c, felt, feltColor('#1d5a3c'), 3); feltShade(c, felt); hatch(c, felt, .35, 13, '#0a2416', .16); ink(c, felt, true, 3);
   ink(c, rr(tx + 56, ty + 56, tw - 112, th - 112, 40, 30), true, 2.5, '#d9a441', 1.5);
   ink(c, ell(L.trickC.x, L.trickC.y, 250, 200, 36), true, 2, 'rgba(242,207,116,.4)', 2);
   inkText(c, 'BATAK', L.trickC.x, L.trickC.y + 6, 60, 'rgba(242,207,116,.35)', { outline: false });
@@ -4484,7 +4593,7 @@ function drawBatak(t) {
   drawLayer(getLayers('bt')[0], 1);
   person(1); person(3);
   setWorld(1);
-  const card = (c, x, y, sc = 1, rot = 0, face = true, a = 1) => { const spr = face ? cardSprite(c.r + c.s, k => drawCardFace(k, c.r, c.s)) : cardSprite('back' + AV.back, drawCardBack); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = a; ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-60 * sc + 7, -85 * sc + 8, 120 * sc, 170 * sc); ctx.drawImage(spr, -60 * sc, -85 * sc, 120 * sc, 170 * sc); ctx.restore(); ctx.globalAlpha = 1; };
+  const card = (c, x, y, sc = 1, rot = 0, face = true, a = 1) => { const spr = face ? cardSprite(c.r + c.s, k => drawCardFace(k, c.r, c.s)) : cardSprite('back' + AV.back, drawCardBack); ctx.save(); ctx.translate(x, y); ctx.rotate(rot); ctx.globalAlpha = a; shadowRect(-60 * sc, -85 * sc, 120 * sc, 170 * sc, 12 * sc, .6, 10 * sc, 16 * sc); ctx.drawImage(spr, -60 * sc, -85 * sc, 120 * sc, 170 * sc); ctx.restore(); ctx.globalAlpha = 1; };
   const now = t, active = bt.state !== 'bet', playing = ['bid', 'trump', 'play'].includes(bt.state);
   for (let v = 1; v <= 3; v++) {
     const s = seatOf(v), [lx, ly] = L.lab[v], hot = playing && bt.turn === s, st = btOnline() && !bt.bots[s] && MP.t && MP.t.seats[s];
@@ -4643,12 +4752,12 @@ function tbDown(w) {
 }
 function drawTombalaTable(c) {
   const v = visRect(300); seed(1700);
-  wash(c, sub([[v.x0 - 200, 200], [v.x1 + 200, 200], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#3c2414', 3);
+  { const fl = sub([[v.x0 - 200, 200], [v.x1 + 200, 200], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true); wash(c, fl, '#3c2414', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (200) + 420); }
   for (let i = -24; i <= 24; i++) ink(c, [[500 + i * 60, 202], [500 + i * 170, v.y1 + 300]], false, 2, '#1e1008', 3);
   const L = TBLay(), w = L.cw * 9 + 40;
 }
 function tbDrawCard(card, x, y, cw, ch, t, dim, ck) {
-  seed(1710 + y); const w = cw * 9, h = ch * 3, p = rr(x - 14, y - 14, w + 28, h + 28, 14, 20); ctx.fillStyle = 'rgba(0,0,0,.3)'; ctx.fillRect(x - 6, y - 4, w + 28, h + 28);
+  seed(1710 + y); const w = cw * 9, h = ch * 3, p = rr(x - 14, y - 14, w + 28, h + 28, 14, 20); shadowRect(x - 14, y - 14, w + 28, h + 28, 14, .6, 12, 20);
   wash(ctx, p, dim ? '#d8ccb0' : '#f6ecd2', 1); ink(ctx, p, true, 3);
   ctx.strokeStyle = '#b8462a'; ctx.lineWidth = 2; ctx.globalAlpha = .7; for (let i = 1; i < 9; i++) { ctx.beginPath(); ctx.moveTo(x + i * cw, y); ctx.lineTo(x + i * cw, y + h); ctx.stroke(); } for (let r = 1; r < 3; r++) { ctx.beginPath(); ctx.moveTo(x, y + r * ch); ctx.lineTo(x + w, y + r * ch); ctx.stroke(); } ctx.globalAlpha = 1;
   ink(ctx, rr(x, y, w, h, 6, 20), true, 2.5, '#b8462a', 1);
@@ -4754,7 +4863,7 @@ function yrDown(w) {
 }
 function drawYarisTable(c) {
   const v = visRect(300), L = YRL(); seed(2100);
-  wash(c, sub([[v.x0 - 200, L.y0 - 60], [v.x1 + 200, L.y0 - 60], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#3c2414', 3);
+  { const fl = sub([[v.x0 - 200, L.y0 - 60], [v.x1 + 200, L.y0 - 60], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true); wash(c, fl, '#3c2414', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (L.y0 - 60) + 420); }
   const tr = rr(L.x0 - 250, L.y0 - 16, L.x1 - L.x0 + 340, L.lane * 5 + 32, 30, 30); wash(c, tr, '#5a3a1e', 2); ink(c, tr, true, 4);
   for (let i = 0; i < 5; i++) { const y = L.y0 + i * L.lane, ln = rr(L.x0 - 60, y + 6, L.x1 - L.x0 + 130, L.lane - 12, 14, 24); wash(c, ln, i % 2 ? '#3f8a4a' : '#4a9a55', 1.5); hatch(c, ln, .1, 14, '#1d5a2a', .18); ink(c, ln, true, 2.5); }
   ink(c, [[L.x0, L.y0], [L.x0, L.y0 + L.lane * 5]], false, 5, '#fbf8f2', 2);
@@ -4856,7 +4965,7 @@ function dmDown(w) {
 const DM_PIP = { 0: [], 1: [[0, 0]], 2: [[-1, -1], [1, 1]], 3: [[-1, -1], [0, 0], [1, 1]], 4: [[-1, -1], [1, -1], [-1, 1], [1, 1]], 5: [[-1, -1], [1, -1], [0, 0], [-1, 1], [1, 1]], 6: [[-1, -1], [1, -1], [-1, 0], [1, 0], [-1, 1], [1, 1]] };
 function drawDomino(a, b, x, y, len, horiz, hi, back) {
   const s = len / 2; ctx.save(); ctx.translate(x, y); if (!horiz) ctx.rotate(Math.PI / 2);
-  ctx.fillStyle = 'rgba(0,0,0,.35)'; ctx.fillRect(-s + 4, -s / 2 + 5, len, s);
+  shadowRect(-s, -s / 2, len, s, s * .16, .55, 6, 9);
   ctx.fillStyle = back ? '#7a1e28' : '#fbf6ea'; ctx.strokeStyle = hi ? '#f2cf74' : INK; ctx.lineWidth = hi ? 5 : 2.5;
   ctx.beginPath(); ctx.roundRect(-s, -s / 2, len, s, s * .16); ctx.fill(); ctx.stroke();
   if (back) { ctx.strokeStyle = '#d9a441'; ctx.lineWidth = 2; ctx.strokeRect(-s + 7, -s / 2 + 7, len - 14, s - 14); ctx.restore(); return; }
@@ -4866,10 +4975,10 @@ function drawDomino(a, b, x, y, len, horiz, hi, back) {
 }
 function drawDominoTable(c) {
   const v = visRect(300), L = DML(), top = L.table[1] - 50; seed(2300);
-  wash(c, sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true), '#4a2a16', 3);
+  { const fl = sub([[v.x0 - 200, top], [v.x1 + 200, top], [v.x1 + 200, v.y1 + 300], [v.x0 - 200, v.y1 + 300]], 80, true); wash(c, fl, '#4a2a16', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (top) + 420); }
   for (let i = -24; i <= 24; i++) ink(c, [[L.cx + i * 50, top + 2], [L.cx + i * 150, v.y1 + 300]], false, 2, '#24120a', 3);
-  const [tx, ty, tw, th] = L.table, rim = rr(tx, ty, tw, th, 50, 30); wash(c, rim, '#3a1c0c', 2); ink(c, rim, true, 4);
-  const felt = rr(tx + 22, ty + 22, tw - 44, th - 44, 36, 30); wash(c, felt, feltColor('#24585e'), 3); hatch(c, felt, .35, 13, '#0f2f33', .16); ink(c, felt, true, 3);
+  const [tx, ty, tw, th] = L.table, rim = rr(tx, ty, tw, th, 50, 30); dropShadow(c, rim, 50, 26, .7); wash(c, rim, '#3a1c0c', 2); rimShade(c, rim); ink(c, rim, true, 4);
+  const felt = rr(tx + 22, ty + 22, tw - 44, th - 44, 36, 30); wash(c, felt, feltColor('#24585e'), 3); feltShade(c, felt); hatch(c, felt, .35, 13, '#0f2f33', .16); ink(c, felt, true, 3);
   ink(c, rr(tx + 44, ty + 44, tw - 88, th - 88, 26, 30), true, 2.5, '#d9a441', 1.5);
 }
 function drawDominoScene(t) {
@@ -4935,10 +5044,10 @@ function drawRuletWheel(c) {   // 0,0 merkezli, yarıçap 300
 function buildRlSprites() { const px = Math.ceil(620 * S * DPR * 1.1); rlWheelSpr = [0, 1].map(b => { const k = makeCanvas(px, px), c = k.getContext('2d'); c.translate(px / 2, px / 2); c.scale(px / 620, px / 620); const o = BOIL; BOIL = b; drawRuletWheel(c); BOIL = o; return k; }); }
 function drawRuletTable(c) {
   const v = visRect(300), L = RLL(), cells = rlCells(); seed(160);
-  wash(c, sub([[v.x0 - 300, v.y0 - 300], [v.x1 + 300, v.y0 - 300], [v.x1 + 300, v.y1 + 300], [v.x0 - 300, v.y1 + 300]], 100, true), '#5b321a', 3);
+  { const fl = sub([[v.x0 - 300, v.y0 - 300], [v.x1 + 300, v.y0 - 300], [v.x1 + 300, v.y1 + 300], [v.x0 - 300, v.y1 + 300]], 100, true); wash(c, fl, '#5b321a', 3); floorShade(c, fl, (v.x0 + v.x1) / 2, (v.y0 - 300) + 420); }
   for (let i = -30; i <= 30; i++) ink(c, [[500 + i * 60, v.y0 - 300], [500 + i * 90, v.y1 + 300]], false, 2, '#2c160a', 3);
   const b0 = { x: L.bx - 40, y: L.by - L.ch - 40, w: L.cw * 12 + 80, h: L.ch * 6 + 80 }, felt = rr(b0.x, b0.y, b0.w, b0.h, 30, 30);
-  wash(c, rr(b0.x - 22, b0.y - 22, b0.w + 44, b0.h + 44, 40, 30), '#4a2412', 2); wash(c, felt, feltColor('#1d5a40'), 3); hatch(c, felt, .35, 13, '#0b2b1d', .15); ink(c, felt, true, 3);
+  { const rm = rr(b0.x - 22, b0.y - 22, b0.w + 44, b0.h + 44, 40, 30); dropShadow(c, rm, 50, 26, .7); wash(c, rm, '#4a2412', 2); rimShade(c, rm); } wash(c, felt, feltColor('#1d5a40'), 3); feltShade(c, felt); hatch(c, felt, .35, 13, '#0b2b1d', .15); ink(c, felt, true, 3);
   for (const k of cells) {
     seed(700 + k.x + k.y); const p = rr(k.x + 3, k.y + 3, k.w - 6, k.h - 6, 8, 14); wash(c, p, k.col, 1, .92); ink(c, p, true, 2, '#d9a441', .8);
     if (k.key === 'red' || k.key === 'black') { const d = sub([[k.x + k.w / 2, k.y + 10], [k.x + k.w / 2 + 22, k.y + k.h / 2], [k.x + k.w / 2, k.y + k.h - 10], [k.x + k.w / 2 - 22, k.y + k.h / 2]], 6, true); wash(c, d, k.key === 'red' ? '#e2574c' : '#555566', .5); ink(c, d, true, 1.6, '#f2cf74', .5); }
@@ -5040,7 +5149,7 @@ function drawRulet(t) {
 let last = performance.now(), started = false;
 function frame(t) {
   const rawDt = t - last; const dt = Math.min(50, rawDt); last = t;
-  if (QUAL === 'hi' && !store.get('qualAuto', 0) && trans.done && !document.hidden) { if (rawDt > 45 && rawDt < 400) slowT += rawDt; else slowT = Math.max(0, slowT - 30); if (slowT > 3500) { QUAL = 'lo'; store.set('qual', 'lo'); store.set('qualAuto', 1); slowT = 0; resize(); banner('Hızlı görüntü moduna geçildi', 'Ayarlar\'dan 2K\'ya dönebilirsin', { dur: 2600, top: true, col: '#2a7a5a' }); } }
+  if (QUAL === 'hi' && !store.get('qualAuto', 0) && trans.done && !document.hidden) { if (rawDt > 55 && rawDt < 200) slowT += rawDt; else slowT = Math.max(0, slowT - 60); if (slowT > 7000) { QUAL = 'lo'; store.set('qual', 'lo'); store.set('qualAuto', 1); slowT = 0; resize(); banner('Hızlı görüntü moduna geçildi', 'Ayarlar\'dan 2K\'ya dönebilirsin', { dur: 2600, top: true, col: '#2a7a5a' }); } }
   BOIL = 0;
   // kamera
   const k = 1 - Math.pow(.004, dt / 1000 * 1.2);
@@ -5106,7 +5215,7 @@ function frame(t) {
   drawIris(t);
   // kağıt dokusu + vinyet
   ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
-  ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .28; ctx.fillStyle = grainPat; ctx.fillRect(0, 0, W, H);
+  if (QUAL !== 'hi') { ctx.globalCompositeOperation = 'overlay'; ctx.globalAlpha = .28; ctx.fillStyle = grainPat; ctx.fillRect(0, 0, W, H); }
   ctx.globalCompositeOperation = 'source-over'; ctx.globalAlpha = 1;
   ctx.setTransform(1, 0, 0, 1, 0, 0); if (vignette) ctx.drawImage(vignette, 0, 0);
   requestAnimationFrame(frame);
