@@ -1,0 +1,856 @@
+<title>Yakamoz</title>
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover, user-scalable=no">
+<meta name="theme-color" content="#070d1f">
+<meta name="claude:viewport-fit-sides" content="cover">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,500;1,9..144,300;1,9..144,400&family=Nunito:wght@600;700;800&display=swap">
+<style>
+/* Layout: full-bleed canvas (sky above, night sea below); a thin DOM HUD and overlays float on top. Single deliberate dark look. */
+:root{
+  --night:#070d1f;
+  --glow:#7ff5e0;
+  --jelly:#f3a6ff;
+  --pearl:#ffd98a;
+  --ink:#e9f2f6;
+  --ink-dim:rgba(233,242,246,.64);
+  --veil:rgba(7,13,31,.58);
+  --line:rgba(127,245,224,.28);
+  --display:"Fraunces","Iowan Old Style",Georgia,serif;
+  --ui:"Nunito",system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;
+  color-scheme:dark;
+}
+[hidden]{display:none!important}
+html,body{height:100%}
+body{margin:0;background:var(--night);color:var(--ink);font-family:var(--ui);overflow:hidden;
+  touch-action:none;-webkit-user-select:none;user-select:none;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+canvas#c{position:fixed;inset:0;width:100%;height:100%;display:block;cursor:pointer}
+button{font:inherit;color:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}
+button:focus-visible{outline:2px solid var(--glow);outline-offset:3px}
+
+/* HUD */
+#hud{position:fixed;left:0;right:0;top:0;display:flex;align-items:center;justify-content:space-between;gap:12px;
+  padding-top:calc(env(safe-area-inset-top,0px) + 10px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  pointer-events:none}
+#hud > *{pointer-events:auto}
+.ic{width:42px;height:42px;border-radius:50%;border:1px solid rgba(233,242,246,.16);background:rgba(7,13,31,.35);
+  display:grid;place-items:center;padding:0;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
+.ic svg{width:20px;height:20px;stroke:var(--ink);fill:none;stroke-width:1.7;stroke-linecap:round;stroke-linejoin:round}
+.ic:active{transform:scale(.94)}
+.hud-r{display:flex;gap:8px}
+#prog{flex:1;max-width:220px;display:flex;flex-direction:column;align-items:center;gap:6px;pointer-events:none}
+#progTxt{font-weight:800;font-size:15px;letter-spacing:.04em;font-variant-numeric:tabular-nums;text-shadow:0 1px 8px rgba(0,0,0,.6)}
+#progTxt small{font-weight:600;color:var(--ink-dim);letter-spacing:.06em;text-transform:uppercase;font-size:11px;margin-right:6px}
+.bar{width:100%;height:4px;border-radius:4px;background:rgba(233,242,246,.14);overflow:hidden;position:relative}
+.bar i{position:absolute;inset:0 auto 0 0;width:0;background:var(--glow);border-radius:4px;transition:width .25s ease;box-shadow:0 0 10px var(--glow)}
+.bar b{position:absolute;top:-3px;bottom:-3px;width:2px;background:var(--ink);border-radius:2px;left:0}
+
+/* Overlays */
+.overlay{position:fixed;inset:0;display:flex;flex-direction:column;align-items:center;justify-content:center;text-align:center;gap:18px;
+  padding-block:calc(env(safe-area-inset-top,0px) + 24px) calc(env(safe-area-inset-bottom,0px) + 24px);
+  padding-left:max(16px,env(safe-area-inset-left,0px));padding-right:max(16px,env(safe-area-inset-right,0px));
+  transition:opacity .5s ease}
+.overlay.fade{opacity:0;pointer-events:none}
+#menu{background:radial-gradient(120% 70% at 50% 62%,rgba(7,13,31,.15),rgba(7,13,31,.72))}
+#menu h1{font-family:var(--display);font-style:italic;font-weight:300;font-size:clamp(56px,17vw,112px);line-height:.95;margin:0;
+  letter-spacing:-.02em;color:var(--ink);text-shadow:0 0 28px rgba(127,245,224,.45),0 0 2px rgba(127,245,224,.8)}
+#menu .tag{font-family:var(--display);font-style:italic;font-size:clamp(17px,4.6vw,21px);color:var(--ink-dim);margin:0 0 10px;max-width:30ch;text-wrap:balance}
+.btns{display:flex;flex-direction:column;gap:10px;width:min(320px,100%)}
+.btn{border-radius:16px;padding:14px 18px;border:1px solid rgba(233,242,246,.2);background:rgba(7,13,31,.45);
+  display:flex;flex-direction:column;align-items:center;gap:2px;font-weight:800;font-size:18px;
+  backdrop-filter:blur(8px);-webkit-backdrop-filter:blur(8px);transition:transform .15s ease,background .2s ease}
+.btn small{font-weight:600;font-size:13px;color:var(--ink-dim)}
+.btn.primary{background:var(--glow);color:#04211d;border-color:transparent;box-shadow:0 0 30px rgba(127,245,224,.35)}
+.btn.primary small{color:rgba(4,33,29,.7)}
+.btn.ghost{background:transparent;border-color:transparent;font-size:15px;font-weight:700;color:var(--ink-dim);padding:8px}
+.btn:active{transform:scale(.97)}
+.stats{margin:6px 0 0;font-size:13px;color:var(--ink-dim);font-variant-numeric:tabular-nums;letter-spacing:.02em}
+
+#toast{position:fixed;left:50%;top:44%;transform:translate(-50%,-50%);text-align:center;pointer-events:none;
+  width:min(88vw,380px);display:flex;flex-direction:column;gap:6px;transition:opacity .45s ease,transform .45s ease}
+#toast.fade{opacity:0;transform:translate(-50%,-44%)}
+#toast .t1{font-family:var(--display);font-style:italic;font-size:clamp(30px,9vw,44px);line-height:1.05;text-shadow:0 0 22px rgba(127,245,224,.4),0 2px 10px rgba(0,0,0,.6)}
+#toast .t2{font-weight:800;font-size:16px;letter-spacing:.03em;text-shadow:0 1px 8px rgba(0,0,0,.8);font-variant-numeric:tabular-nums}
+#toast .t3{font-size:15px;color:var(--ink-dim);text-shadow:0 1px 8px rgba(0,0,0,.9);text-wrap:balance}
+#toast .t3 b{color:var(--pearl);font-family:var(--display);font-style:italic;font-weight:400;font-size:17px}
+#toast .t4{margin-top:10px;font-size:12px;font-weight:700;letter-spacing:.14em;text-transform:uppercase;color:var(--glow);opacity:.85;animation:breathe 2.4s ease-in-out infinite}
+@keyframes breathe{50%{opacity:.35}}
+
+#skyUi{justify-content:flex-start;pointer-events:none;background:none}
+#skyUi > *{pointer-events:auto}
+#skyUi h2{font-family:var(--display);font-style:italic;font-weight:300;font-size:clamp(34px,9vw,52px);margin:0;line-height:1}
+#skyUi p{margin:0;color:var(--ink-dim);font-size:14px;max-width:34ch;text-wrap:balance}
+#skyClose{position:fixed;bottom:calc(env(safe-area-inset-bottom,0px) + 22px);left:50%;transform:translateX(-50%)}
+
+@media (prefers-reduced-motion:reduce){.overlay,#toast,.bar i{transition:none}#toast .t4{animation:none}}
+</style>
+
+<canvas id="c" aria-label="Gece denizi. Işıkları uyandırmak için denize dokun."></canvas>
+
+<div id="hud" hidden>
+  <button class="ic" id="btnMenu" aria-label="Menüye dön">
+    <svg viewBox="0 0 24 24"><path d="M4 7h16M4 12h16M4 17h10"/></svg>
+  </button>
+  <div id="prog" aria-live="polite">
+    <div id="progTxt"><small id="progLbl">Dalga 1</small><span id="progNum">0 / 3</span></div>
+    <div class="bar" id="barWrap"><i id="progBar"></i><b id="progMark"></b></div>
+  </div>
+  <div class="hud-r">
+    <button class="ic" id="btnSky" aria-label="Gökyüzüme bak">
+      <svg viewBox="0 0 24 24"><path d="M12 3l2.2 5.6L20 9.3l-4.5 3.8 1.4 5.9L12 15.9 7.1 19l1.4-5.9L4 9.3l5.8-.7z"/></svg>
+    </button>
+    <button class="ic" id="btnSound" aria-label="Sesi kapat">
+      <svg viewBox="0 0 24 24" id="sndIcon"><path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/></svg>
+    </button>
+  </div>
+</div>
+
+<section class="overlay" id="menu">
+  <h1>Yakamoz</h1>
+  <p class="tag">Denize dokun. Işık, ışığı uyandırsın; her zincir gökyüzünde bir takımyıldız olsun.</p>
+  <div class="btns">
+    <button class="btn primary" id="playWaves">Dalgalar<small id="waveLbl">1. dalga</small></button>
+    <button class="btn" id="playZen">Serbest yüzüş<small>Hedef yok. Sadece ışık ve ses.</small></button>
+    <button class="btn ghost" id="openSky">Gökyüzüme bak</button>
+  </div>
+  <p class="stats" id="stats"></p>
+</section>
+
+<section class="overlay fade" id="skyUi" hidden>
+  <h2>Gökyüzün</h2>
+  <p id="skyInfo"></p>
+  <button class="btn" id="skyClose">Denize dön</button>
+</section>
+
+<div id="toast" class="fade" role="status" aria-live="polite">
+  <div class="t1" id="t1"></div><div class="t2" id="t2"></div><div class="t3" id="t3"></div><div class="t4" id="t4"></div>
+</div>
+
+<script>
+(() => {
+'use strict';
+
+/* ---------- persistence (per-viewer, optional) ---------- */
+const KEY = 'yakamoz.v1';
+let saved = null;
+try { saved = JSON.parse(localStorage.getItem(KEY) || 'null'); } catch (e) { saved = null; }
+const save = { total: 0, wave: 1, best: 1, cons: [], muted: false };
+if (saved && typeof saved === 'object') {
+  if (Number.isFinite(saved.total)) save.total = saved.total;
+  if (Number.isFinite(saved.wave)) save.wave = Math.max(1, saved.wave);
+  if (Number.isFinite(saved.best)) save.best = saved.best;
+  if (Array.isArray(saved.cons)) save.cons = saved.cons.filter(c => c && Array.isArray(c.p) && Array.isArray(c.e));
+  save.muted = !!saved.muted;
+}
+let saveTimer = 0;
+function persist(now) {
+  if (now && now - saveTimer < 1500) return;
+  saveTimer = now || performance.now();
+  try { localStorage.setItem(KEY, JSON.stringify(save)); } catch (e) {}
+}
+
+/* ---------- helpers ---------- */
+const $ = id => document.getElementById(id);
+const rand = (a, b) => a + Math.random() * (b - a);
+const clamp = (v, a, b) => v < a ? a : v > b ? b : v;
+const easeOut = t => 1 - Math.pow(1 - t, 3);
+const easeInOut = t => t < .5 ? 4 * t * t * t : 1 - Math.pow(-2 * t + 2, 3) / 2;
+const fmt = n => n.toLocaleString('tr-TR');
+function hash(i) { let x = Math.sin(i * 127.1 + 311.7) * 43758.5453; return x - Math.floor(x); }
+function haptic(ms) { try { if (navigator.vibrate) navigator.vibrate(ms); } catch (e) {} }
+
+const COLORS = {
+  glow: [127, 245, 224],
+  jelly: [243, 166, 255],
+  pearl: [255, 217, 138],
+  star: [214, 230, 255],
+};
+
+/* ---------- canvas & layout ---------- */
+const cv = $('c'), ctx = cv.getContext('2d');
+let W = 0, H = 0, DPR = 1, baseH = 0, horizon = 0, horizonTarget = 0, R = 40, unit = 1;
+const sprites = {};
+function makeSprite(rgb) {
+  const s = 64, c = document.createElement('canvas'); c.width = c.height = s;
+  const g = c.getContext('2d'), gr = g.createRadialGradient(s / 2, s / 2, 0, s / 2, s / 2, s / 2);
+  const [r, gg, b] = rgb;
+  gr.addColorStop(0, 'rgba(255,255,255,1)');
+  gr.addColorStop(.12, `rgba(${r},${gg},${b},.95)`);
+  gr.addColorStop(.35, `rgba(${r},${gg},${b},.25)`);
+  gr.addColorStop(1, `rgba(${r},${gg},${b},0)`);
+  g.fillStyle = gr; g.fillRect(0, 0, s, s);
+  return c;
+}
+for (const k in COLORS) sprites[k] = makeSprite(COLORS[k]);
+
+function resize() {
+  DPR = Math.min(2, window.devicePixelRatio || 1);
+  W = window.innerWidth; H = window.innerHeight;
+  cv.width = Math.round(W * DPR); cv.height = Math.round(H * DPR);
+  ctx.setTransform(DPR, 0, 0, DPR, 0, 0);
+  const oldBase = baseH;
+  baseH = Math.round(H * (W > H * 1.2 ? 0.26 : 0.3));
+  horizonTarget = mode === 'sky' ? H * 0.9 : baseH;
+  horizon = horizonTarget;
+  const area = W * (H - baseH);
+  R = 0.1 * Math.sqrt(area);
+  unit = clamp(Math.sqrt(area) / 480, .8, 1.7);
+  if (oldBase) for (const p of plankton) { p.x = clamp(p.x, 12, W - 12); p.y = clamp(p.y, seaTop(), seaBottom()); }
+}
+const seaTop = () => baseH + 26;
+const seaBottom = () => H - 30;
+
+/* ---------- audio ---------- */
+const Audio = {
+  c: null, master: null, dry: null, rev: null, ocean: null, oceanLp: null, recent: [],
+  init() {
+    if (this.c) { if (this.c.state === 'suspended') this.c.resume().catch(() => {}); return; }
+    const AC = window.AudioContext || window.webkitAudioContext;
+    if (!AC) return;
+    let c; try { c = new AC(); } catch (e) { return; }
+    this.c = c;
+    const comp = c.createDynamicsCompressor();
+    comp.threshold.value = -16; comp.ratio.value = 4; comp.connect(c.destination);
+    this.master = c.createGain(); this.master.gain.value = save.muted ? 0 : .9; this.master.connect(comp);
+    // reverb from decaying noise
+    const len = Math.floor(c.sampleRate * 3.4), ir = c.createBuffer(2, len, c.sampleRate);
+    for (let ch = 0; ch < 2; ch++) { const d = ir.getChannelData(ch); for (let i = 0; i < len; i++) d[i] = (Math.random() * 2 - 1) * Math.pow(1 - i / len, 2.8); }
+    this.rev = c.createConvolver(); this.rev.buffer = ir;
+    const rg = c.createGain(); rg.gain.value = .6; this.rev.connect(rg); rg.connect(this.master);
+    this.dry = c.createGain(); this.dry.gain.value = .65; this.dry.connect(this.master);
+    // ocean: brown noise breathing with the moon
+    const nl = c.sampleRate * 6, nb = c.createBuffer(1, nl, c.sampleRate), nd = nb.getChannelData(0);
+    let last = 0;
+    for (let i = 0; i < nl; i++) { last = (last + .02 * (Math.random() * 2 - 1)) / 1.02; nd[i] = last * 3.2; }
+    const src = c.createBufferSource(); src.buffer = nb; src.loop = true;
+    this.oceanLp = c.createBiquadFilter(); this.oceanLp.type = 'lowpass'; this.oceanLp.frequency.value = 400;
+    this.ocean = c.createGain(); this.ocean.gain.value = 0;
+    src.connect(this.oceanLp); this.oceanLp.connect(this.ocean); this.ocean.connect(this.master);
+    src.start();
+    // soft drone (D, A, D)
+    const dl = c.createBiquadFilter(); dl.type = 'lowpass'; dl.frequency.value = 600;
+    const dg = c.createGain(); dg.gain.value = 0; dg.gain.setTargetAtTime(.05, c.currentTime, 3);
+    dl.connect(dg); dg.connect(this.master); dg.connect(this.rev);
+    [73.42, 110, 146.83].forEach((f, i) => {
+      const o = c.createOscillator(); o.type = i === 1 ? 'triangle' : 'sine'; o.frequency.value = f; o.detune.value = (i - 1) * 4;
+      const g = c.createGain(); g.gain.value = i === 1 ? .16 : .28; o.connect(g); g.connect(dl); o.start();
+    });
+  },
+  setMuted(m) { if (this.master) this.master.gain.setTargetAtTime(m ? 0 : .9, this.c.currentTime, .08); },
+  breath(b) {
+    if (!this.c) return;
+    const t = this.c.currentTime;
+    this.ocean.gain.setTargetAtTime(.05 + .13 * b, t, .35);
+    this.oceanLp.frequency.setTargetAtTime(260 + 560 * b, t, .35);
+  },
+  voice(f, gain, dur, pan, delay = 0) {
+    const c = this.c, t = c.currentTime + delay;
+    const env = c.createGain();
+    env.gain.setValueAtTime(.0001, t);
+    env.gain.exponentialRampToValueAtTime(gain, t + .012);
+    env.gain.exponentialRampToValueAtTime(.0001, t + dur);
+    const o = c.createOscillator(); o.type = 'sine'; o.frequency.value = f;
+    const o2 = c.createOscillator(); o2.type = 'sine'; o2.frequency.value = f * 2.005;
+    const g2 = c.createGain(); g2.gain.value = .22;
+    const o3 = c.createOscillator(); o3.type = 'sine'; o3.frequency.value = f * 3.01;
+    const g3 = c.createGain(); g3.gain.value = .06;
+    o.connect(env); o2.connect(g2); g2.connect(env); o3.connect(g3); g3.connect(env);
+    let out = env;
+    if (c.createStereoPanner) { const p = c.createStereoPanner(); p.pan.value = clamp(pan, -.8, .8); env.connect(p); out = p; }
+    out.connect(this.dry); out.connect(this.rev);
+    for (const x of [o, o2, o3]) { x.start(t); x.stop(t + dur + .05); }
+  },
+  note(step, x, kind) {
+    if (!this.c || save.muted) return;
+    const now = this.c.currentTime;
+    this.recent = this.recent.filter(t => now - t < .11);
+    if (this.recent.length >= 4) return;
+    this.recent.push(now);
+    const scale = [0, 2, 4, 7, 9];
+    const m = ((step % 24) + 24) % 24, idx = m <= 12 ? m : 24 - m;
+    const semis = 12 * Math.floor(idx / 5) + scale[idx % 5];
+    let f = 293.66 * Math.pow(2, semis / 12);
+    const pan = (x / W) * 2 - 1;
+    if (kind === 'jelly') { f /= 2; this.voice(f, .16, 3.2, pan); }
+    else if (kind === 'pearl') { this.voice(f, .12, 4, pan); this.voice(f * 1.5, .08, 4, pan, .06); this.voice(f * 2, .06, 4, pan, .12); }
+    else this.voice(f, .13, 2.4, pan);
+  },
+  drop(x) {
+    if (!this.c || save.muted) return;
+    const c = this.c, t = c.currentTime;
+    const o = c.createOscillator(); o.type = 'sine';
+    o.frequency.setValueAtTime(220, t); o.frequency.exponentialRampToValueAtTime(70, t + .35);
+    const g = c.createGain(); g.gain.setValueAtTime(.0001, t); g.gain.exponentialRampToValueAtTime(.22, t + .01); g.gain.exponentialRampToValueAtTime(.0001, t + .5);
+    o.connect(g); g.connect(this.dry); g.connect(this.rev); o.start(t); o.stop(t + .55);
+  },
+  chime() {
+    if (!this.c || save.muted) return;
+    [0, 4, 7, 12].forEach((s, i) => this.voice(587.33 * Math.pow(2, s / 12), .07, 3.5, (i - 1.5) * .3, i * .14));
+  },
+};
+
+/* ---------- world state ---------- */
+let mode = 'menu';          // menu | wave | zen | sky
+let returnMode = 'menu';
+let phase = 'idle';         // idle | ready | running | done | result
+let wave = 1, waveCfg = null, litWave = 0, waveChain = null;
+let plankton = [], ripples = [], bursts = [], sparks = [];
+let time = 0, last = performance.now();
+let continueFn = null, continueAt = 0, doneAt = 0;
+const pendingStars = new Set();
+const MAX_STARS = 2400;
+const conAnim = new Map();  // constellation index -> birth time (for line drawing)
+
+function breathAt(t) { return .5 - .5 * Math.cos((t / 8) * Math.PI * 2); } // 8 s: 4 in, 4 out
+const tideMult = () => 1 + .34 * breathAt(time);
+
+function spawn(kind, fade) {
+  const sp = (kind === 'jelly' ? rand(6, 10) : rand(9, 18)) * unit;
+  plankton.push({
+    kind, x: rand(18, W - 18), y: rand(seaTop() + 6, seaBottom() - 6),
+    a: rand(0, Math.PI * 2), sp, r: (kind === 'jelly' ? 6.5 : kind === 'pearl' ? 5.5 : 4) * unit,
+    tw: rand(0, 6.3), lit: false, dead: false, alpha: fade ? 0 : 1,
+  });
+}
+
+function waveParams(n) {
+  const count = Math.min(20 + n * 3, 72);
+  const frac = Math.min(.08 + n * .025, .6);
+  return {
+    count, target: Math.max(2, Math.round(count * frac)),
+    jelly: n >= 4 ? Math.min(1 + Math.floor((n - 4) / 2), 8) : 0,
+    pearl: n >= 6 && n % 2 === 0 ? 1 : 0,
+  };
+}
+
+const HINTS = {
+  1: 'Denize bir kez dokun.',
+  2: 'Uyanan her ışık, dokunduğu ışıkları da uyandırır.',
+  3: 'Ay dolgunlaştığında dokun: halkan büyür.',
+  4: 'Pembe denizanaları daha geniş halka yayar.',
+  6: 'Altın inci uzun süre parlar ve akor çalar.',
+};
+const CALM = ['Acele yok.', 'Nefes al… ve ver.', 'Deniz seni bekler.', 'Her zincir gökyüzüne bir iz bırakır.', 'Ayı izle.', 'Yavaş olan kazanır.', 'Dalgalar hep geri gelir.'];
+
+function startWave(n) {
+  mode = 'wave'; wave = n; waveCfg = waveParams(n);
+  plankton = plankton.filter(p => p.lit && !p.dead);   // let glowing ones finish
+  ripples = ripples.filter(r => r.chain && r.chain.zen);
+  litWave = 0; waveChain = null; phase = 'ready';
+  const { count, jelly, pearl } = waveCfg;
+  for (let i = 0; i < count - jelly - pearl; i++) spawn('glow', true);
+  for (let i = 0; i < jelly; i++) spawn('jelly', true);
+  for (let i = 0; i < pearl; i++) spawn('pearl', true);
+  if (n <= 2) {
+    const hx = W / 2, hy = (seaTop() + seaBottom()) / 2;
+    plankton.slice(-6 + n).forEach((p, i) => { const a = i * 1.3, d = R * (.5 + i * .35); p.x = hx + Math.cos(a) * d; p.y = clamp(hy + Math.sin(a) * d, seaTop(), seaBottom()); });
+  }
+  showHud(true); updateHud();
+  toast({ t1: `Dalga ${n}`, t2: `Hedef: ${waveCfg.target} ışık`, t3: HINTS[n] || CALM[n % CALM.length], hold: 2600 });
+}
+
+function startZen() {
+  mode = 'zen'; phase = 'ready';
+  showHud(true); updateHud();
+  toast({ t1: 'Serbest yüzüş', t2: '', t3: 'İstediğin kadar dokun. Uzun zincirler gökyüzünde kalır.', hold: 2800 });
+}
+
+function toMenu() {
+  mode = 'menu'; phase = 'idle'; continueFn = null;
+  showHud(false); hideToast();
+  $('menu').hidden = false; requestAnimationFrame(() => $('menu').classList.remove('fade'));
+  refreshMenu();
+}
+
+function refreshMenu() {
+  $('waveLbl').textContent = `${save.wave}. dalgadan devam`;
+  if (save.wave === 1) $('waveLbl').textContent = 'Baştan başla, kolayca';
+  $('stats').textContent = save.total
+    ? `${fmt(save.total)} ışık uyandırdın · ${fmt(save.cons.length)} takımyıldız`
+    : 'Otobüste, metroda, yatmadan önce. Tek parmak yeter.';
+}
+
+/* ---------- chains, ripples ---------- */
+function newChain(x, y, zen) {
+  return { pts: [{ x, y, parent: -1 }], lit: 0, active: 0, off: Math.floor(rand(0, 5)), zen, done: false };
+}
+function addRipple(x, y, max, depth, chain, pi, p, kind) {
+  ripples.push({ x, y, max, r: 0, t: 0, grow: .5, hold: kind === 'pearl' ? 3.2 : 1.5, fade: .8, depth, chain, pi, p, kind });
+  chain.active++;
+}
+
+function tap(x, y) {
+  Audio.init();
+  if (y < baseH + 6) return;
+  if (mode === 'wave' && phase !== 'ready') return;
+  if (mode !== 'wave' && mode !== 'zen') return;
+  hideToast(true);
+  const chain = newChain(x, y, mode === 'zen');
+  addRipple(x, y, R * tideMult(), 0, chain, 0, null, 'tap');
+  for (let i = 0; i < 3; i++) bursts.push({ ring: true, x, y, r: 4 + i * 6, t: -i * .12, life: 1.6 });
+  Audio.drop(x); haptic(10);
+  if (mode === 'wave') { phase = 'running'; waveChain = chain; }
+}
+
+function ignite(p, by) {
+  p.lit = true; p.litT = time;
+  const ch = by.chain;
+  ch.pts.push({ x: p.x, y: p.y, parent: by.pi });
+  const mult = p.kind === 'jelly' ? 1.45 : p.kind === 'pearl' ? 1.2 : 1;
+  addRipple(p.x, p.y, R * mult, by.depth + 1, ch, ch.pts.length - 1, p, p.kind);
+  ch.lit++;
+  if (mode === 'wave' && !ch.zen) litWave++;
+  p.star = save.total; save.total++;
+  if (p.star < MAX_STARS) pendingStars.add(p.star);
+  const col = p.kind;
+  for (let i = 0; i < 7; i++) { const a = rand(0, 6.28), s = rand(20, 60) * unit; bursts.push({ x: p.x, y: p.y, vx: Math.cos(a) * s, vy: Math.sin(a) * s, t: 0, life: rand(.5, .9), col }); }
+  Audio.note(by.depth + 1 + ch.off, p.x, p.kind);
+  haptic(p.kind === 'pearl' ? 18 : 5);
+  updateHud();
+  persist(performance.now());
+}
+
+function chainDone(ch) {
+  ch.done = true;
+  if (ch.zen && ch.lit >= 8) {
+    const c = makeConstellation(ch, 0);
+    toast({ t1: `${ch.lit} ışık`, t2: '', t3: `Gökyüzüne yeni takımyıldız: <b>${c.n}</b>`, hold: 2600 });
+    Audio.chime();
+  }
+}
+
+/* ---------- constellations ---------- */
+const ADJ = ['Uykulu', 'Sessiz', 'Gümüş', 'Neşeli', 'Kayıp', 'Küçük', 'Yalnız', 'Sabırlı', 'Mavi', 'Rüzgârlı', 'Utangaç', 'Bilge', 'Tuzlu', 'Hülyalı', 'Meraklı', 'Yorgun', 'Gezgin', 'Dalgın', 'Cesur', 'Tembel', 'Mırıl', 'Eski'];
+const NOUN = ['Martı', 'Balina', 'Kayık', 'Fener', 'Ahtapot', 'Midye', 'Yunus', 'Çapa', 'Pusula', 'Kaplumbağa', 'Dalgıç', 'Mercan', 'İstavrit', 'Sandal', 'Yelken', 'Kedi', 'Simitçi', 'Vapur', 'Balıkçı', 'Deniz Atı', 'Lodos', 'Karabatak'];
+function conName() {
+  const used = new Set(save.cons.map(c => c.n));
+  for (let i = 0; i < 20; i++) { const n = ADJ[Math.floor(rand(0, ADJ.length))] + ' ' + NOUN[Math.floor(rand(0, NOUN.length))]; if (!used.has(n)) return n; }
+  return ADJ[0] + ' ' + NOUN[0] + ' ' + (save.cons.length + 1);
+}
+function makeConstellation(ch, waveNo) {
+  // first ten points of the chain, in the order light travelled; parents always come earlier
+  const pts = ch.pts.slice(0, 10);
+  const edges = [];
+  for (let i = 1; i < pts.length; i++) edges.push([pts[i].parent, i]);
+  let x0 = Infinity, y0 = Infinity, x1 = -Infinity, y1 = -Infinity;
+  for (const p of pts) { x0 = Math.min(x0, p.x); y0 = Math.min(y0, p.y); x1 = Math.max(x1, p.x); y1 = Math.max(y1, p.y); }
+  const size = Math.max(x1 - x0, y1 - y0) || 1;
+  const np = pts.map(p => [+((p.x - x0) / size).toFixed(3), +((p.y - y0) / size).toFixed(3)]);
+  const nw = (x1 - x0) / size, nh = (y1 - y0) / size;
+  // place far from neighbours and from the moon
+  let best = null, bestScore = -1;
+  const recent = save.cons.slice(-14);
+  for (let i = 0; i < 40; i++) {
+    const cx = rand(.1, .9), cy = rand(.14, .86);
+    let d = Math.hypot((cx - .8) * 1.6, cy - .42) * .8;
+    for (const c of recent) d = Math.min(d, Math.hypot((cx - c.cx) * 1.6, cy - c.cy));
+    if (d > bestScore) { bestScore = d; best = [cx, cy]; }
+  }
+  const con = { n: conName(), p: np, e: edges, w: +nw.toFixed(3), h: +nh.toFixed(3), cx: +best[0].toFixed(3), cy: +best[1].toFixed(3), s: +rand(.16, .22).toFixed(3), wv: waveNo, c: ch.lit };
+  save.cons.push(con);
+  if (save.cons.length > 120) save.cons.shift();
+  conAnim.set(con, time);
+  persist();
+  return con;
+}
+
+/* ---------- wave result ---------- */
+function finishWave() {
+  phase = 'result';
+  const cfg = waveCfg, ok = litWave >= cfg.target;
+  const all = litWave >= cfg.count;
+  if (ok) {
+    let line = '';
+    if (waveChain && waveChain.pts.length >= 4) {
+      const c = makeConstellation(waveChain, wave);
+      line = `Gökyüzüne yeni takımyıldız: <b>${c.n}</b>`;
+    }
+    save.wave = wave + 1; save.best = Math.max(save.best, wave + 1); persist();
+    Audio.chime(); haptic([12, 60, 12]);
+    toast({ t1: all ? 'Kusursuz!' : ['Sakin ve parlak.', 'Güzel bir dalga.', 'Deniz parlıyor.', 'Işık yolunu buldu.'][wave % 4], t2: `${litWave} ışık uyandı`, t3: line, t4: 'Devam etmek için dokun' });
+    armContinue(() => startWave(wave + 1));
+  } else {
+    persist();
+    toast({ t1: litWave >= cfg.target - 2 ? 'Az kaldı.' : 'Deniz bekler.', t2: `${litWave} / ${cfg.target} ışık`, t3: 'Bir nefes daha? Ay dolgunken dene.', t4: 'Tekrar için dokun' });
+    armContinue(() => startWave(wave));
+  }
+}
+function armContinue(fn) { continueFn = fn; continueAt = time + .7; }
+
+/* ---------- HUD & toast ---------- */
+function showHud(on) {
+  $('hud').hidden = !on;
+  if (on) { $('menu').classList.add('fade'); setTimeout(() => { if (mode !== 'menu') $('menu').hidden = true; }, 500); }
+}
+function updateHud() {
+  if (mode === 'wave' && waveCfg) {
+    $('progLbl').textContent = `Dalga ${wave}`;
+    $('progNum').textContent = `${litWave} / ${waveCfg.target}`;
+    $('progBar').style.width = Math.min(100, litWave / waveCfg.count * 100) + '%';
+    $('progMark').style.left = (waveCfg.target / waveCfg.count * 100) + '%';
+    $('progMark').hidden = false; $('barWrap').hidden = false;
+  } else if (mode === 'zen' || (mode === 'sky' && returnMode === 'zen')) {
+    $('progLbl').textContent = 'Toplam';
+    $('progNum').textContent = fmt(save.total);
+    $('barWrap').hidden = true;
+  }
+}
+let toastTimer = 0;
+function toast({ t1 = '', t2 = '', t3 = '', t4 = '', hold = 0 }) {
+  $('t1').textContent = t1; $('t2').textContent = t2; $('t3').innerHTML = t3; $('t4').textContent = t4;
+  $('t2').hidden = !t2; $('t3').hidden = !t3; $('t4').hidden = !t4;
+  const el = $('toast'); el.classList.remove('fade');
+  clearTimeout(toastTimer);
+  if (hold) toastTimer = setTimeout(() => el.classList.add('fade'), hold);
+}
+function hideToast(onlyTransient) { if (onlyTransient && continueFn) return; clearTimeout(toastTimer); $('toast').classList.add('fade'); }
+
+/* ---------- sky view ---------- */
+function openSky() {
+  Audio.init();
+  if (mode === 'sky') return;
+  returnMode = mode; mode = 'sky'; horizonTarget = H * .9;
+  hideToast();
+  $('menu').classList.add('fade'); setTimeout(() => { if (mode === 'sky') $('menu').hidden = true; }, 500);
+  $('hud').hidden = true;
+  const n = save.cons.length;
+  $('skyInfo').textContent = save.total
+    ? `${fmt(save.total)} yıldız, ${fmt(n)} takımyıldız. Hepsi senin zincirlerinden.`
+    : 'Henüz boş. Denizde uyandırdığın her ışık buraya bir yıldız olarak yükselir.';
+  const s = $('skyUi'); s.hidden = false; requestAnimationFrame(() => s.classList.remove('fade'));
+}
+function closeSky() {
+  if (mode !== 'sky') return;
+  mode = returnMode; horizonTarget = baseH;
+  const s = $('skyUi'); s.classList.add('fade'); setTimeout(() => { if (mode !== 'sky') s.hidden = true; }, 500);
+  if (mode === 'menu') toMenu(); else { showHud(true); updateHud(); if (continueFn) $('toast').classList.remove('fade'); }
+}
+
+/* ---------- star layout ---------- */
+function starPos(i) {
+  const j = i % MAX_STARS;
+  const x = hash(j * 2.13 + 1) * W;
+  const y = Math.pow(hash(j * 3.71 + 7), 1.25) * (horizon - 8) + 4;
+  return [x, y];
+}
+
+/* ---------- update ---------- */
+function update(dt) {
+  time += dt;
+  horizon += (horizonTarget - horizon) * Math.min(1, dt * 3.2);
+  const b = breathAt(time);
+  Audio.breath(b);
+
+  // plankton drift
+  const top = seaTop(), bot = seaBottom();
+  for (const p of plankton) {
+    if (p.alpha < 1) p.alpha = Math.min(1, p.alpha + dt * .9);
+    if (p.lit) continue;
+    p.a += (Math.random() - .5) * 1.8 * dt;
+    const cur = Math.sin(time * .12 + p.y * .012) * 4 * unit;
+    p.x += (Math.cos(p.a) * p.sp + cur) * dt;
+    p.y += Math.sin(p.a) * p.sp * .75 * dt;
+    if (p.x < 12) { p.x = 12; p.a = Math.PI - p.a; } else if (p.x > W - 12) { p.x = W - 12; p.a = Math.PI - p.a; }
+    if (p.y < top) { p.y = top; p.a = -p.a; } else if (p.y > bot) { p.y = bot; p.a = -p.a; }
+  }
+
+  // ripples & ignition
+  for (const r of ripples) {
+    r.t += dt;
+    const g = r.grow, h = r.hold;
+    r.r = r.t < g ? r.max * easeOut(r.t / g) : r.max * (1 + .06 * Math.min(1, (r.t - g - h) / r.fade) * (r.t > g + h ? 1 : 0));
+    r.active = r.t < g + h + r.fade * .3;
+  }
+  for (const p of plankton) {
+    if (p.lit || p.alpha < .6) continue;
+    for (const r of ripples) {
+      if (!r.active) continue;
+      const dx = p.x - r.x, dy = p.y - r.y, rr = r.r + p.r;
+      if (dx * dx + dy * dy < rr * rr) { ignite(p, r); break; }
+    }
+  }
+  for (let i = ripples.length - 1; i >= 0; i--) {
+    const r = ripples[i];
+    if (r.t >= r.grow + r.hold + r.fade) {
+      ripples.splice(i, 1);
+      if (r.p) {
+        r.p.dead = true;
+        const [tx, ty] = starPos(r.p.star);
+        sparks.push({ sx: r.p.x, sy: r.p.y + (horizon - baseH), x: r.p.x, y: r.p.y, px: r.p.x, py: r.p.y, idx: r.p.star, t: 0, dur: rand(1.3, 2.1), kind: r.p.kind, bend: rand(-60, 60) });
+      }
+      r.chain.active--;
+      if (r.chain.active <= 0 && !r.chain.done) chainDone(r.chain);
+    }
+  }
+  plankton = plankton.filter(p => !p.dead);
+
+  // zen: keep the sea populated
+  if (mode === 'zen' || (mode === 'sky' && returnMode === 'zen') || mode === 'menu' || (mode === 'sky' && returnMode === 'menu')) {
+    const want = mode === 'menu' || returnMode === 'menu' ? 26 : 46;
+    let dark = 0; for (const p of plankton) if (!p.lit) dark++;
+    if (dark < want && Math.random() < dt * 4) {
+      const k = Math.random() < .08 ? 'jelly' : Math.random() < .02 ? 'pearl' : 'glow';
+      spawn(k, true);
+    }
+  }
+
+  // wave end
+  if (phase === 'running' && ripples.every(r => r.chain.zen)) { phase = 'done'; doneAt = time + .5; }
+  if (mode === 'wave' && phase === 'done' && time >= doneAt) finishWave();
+
+  // bursts
+  for (const p of bursts) {
+    p.t += dt;
+    if (!p.ring) { p.x += p.vx * dt; p.y += p.vy * dt; p.vx *= .94; p.vy *= .94; }
+  }
+  bursts = bursts.filter(p => p.t < p.life);
+
+  // sparks rise to the sky
+  for (const s of sparks) {
+    s.t += dt;
+    const k = easeInOut(Math.min(1, s.t / s.dur));
+    const [tx, ty] = starPos(s.idx);
+    const cx = (s.sx + tx) / 2 + s.bend, cy = Math.min(s.sy, ty) - 40;
+    s.px = s.x; s.py = s.y;
+    const u = 1 - k;
+    s.x = u * u * s.sx + 2 * u * k * cx + k * k * tx;
+    s.y = u * u * s.sy + 2 * u * k * cy + k * k * ty;
+    if (s.t >= s.dur) pendingStars.delete(s.idx);
+  }
+  sparks = sparks.filter(s => s.t < s.dur);
+
+  if (mode === 'zen') { const el = $('progNum'); const v = fmt(save.total); if (el.textContent !== v) el.textContent = v; }
+}
+
+/* ---------- draw ---------- */
+function rgba(c, a) { return `rgba(${c[0]},${c[1]},${c[2]},${a})`; }
+
+function draw() {
+  const b = breathAt(time);
+  const off = horizon - baseH;
+
+  // sky
+  const sky = ctx.createLinearGradient(0, 0, 0, horizon);
+  sky.addColorStop(0, '#060a1a'); sky.addColorStop(.7, '#0f1a3a'); sky.addColorStop(1, '#22305a');
+  ctx.fillStyle = sky; ctx.fillRect(0, 0, W, horizon + 1);
+
+  // stars (yours)
+  const n = Math.min(save.total, MAX_STARS);
+  const boost = save.total > MAX_STARS ? Math.min(.35, (save.total - MAX_STARS) / 20000) : 0;
+  for (let i = 0; i < n; i++) {
+    if (pendingStars.has(i)) continue;
+    const [x, y] = starPos(i);
+    const h = hash(i * 5.3 + 2);
+    const tw = .55 + .45 * Math.sin(time * (.6 + h * 1.6) + i);
+    const a = (.35 + .55 * h) * tw + boost;
+    const s = h > .93 ? 2.2 : h > .7 ? 1.5 : 1;
+    ctx.fillStyle = `rgba(222,234,255,${Math.min(1, a)})`;
+    ctx.fillRect(x - s / 2, y - s / 2, s, s);
+    if (h > .965) { ctx.globalAlpha = .35 * tw; ctx.drawImage(sprites.star, x - 7, y - 7, 14, 14); ctx.globalAlpha = 1; }
+  }
+
+  // constellations
+  const skyMode = mode === 'sky' || horizon > baseH + 20;
+  const list = skyMode ? save.cons : save.cons.slice(-10);
+  const scaleBase = Math.min(W, horizon * 1.5);
+  ctx.lineCap = 'round';
+  for (const c of list) {
+    const sc = c.s * scaleBase * (skyMode ? 1 : .75);
+    const ox = c.cx * W - c.w * sc / 2, oy = c.cy * horizon - c.h * sc / 2;
+    const born = conAnim.get(c);
+    const prog = born === undefined ? 1 : clamp((time - born) / 2.5, 0, 1);
+    ctx.strokeStyle = rgba(COLORS.glow, skyMode ? .42 : .26);
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    c.e.forEach(([a, bb], k) => {
+      const lp = clamp(prog * c.e.length - k, 0, 1);
+      if (lp <= 0 || !c.p[a] || !c.p[bb]) return;
+      const ax = ox + c.p[a][0] * sc, ay = oy + c.p[a][1] * sc, bx = ox + c.p[bb][0] * sc, by = oy + c.p[bb][1] * sc;
+      ctx.moveTo(ax, ay); ctx.lineTo(ax + (bx - ax) * lp, ay + (by - ay) * lp);
+    });
+    ctx.stroke();
+    for (let k = 0; k < c.p.length; k++) {
+      const x = ox + c.p[k][0] * sc, y = oy + c.p[k][1] * sc;
+      const s = (k === 0 ? 14 : 10) * (.85 + .15 * Math.sin(time * 1.3 + k));
+      ctx.drawImage(sprites.star, x - s / 2, y - s / 2, s, s);
+    }
+    if (skyMode && horizon > H * .6) {
+      ctx.font = 'italic 300 13px Fraunces, Georgia, serif';
+      ctx.textAlign = 'center'; ctx.fillStyle = 'rgba(233,242,246,.7)';
+      ctx.fillText(c.n, ox + c.w * sc / 2, oy + c.h * sc + 16);
+    }
+  }
+
+  // moon, breathing
+  const mx = W * (W > H ? .82 : .78), my = Math.min(horizon * .42, 140) + (horizon - baseH) * .15;
+  const mr = Math.max(14, Math.min(W, H) * .045);
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  const mg = ctx.createRadialGradient(mx, my, mr * .5, mx, my, mr * (3.2 + 2.2 * b));
+  mg.addColorStop(0, `rgba(244,241,220,${.22 + .2 * b})`); mg.addColorStop(1, 'rgba(244,241,220,0)');
+  ctx.fillStyle = mg; ctx.beginPath(); ctx.arc(mx, my, mr * (3.2 + 2.2 * b), 0, 7); ctx.fill();
+  ctx.restore();
+  ctx.fillStyle = '#f4f1dc'; ctx.beginPath(); ctx.arc(mx, my, mr, 0, 7); ctx.fill();
+  ctx.fillStyle = 'rgba(190,186,160,.35)';
+  ctx.beginPath(); ctx.arc(mx - mr * .3, my - mr * .2, mr * .22, 0, 7); ctx.arc(mx + mr * .35, my + mr * .3, mr * .14, 0, 7); ctx.fill();
+  // breath ring: full ring = tide high = bigger ripple
+  ctx.strokeStyle = `rgba(244,241,220,${.15 + .35 * b})`; ctx.lineWidth = 1.2;
+  ctx.beginPath(); ctx.arc(mx, my, mr * (1.5 + .9 * b), 0, Math.PI * 2); ctx.stroke();
+
+  // sea
+  const sea = ctx.createLinearGradient(0, horizon, 0, H);
+  sea.addColorStop(0, '#0c2238'); sea.addColorStop(.25, '#061626'); sea.addColorStop(1, '#020812');
+  ctx.fillStyle = sea; ctx.fillRect(0, horizon, W, H - horizon);
+  ctx.fillStyle = `rgba(160,200,230,${.18 + .1 * b})`; ctx.fillRect(0, horizon - .5, W, 1);
+
+  ctx.save();
+  ctx.beginPath(); ctx.rect(0, horizon, W, H - horizon); ctx.clip();
+
+  // moon path on water
+  ctx.globalCompositeOperation = 'lighter';
+  for (let k = 0; k < 34; k++) {
+    const f = k / 34, y = horizon + 4 + Math.pow(f, 1.5) * (H - horizon) * .95;
+    const wdt = (6 + f * 90) * (.5 + .5 * Math.sin(time * 1.2 + k * 1.7)) * (W / 420);
+    const x = mx + Math.sin(time * .6 + k * .9) * f * 18;
+    ctx.fillStyle = `rgba(244,241,220,${(.13 * (1 - f) + .02) * (.6 + .5 * b)})`;
+    ctx.fillRect(x - wdt / 2, y, wdt, 1 + f * 1.2);
+  }
+  ctx.globalCompositeOperation = 'source-over';
+  // slow swell lines
+  ctx.strokeStyle = 'rgba(127,200,230,.05)'; ctx.lineWidth = 1;
+  for (let k = 0; k < 7; k++) {
+    const y0 = horizon + (k + 1) * (H - horizon) / 8;
+    ctx.beginPath();
+    for (let x = 0; x <= W; x += 16) { const y = y0 + Math.sin(x * .012 + time * (.35 + k * .05) + k) * (3 + k); x ? ctx.lineTo(x, y) : ctx.moveTo(x, y); }
+    ctx.stroke();
+  }
+
+  ctx.translate(0, off);
+  ctx.globalCompositeOperation = 'lighter';
+
+  // ripples
+  for (const r of ripples) {
+    const end = r.grow + r.hold;
+    const a = r.t < end ? 1 : Math.max(0, 1 - (r.t - end) / r.fade);
+    const col = r.kind === 'tap' ? COLORS.glow : COLORS[r.kind] || COLORS.glow;
+    const pulse = r.t > r.grow && r.t < end ? .85 + .15 * Math.sin(r.t * 6) : 1;
+    const g = ctx.createRadialGradient(r.x, r.y, 0, r.x, r.y, r.r || 1);
+    g.addColorStop(0, rgba(col, .16 * a)); g.addColorStop(.8, rgba(col, .08 * a)); g.addColorStop(1, rgba(col, .22 * a * pulse));
+    ctx.fillStyle = g; ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.fill();
+    ctx.strokeStyle = rgba(col, .55 * a * pulse); ctx.lineWidth = 1.4;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
+    ctx.strokeStyle = rgba(col, .12 * a); ctx.lineWidth = 6;
+    ctx.beginPath(); ctx.arc(r.x, r.y, r.r, 0, Math.PI * 2); ctx.stroke();
+  }
+
+  // plankton
+  const glowMul = Math.min(1, .82 + .22 * b);
+  for (const p of plankton) {
+    const tw = .65 + .35 * Math.sin(time * 2.2 + p.tw);
+    let size, a;
+    if (p.lit) {
+      const age = time - p.litT;
+      size = p.r * (6 + 3 * Math.exp(-age * 3));
+      a = 1;
+    } else {
+      size = p.r * (p.kind === 'jelly' ? 6.4 + Math.sin(time * 1.6 + p.tw) * .8 : 5.6);
+      a = (.55 + .35 * tw) * glowMul * p.alpha;
+      if (p.kind === 'pearl') a = Math.min(1, a + .25);
+    }
+    ctx.globalAlpha = a;
+    ctx.drawImage(sprites[p.kind], p.x - size / 2, p.y - size / 2, size, size);
+  }
+  ctx.globalAlpha = 1;
+
+  // bursts
+  for (const p of bursts) {
+    const k = p.t / p.life;
+    if (p.ring) {
+      if (p.t < 0) continue;
+      ctx.strokeStyle = rgba(COLORS.glow, .35 * (1 - k)); ctx.lineWidth = 1;
+      ctx.beginPath(); ctx.arc(p.x, p.y, p.r + k * R * 1.4, 0, Math.PI * 2); ctx.stroke();
+    } else {
+      ctx.globalAlpha = 1 - k; const s = 6 * (1 - k) + 2;
+      ctx.drawImage(sprites[p.col], p.x - s / 2, p.y - s / 2, s, s); ctx.globalAlpha = 1;
+    }
+  }
+
+  // first-wave hint: a soft pulsing ring that says "touch here"
+  if (mode === 'wave' && phase === 'ready' && wave <= 1 && save.total < 40) {
+    const hx = W / 2, hy = (seaTop() + seaBottom()) / 2, k = (time % 1.8) / 1.8;
+    ctx.strokeStyle = rgba(COLORS.glow, .5 * (1 - k)); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.arc(hx, hy, 10 + k * 40, 0, Math.PI * 2); ctx.stroke();
+    ctx.globalAlpha = .55 + .3 * Math.sin(time * 3);
+    ctx.drawImage(sprites.glow, hx - 14, hy - 14, 28, 28); ctx.globalAlpha = 1;
+  }
+  ctx.restore();
+
+  // sparks climbing to the sky (drawn above everything)
+  ctx.save(); ctx.globalCompositeOperation = 'lighter';
+  for (const s of sparks) {
+    const col = COLORS[s.kind] || COLORS.glow;
+    ctx.strokeStyle = rgba(col, .45); ctx.lineWidth = 1.5;
+    ctx.beginPath(); ctx.moveTo(s.px, s.py); ctx.lineTo(s.x, s.y); ctx.stroke();
+    ctx.drawImage(sprites[s.kind] || sprites.glow, s.x - 6, s.y - 6, 12, 12);
+  }
+  ctx.restore();
+}
+
+function frame(now) {
+  const dt = Math.min(.05, (now - last) / 1000); last = now;
+  update(dt); draw();
+  requestAnimationFrame(frame);
+}
+
+/* ---------- input ---------- */
+cv.addEventListener('pointerdown', e => {
+  e.preventDefault();
+  if (mode === 'sky') { closeSky(); return; }
+  if (continueFn) {
+    if (time >= continueAt) { const f = continueFn; continueFn = null; hideToast(); f(); }
+    return;
+  }
+  tap(e.clientX, e.clientY);
+}, { passive: false });
+document.addEventListener('keydown', e => {
+  if (e.key === ' ' || e.key === 'Enter') {
+    if (document.activeElement && document.activeElement.tagName === 'BUTTON') return;
+    e.preventDefault();
+    if (mode === 'sky') { closeSky(); return; }
+    if (continueFn && time >= continueAt) { const f = continueFn; continueFn = null; hideToast(); f(); return; }
+    if (mode === 'wave' || mode === 'zen') tap(W / 2 + rand(-W * .2, W * .2), (seaTop() + seaBottom()) / 2 + rand(-60, 60));
+  } else if (e.key === 'Escape') { if (mode === 'sky') closeSky(); else if (mode !== 'menu') toMenu(); }
+});
+
+let wakeLock = null;
+async function keepAwake() { try { if ('wakeLock' in navigator && !wakeLock) { wakeLock = await navigator.wakeLock.request('screen'); wakeLock.addEventListener('release', () => { wakeLock = null; }); } } catch (e) { wakeLock = null; } }
+
+$('playWaves').addEventListener('click', () => { Audio.init(); keepAwake(); startWave(save.wave); });
+$('playZen').addEventListener('click', () => { Audio.init(); keepAwake(); startZen(); });
+$('openSky').addEventListener('click', openSky);
+$('btnSky').addEventListener('click', openSky);
+$('skyClose').addEventListener('click', closeSky);
+$('btnMenu').addEventListener('click', toMenu);
+function paintSound() {
+  $('btnSound').setAttribute('aria-label', save.muted ? 'Sesi aç' : 'Sesi kapat');
+  $('sndIcon').innerHTML = save.muted
+    ? '<path d="M4 10v4h4l5 4V6L8 10z"/><path d="M17 9l5 6M22 9l-5 6"/>'
+    : '<path d="M4 10v4h4l5 4V6L8 10z"/><path d="M16.5 8.5a5 5 0 010 7M19 6a8.5 8.5 0 010 12"/>';
+}
+$('btnSound').addEventListener('click', () => { save.muted = !save.muted; Audio.init(); Audio.setMuted(save.muted); paintSound(); persist(); });
+
+document.addEventListener('visibilitychange', () => {
+  if (!Audio.c) return;
+  if (document.hidden) { Audio.c.suspend().catch(() => {}); persist(); }
+  else { Audio.c.resume().catch(() => {}); if (mode !== 'menu') keepAwake(); }
+});
+window.addEventListener('pagehide', () => persist());
+window.addEventListener('resize', resize);
+
+/* ---------- boot ---------- */
+resize();
+for (let i = 0; i < 26; i++) spawn(Math.random() < .08 ? 'jelly' : 'glow', false);
+paintSound(); refreshMenu();
+requestAnimationFrame(t => { last = t; requestAnimationFrame(frame); });
+})();
+</script>
